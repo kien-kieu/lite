@@ -13,13 +13,13 @@ A prerequisite for installing LiTe is the installation of CGAL (http://www.cgal.
 Download
 --------
 
-### Release version of LiTe
-Source files can be downloaded as an archive from https://mulcyber.toulouse.inra.fr/frs/?group_id=xx. Unpack the archive into a given directory.
+<!-- ### Release version of LiTe
+Source files can be downloaded as an archive from https://github.com/kien-kieu/lite.git. Unpack the archive into a given directory. -->
 
 ### Latest version of LiTe
 Source files of the latest development version of LiTe are also available through git:
 
-     git clone http://mulcyber.toulouse.inra.fr/anonscm/git/lite/lite.git
+     git clone https://github.com/kien-kieu/lite.git
 
 Build LiTe
 ----------
