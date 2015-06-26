@@ -1,0 +1,13 @@
+Package: RLiTe
+Type: Package
+Title: What the package does (short line)
+Version: 1.0
+Date: 2014-04-29
+Author: Kien Kieu, Katarzyna Adamczyk
+Maintainer: Kien Kieu <kien.kieu@jouy.inra.fr>
+Description: More about what it does (maybe more than one line)
+License: GPL
+Imports: methods
+Depends: Rcpp (>= 0.11.1)
+LinkingTo: Rcpp
+RcppModules: lite

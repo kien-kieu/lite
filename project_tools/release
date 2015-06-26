@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Line Tessellation (LiTe) library
+# |||Development version
+# Authors: Katarzyna Adamczyk and Kiên Kiêu.
+# |||Copyright INRA 2006-yyyy.
+# Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
+# License: GPL v3.
+
+# Shell script to be used for generating a new release.
+# Input argument: the release identifier e.g. 1.0
+
+usage() {
+    echo -e "\nUsage:\n$0 release_identifier \n"
+}
+
+if [ "$#" -ne 1 ]; then
+    echo -e "\nShell script $0 expects one argument"
+    usage
+    exit 1
+fi
+
+rel_id=$1         # release identifier passed as argument to scritpt
+year=`date +"%Y"` # get current year in yyyy format
+
+# Create new Git branch and switch to it
+git checkout -b release-$rel_id
+
+# Edit file headers
+# Write release identifier
+find . -name .git -prune -o -type f -exec sed -i "s/|||Development version/Release $rel_id/" {} \; -print
+# Write current year in copyright statement
+find . -name .git -prune -o -type f -exec sed -i "s/|||Copyright INRA 2006-yyyy/Copyright INRA 2006-$year/" {} \; -print
+
+# Edit script lite-config (version number)
+sed -i "s/^version=development/version=$rel_id/" lite-config.in
+
+# Edit documentation welcome page
+sed -i "s/\(\\\copyright INRA\)/\1 2006-$year/" docfiles/index.md
+sed -i "s/\\\version development/\\\version $rel_id/" docfiles/index.md
+
+# Commit and tag
+git commit -a --m "Release $rel_id"
+git tag -a v$rel_id -m "Release $rel_id"
+
+# Return to branch master
+git checkout master

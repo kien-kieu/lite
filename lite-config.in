@@ -1,0 +1,58 @@
+#! /bin/sh
+
+# Line Tessellation (LiTe) library
+# |||Development version
+# Authors: Katarzyna Adamczyk and Kiên Kiêu.
+# |||Copyright INRA 2006-yyyy.
+# Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
+# License: GPL v3.
+
+prefix=@CMAKE_INSTALL_PREFIX@
+version=development
+
+usage()
+{
+    cat <<EOF
+Usage: lite-config [OPTION]
+
+Known values for OPTION are:
+
+  --version             show LiTe version number
+  --prefix		show LiTe installation prefix 
+  --help		display this help and exit
+
+EOF
+
+    exit $1
+}
+
+if test $# -eq 0; then
+    usage 1
+fi
+
+while test $# -gt 0; do
+    case "$1" in
+    *) optarg= ;;
+    esac
+
+    case "$1" in
+    --version)
+        echo $version
+	;;
+
+    --prefix)
+	echo $prefix
+	;;
+
+    --help)
+	usage 0
+	;;
+    *)
+	usage
+	exit 1
+	;;
+    esac
+    shift
+done
+
+exit 0

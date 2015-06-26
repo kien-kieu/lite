@@ -1,0 +1,44 @@
+# Line Tessellation (LiTe) library
+# |||Development version
+# Authors: Katarzyna Adamczyk and Kiên Kiêu.
+# |||Copyright INRA 2006-yyyy.
+# Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
+# License: GPL v3.
+
+# Skeleton of a CMake file for compiling applications using LiTe library
+project( liteApp ) # NAME YOUR PROJECT HERE
+
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.5)
+
+set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
+ 
+if ( COMMAND cmake_policy )
+  cmake_policy( SET CMP0003 NEW )  
+endif()
+ 
+find_package(CGAL QUIET COMPONENTS Core )
+
+if ( CGAL_FOUND )
+
+  include( ${CGAL_USE_FILE} )
+
+  find_program(LITE_CONFIG lite-config)
+  execute_process(COMMAND ${LITE_CONFIG} --prefix OUTPUT_VARIABLE LITE_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  include_directories(${LITE_PREFIX}/include)	
+  
+  add_library(ttesselStaticLib STATIC IMPORTED)
+  set_target_properties(ttesselStaticLib PROPERTIES IMPORTED_LOCATION ${LITE_PREFIX}/lib/libttesselStaticLib.a)
+
+  add_library(ttesselSharedLib SHARED IMPORTED)
+  set_target_properties(ttesselSharedLib PROPERTIES IMPORTED_LOCATION ${LITE_PREFIX}/lib/libttesselSharedLib@CMAKE_SHARED_LIBRARY_SUFFIX@)
+
+  add_executable(myApp myApp) # FOR INSTANCE
+  target_link_libraries(myApp ttesselStaticLib) 
+
+else()
+  
+    message(STATUS "This program requires the CGAL library, and will not be compiled.")
+  
+endif()
+

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Line Tessellation (LiTe) library
+# |||Development version
+# Authors: Katarzyna Adamczyk and Kiên Kiêu.
+# |||Copyright INRA 2006-yyyy.
+# Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
+# License: GPL v3.
+
+rm -f src/Makevars

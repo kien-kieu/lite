@@ -1,0 +1,5 @@
+# commands for converting xfig files into images used
+# in LiTe documentation.
+
+fig2dev -L png ttessellation.fig images/static_ttessellation.png
+fig2dev -L pdf ttessellation.fig images/static_ttessellation.pdf
