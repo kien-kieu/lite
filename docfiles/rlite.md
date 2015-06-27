@@ -20,17 +20,18 @@ Download
 --------
 At the moment only the installation from package source is really supported. This means in practice that mostly Unix-like systems (Linux, Mac OS X) are supported. No standard Windows binaries are provided. The procedure for Windows given at the end of this pages is still rather experimental.
 
-Download the package source at https://mulcyber.toulouse.inra.fr/frs/?group_id=xx. 
+Download the package source at https://github.com/kien-kieu/lite/blob/release-x.y/build/wrap/R/RLiTe_x.y.tar.gzwhere x.y is the (latest) release number of LiTe.
+
 
 Installation of RLiTe
 ---------------------
 RLiTe can be installed as a standard R package. For instance, the following command line should do the job.
 
-    R CMD INSTALL RLiTe_1.1.tar.gz
+    R CMD INSTALL RLiTe_x.y.tar.gz
 
 Or within a R interactive session, RLiTe can be installed running
 
-   install.packages("RLiTe_1.1.tar.gz",repos=NULL)
+   install.packages("RLiTe_x.y.tar.gz",repos=NULL)
 
 Windows users
 -------------
