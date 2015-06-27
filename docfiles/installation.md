@@ -38,7 +38,7 @@ There are a few CMake options specific to LiTe:
 
 As an example, if documentation should be generated, build LiTe using the command line below.
 
-    cmake ../lite_src -D BUILD_DOCUMENTATION=ON
+    cmake -D BUILD_DOCUMENTATION=ON ../lite_src 
 
 Compile and install LiTe
 ------------------------
