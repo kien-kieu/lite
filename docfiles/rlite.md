@@ -1,4 +1,4 @@
-The R package RLiTe
+The R package RLiTe {#rlite}
 ===================
 
 <!-- Line Tessellation (LiTe) library

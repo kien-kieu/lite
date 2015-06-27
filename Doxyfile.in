@@ -11,10 +11,10 @@ OUTPUT_DIRECTORY       = doc
 OUTPUT_LANGUAGE        = English
 INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@
 RECURSIVE              = YES
-EXCLUDE                = @CMAKE_CURRENT_SOURCE_DIR@/CheckTes.C \
-		         @CMAKE_CURRENT_SOURCE_DIR@/include/random_lines.h \
+EXCLUDE                = @CMAKE_CURRENT_SOURCE_DIR@/include/random_lines.h \
                          @CMAKE_CURRENT_SOURCE_DIR@/applications \
-			 @CMAKE_CURRENT_SOURCE_DIR@/demos
+			 @CMAKE_CURRENT_SOURCE_DIR@/demos \
+			 @CMAKE_CURRENT_SOURCE_DIR@/readme.md
 EXCLUDE_PATTERNS       = */.svn/*
 EXTRACT_ALL            = NO
 WARNINGS               = NO

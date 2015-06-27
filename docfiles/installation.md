@@ -1,4 +1,4 @@
-Installation
+Installation {#installation}
 ============
 
 <!-- Line Tessellation (LiTe) library
