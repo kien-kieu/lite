@@ -1,0 +1,13 @@
+Package: RLiTe
+Type: Package
+Title: Simulation and inference of Gibbs T-tessellations
+Version: 99.99
+Date: @TODAY@
+Author: Kien Kieu, Katarzyna Adamczyk-Chauvat
+Maintainer: Kien Kieu <kien.kieu@jouy.inra.fr>
+Description: RLiTe is a Rcpp-based interface to the C++ LiTe library. With RLiTe, one can specify a Gibbs model of T-tessellation, simulate it by a Metropolis-Hastings-Green algorithm. Pseudolikelihood-based inference is also implemented.
+License: GPL
+Imports: methods
+Depends: Rcpp (>= 0.11.1)
+LinkingTo: Rcpp
+RcppModules: lite
