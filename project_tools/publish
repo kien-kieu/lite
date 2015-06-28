@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Line Tessellation (LiTe) library
+# |||Development version
+# Authors: Katarzyna Adamczyk and Kiên Kiêu.
+# |||Copyright INRA 2006-yyyy.
+# Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
+# License: GPL v3.
+
+# Shell script to be used for publishing LiTe web pages
+# Input argument: GitHub login e.g. kien-kieu
+
+usage() {
+    echo -e "\nusage:\n$0 github_login \n"
+}
+
+if [ "$#" -ne 1 ]; then
+    echo -e "\nShell script $0 expects one argument"
+    usage
+    exit 1
+else
+    user=$1
+    repo=git@github.com:${user}/lite
+fi
+
+# Get last commit and last release id
+CHANGESET=$(git rev-parse --verify HEAD)
+TAGLIST=`git tag`
+if [ -n "$TAGLIST" ]; then 
+    LATESTTAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+else
+    LATESTTAG=''
+fi
+
+# Clean html directory or clone it
+mkdir -p build/doc/html
+cd build/doc/html
+if [ git rev-parse --git-dir > /dev/null 2>&1 ]; then
+    git rm -rf .
+else
+    cd ..
+    git clone -b gh-pages "$repo" --single-branch html
+    cd html
+    git rm -rf .
+fi
+
+# Generate HTML documentation
+cd ../..
+cmake -D BUILD_DOCUMENTATION=ON ..
+make Docs
+
+# Substitute x.y with the latest release id in rlite.html
+cd doc/html
+if [ -n "$LATESTTAG" ]; then
+    sed -i "s/x.y/$LATESTTAG/" rlite.html
+fi
+
+# Commit and push
+git add .
+git commit -a -m "Doxygen doc for LiTe commit $CHANGESET"
+git push origin gh-pages
+cd ../../..
