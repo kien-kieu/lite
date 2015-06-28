@@ -15,8 +15,8 @@ usage() {
     echo -e "\nUsage:\n$0 release_identifier [comment]\n"
 }
 
-if [ "$#" -ne 1 -o "$#" -ne 2]; then
-    echo -e "\nShell script $0 expects one or two arguments"
+if [ "$#" -ne 1 -o "$#" -ne 2 ]; then
+    echo -e "\nShell script $0 expects one or two arguments\n"
     usage
     exit 1
 fi
@@ -32,9 +32,9 @@ git checkout -b release-$rel_id
 
 # Edit file headers
 # Write release identifier
-find . -name .git -prune -o -type f -exec sed -i "s/|||Development version/Release $rel_id/" {} \; -print
+find . -name .git -prune -o -type f -exec sed -i "s/|||Development version/Release $rel_id/" {} \;
 # Write current year in copyright statement
-find . -name .git -prune -o -type f -exec sed -i "s/|||Copyright INRA 2006-yyyy/Copyright INRA 2006-$year/" {} \; -print
+find . -name .git -prune -o -type f -exec sed -i "s/|||Copyright INRA 2006-yyyy/Copyright INRA 2006-$year/" {} \;
 
 # Edit script lite-config (version number)
 sed -i "s/^version=development/version=$rel_id/" lite-config.in
@@ -65,3 +65,7 @@ git tag -a v$rel_id -m ${comment}
 
 # Return to branch master
 git checkout master
+
+echo "\nDone. Don't forget to push the release to remote repositories.\n"
+echo "For instance\n"
+echo "git push --tags origin release-$rel_id"
