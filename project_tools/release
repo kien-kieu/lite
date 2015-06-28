@@ -44,10 +44,10 @@ sed -i "s/\(\\\copyright INRA\)/\1 2006-$year/" docfiles/index.md
 sed -i "s/\\\version development/\\\version $rel_id/" docfiles/index.md
 
 # Edit DESCRIPTION file of RLiTe
-sed -i "s/^Version: 99.99/Version $rel_id/" wrap/R/DESCRIPTION.in
+sed -i "s/^Version: 99.99/Version: $rel_id/" wrap/R/DESCRIPTION.in
 
 # Generate R package file
-mkdir build
+mkdir -p build
 cd build
 cmake -D STANDALONE_RLITE=ON ..
 make rlite
