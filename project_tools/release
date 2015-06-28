@@ -15,8 +15,9 @@ usage() {
     echo -e "\nUsage:\n$0 release_identifier [comment]\n"
 }
 
-if [ "$#" -ne 1 -o "$#" -ne 2 ]; then
-    echo -e "\nShell script $0 expects one or two arguments\n"
+if [ "$#" -ne 1 ] && [ "$#" -ne 2 ]; then
+    echo -e "\nShell script $0 expects one or two arguments"
+    echo -e "\n$# were provided"
     usage
     exit 1
 fi
@@ -59,13 +60,17 @@ rm -f .gitignore
 mv .gitignore.new .gitignore
 
 # Commit and tag
+git add wrap/* # done in two steps, otherwise fails because too many files are changed
+git add .
 git commit -a --m "Release $rel_id"
 comment="Release ${rel_id} ${comment}"
-git tag -a v$rel_id -m ${comment}
+echo "COMMENT ${comment}"
+echo 'git tag -a -m "'${comment}'"' "v$rel_id" 
+git tag -a -m "${comment}" v$rel_id
 
 # Return to branch master
 git checkout master
 
-echo "\nDone. Don't forget to push the release to remote repositories.\n"
-echo "For instance\n"
-echo "git push --tags origin release-$rel_id"
+echo -e "\nDone. Don't forget to push the release to remote repositories."
+echo -e "For instance\n"
+echo -e "git push --tags origin release-$rel_id"
