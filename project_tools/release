@@ -8,19 +8,23 @@
 # License: GPL v3.
 
 # Shell script to be used for generating a new release.
-# Input argument: the release identifier e.g. 1.0
+# Input argument: the release identifier e.g. 1.0, optional
+# a comment describing the release.
 
 usage() {
-    echo -e "\nUsage:\n$0 release_identifier \n"
+    echo -e "\nUsage:\n$0 release_identifier [comment]\n"
 }
 
-if [ "$#" -ne 1 ]; then
-    echo -e "\nShell script $0 expects one argument"
+if [ "$#" -ne 1 -o "$#" -ne 2]; then
+    echo -e "\nShell script $0 expects one or two arguments"
     usage
     exit 1
 fi
 
-rel_id=$1         # release identifier passed as argument to scritpt
+rel_id=$1         # release identifier passed as first argument to script
+if [ "$#" = 2 ]; then
+    comment=$2    # tag comment pass as second argument to script
+fi
 year=`date +"%Y"` # get current year in yyyy format
 
 # Create new Git branch and switch to it
@@ -49,9 +53,15 @@ cmake -D STANDALONE_RLITE=ON ..
 make rlite
 cd -
 
+# Tell git not to ignore the generated package file
+echo '!build/wrap/R/RLiTe_*'|cat .gitignore - > .gitignore.new
+rm -f .gitignore
+mv .gitignore.new .gitignore
+
 # Commit and tag
 git commit -a --m "Release $rel_id"
-git tag -a v$rel_id -m "Release $rel_id"
+comment="Release ${rel_id} ${comment}"
+git tag -a v$rel_id -m ${comment}
 
 # Return to branch master
 git checkout master
