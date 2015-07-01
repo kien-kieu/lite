@@ -8,20 +8,18 @@
 # License: GPL v3.
 
 # Shell script to be used for publishing LiTe web pages
-# Input argument: GitHub login e.g. kien-kieu
 
 usage() {
-    echo -e "\nusage:\n$0 github_login \n"
+    echo -e "\nusage:\n$0\n"
 }
 
-if [ "$#" -ne 1 ]; then
-    echo -e "\nShell script $0 expects one argument"
+if [ "$#" -ne 0 ]; then
+    echo -e "\nShell script $0 does not take any  argument"
     usage
     exit 1
-else
-    user=$1
-    repo=git@github.com:${user}/lite
 fi
+  
+repo=https://github.com/kien-kieu/lite
 
 # Get last commit and last release id
 CHANGESET=$(git rev-parse --verify HEAD)
@@ -54,11 +52,15 @@ mv CMakeCache.bak CMakeCache.txt
 # Substitute x.y with the latest release id in rlite.html
 cd doc/html
 if [ -n "$LATESTTAG" ]; then
-    sed -i "s/x.y/$LATESTTAG/" rlite.html
+    sed -i 's/where x\.y.*//' rlite.html
+    sed -i "s/x\.y/$LATESTTAG/g" rlite.html
 fi
 
 # Commit and push
 git add .
 git commit -a -m "Doxygen doc for LiTe commit $CHANGESET"
-git push origin gh-pages
 cd ../../..
+
+echo -e "\nDone. Don't forget to push the doc to remote repositories."
+echo -e "For instance\n"
+echo -e "git push origin gh-pages"
