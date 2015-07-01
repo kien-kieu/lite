@@ -50,8 +50,10 @@ sed -i "s/^Version: 99.99/Version: $rel_id/" wrap/R/DESCRIPTION.in
 # Generate R package file
 mkdir -p build
 cd build
+mv CMakeCache.txt CMakeCache.bak
 cmake -D STANDALONE_RLITE=ON ..
 make rlite
+mv CMakeCache.bak CMakeCache.txt 
 cd -
 
 # Tell git not to ignore the generated package file

@@ -46,8 +46,10 @@ fi
 
 # Generate HTML documentation
 cd ../..
+mv CMakeCache.txt CMakeCache.bak
 cmake -D BUILD_DOCUMENTATION=ON ..
 make Docs
+mv CMakeCache.bak CMakeCache.txt 
 
 # Substitute x.y with the latest release id in rlite.html
 cd doc/html
