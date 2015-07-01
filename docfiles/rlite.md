@@ -20,7 +20,7 @@ Download
 --------
 At the moment only the installation from package source is really supported. This means in practice that mostly Unix-like systems (Linux, Mac OS X) are supported. No standard Windows binaries are provided. The procedure for Windows given at the end of this pages is still rather experimental.
 
-Download the package source at https://github.com/kien-kieu/lite/blob/release-x.y/build/wrap/R/RLiTe_x.y.tar.gzwhere x.y is the (latest) release number of LiTe.
+Download the package source at https://github.com/kien-kieu/lite/blob/release-x.y/build/wrap/R/RLiTe_x.y.tar.gz where x.y is the (latest) release number of LiTe.
 
 
 Installation of RLiTe
