@@ -14,7 +14,8 @@ if ( CGAL_FOUND )
   include_directories (BEFORE ../include)
 
   add_library(ttesselSharedLib SHARED ttessel.cpp)
-  install(TARGETS ttesselSharedLib LIBRARY DESTINATION lib)
+  # install(TARGETS ttesselSharedLib LIBRARY DESTINATION lib)
+  install(TARGETS ttesselSharedLib DESTINATION lib)
   # property INSTALL_NAME_DIR is Mac OS X specific
   set_target_properties(ttesselSharedLib PROPERTIES INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib)
   
