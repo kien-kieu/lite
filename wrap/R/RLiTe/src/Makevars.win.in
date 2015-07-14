@@ -5,7 +5,5 @@
 # Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
 # License: GPL v3.
 
-## Inspired by EBSpatCGAL (Remy Drouilhet)
-PKG_CXXFLAGS=-I@CMAKE_INSTALL_PREFIX@/include -DCGAL_CFG_NO_CPP0X_VARIADIC_TEMPLATES
-## Use the R_HOME indirection to support installations of multiple R version
-PKG_LIBS = $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "Rcpp:::LdFlags()") -L@CMAKE_INSTALL_PREFIX@/lib -lttesselSharedLib
+PKG_CXXFLAGS=@PKGCXXFLAGS@ -DCGAL_CFG_NO_CPP0X_VARIADIC_TEMPLATES
+PKG_LIBS=@PKGLIBS_WIN@
