@@ -45,13 +45,13 @@ Next open the Mingw-w64 Win32 terminal and install gcc, make and CGAL:
      pacman -S make
      pacman -S mingw-w64-i686-cgal
 
-Add to the PATH environment variable of Windows the directory containing the 32-bits version of R directory (for instance C:\R\R-3.2.1\bin\i386).
+Add to the PATH environment variable of Windows the directory containing the 32-bits version of R directory (for instance C:\\R\\R-3.2.1\\bin\\i386).
 
 Reopen the Mingw-w64 Win32 terminal, run R and install both Rcpp and RLiTe
 
        install.packages("http://cran.univ-lyon1.fr/src/contrib/Rcpp_0.11.6.tar.gz",INSTALL_opts="--no-multiarch")
        install.packages("https://github.com/kien-kieu/lite/blob/release-x.y/build/wrap/R/RLiTe_x.y.tar.gz",INSTALL_opts="--no-multiarch")
        
-Add to the PATH environment variable of Windows the path to the subdirectory mingw32\bin of MSYS2. For instance, the path may be C:\msys64\mingw32\bin.
+Add to the PATH environment variable of Windows the path to the subdirectory mingw32\bin of MSYS2. For instance, the path may be C:\\msys64\\mingw32\\bin.
 
 Run R (32-bits version) and load RLiTe.
