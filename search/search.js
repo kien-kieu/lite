@@ -17,7 +17,7 @@ var indexSectionsWithContent =
   7: "fms",
   8: "o",
   9: "f",
-  10: "airt"
+  10: "ait"
 };
 
 var indexSectionNames =

@@ -95,15 +95,32 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>Markovian T-tessellation.  
  <a href="classSMFChain.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="ttessel_8h_source.html">ttessel.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h_source.html">ttessel.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a0e9f3f62a09d5043f0e924c9d5360fdc"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdc">ModType</a> { <a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdcabad12fab312eb0f69bc2699f3fbc0217">SPLIT</a> = 1, 
-<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca035543c27f41ce7dcd07503a52703297">MERGE</a>, 
-<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdcaec0f79d7244755d2fb912871c637d8c6">FLIP</a>
+<tr class="memitem:a0e9f3f62a09d5043f0e924c9d5360fdc"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdc">ModType</a> { <br/>
+&#160;&#160;<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca544d7b3662d608aa70d921eeb68ff39b">SPLIT</a> = 1, 
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdcade09fac334ad58999acb82cd05eae812">MERGE</a>, 
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca997eeb8cdd359593fe886ef56db0a7b6">FLIP</a>, 
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca544d7b3662d608aa70d921eeb68ff39b">SPLIT</a> = 1, 
+<br/>
+&#160;&#160;<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdcade09fac334ad58999acb82cd05eae812">MERGE</a>, 
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca997eeb8cdd359593fe886ef56db0a7b6">FLIP</a>
+<br/>
  }</td></tr>
 <tr class="memdesc:a0e9f3f62a09d5043f0e924c9d5360fdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Types of modifications applicable to a T-tessellation.  <a href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdc">More...</a><br/></td></tr>
+<tr class="separator:a0e9f3f62a09d5043f0e924c9d5360fdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e9f3f62a09d5043f0e924c9d5360fdc"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdc">ModType</a> { <br/>
+&#160;&#160;<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca544d7b3662d608aa70d921eeb68ff39b">SPLIT</a> = 1, 
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdcade09fac334ad58999acb82cd05eae812">MERGE</a>, 
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca997eeb8cdd359593fe886ef56db0a7b6">FLIP</a>, 
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca544d7b3662d608aa70d921eeb68ff39b">SPLIT</a> = 1, 
+<br/>
+&#160;&#160;<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdcade09fac334ad58999acb82cd05eae812">MERGE</a>, 
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdca997eeb8cdd359593fe886ef56db0a7b6">FLIP</a>
+<br/>
+ }</td></tr>
 <tr class="separator:a0e9f3f62a09d5043f0e924c9d5360fdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -138,6 +155,35 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a6c34fac84f9e2917f80fd4f8fcb9e328"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structModifCounts.html">ModifCounts</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSMFChain.html#a6c34fac84f9e2917f80fd4f8fcb9e328">step</a> (unsigned long int=1)</td></tr>
 <tr class="memdesc:a6c34fac84f9e2917f80fd4f8fcb9e328"><td class="mdescLeft">&#160;</td><td class="mdescRight">Proceed to update(s) of the SMF chain.  <a href="#a6c34fac84f9e2917f80fd4f8fcb9e328">More...</a><br/></td></tr>
 <tr class="separator:a6c34fac84f9e2917f80fd4f8fcb9e328"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a998bab6335b7a14f91be3487d9bc00ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a998bab6335b7a14f91be3487d9bc00ea"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>SMFChain</b> (<a class="el" href="classEnergy.html">Energy</a> *, double, double)</td></tr>
+<tr class="separator:a998bab6335b7a14f91be3487d9bc00ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e19d1130efe452383b0422c7d44b021"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7e19d1130efe452383b0422c7d44b021"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSMFChain.html#a7e19d1130efe452383b0422c7d44b021">set_energy</a> (<a class="el" href="classEnergy.html">Energy</a> *e)</td></tr>
+<tr class="memdesc:a7e19d1130efe452383b0422c7d44b021"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the energy function of the model to be simulated. <br/></td></tr>
+<tr class="separator:a7e19d1130efe452383b0422c7d44b021"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a539260dd2a3f8d53491420efc3edf77d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a539260dd2a3f8d53491420efc3edf77d"></a>
+<a class="el" href="classEnergy.html">Energy</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSMFChain.html#a539260dd2a3f8d53491420efc3edf77d">get_energy</a> ()</td></tr>
+<tr class="memdesc:a539260dd2a3f8d53491420efc3edf77d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the energy function of the model to be simulated. <br/></td></tr>
+<tr class="separator:a539260dd2a3f8d53491420efc3edf77d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8fc678bcfd447cbdc5b4eadff80ab43b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8fc678bcfd447cbdc5b4eadff80ab43b"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_smf_prob</b> (double, double)</td></tr>
+<tr class="separator:a8fc678bcfd447cbdc5b4eadff80ab43b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe7242bba1c5800eff787cc78ecb227e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe7242bba1c5800eff787cc78ecb227e"></a>
+<a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdc">ModType</a>&#160;</td><td class="memItemRight" valign="bottom"><b>propose_modif_type</b> ()</td></tr>
+<tr class="separator:abe7242bba1c5800eff787cc78ecb227e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02b6c481a293fa34a99353e1533b2846"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a02b6c481a293fa34a99353e1533b2846"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>Hasting_ratio</b> (<a class="el" href="classTTessel_1_1Split.html">TTessel::Split</a> &amp;, double *)</td></tr>
+<tr class="separator:a02b6c481a293fa34a99353e1533b2846"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08ffd7f0efc2ff9993a00842afa3c9ca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a08ffd7f0efc2ff9993a00842afa3c9ca"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>Hasting_ratio</b> (<a class="el" href="classTTessel_1_1Merge.html">TTessel::Merge</a> &amp;, double *)</td></tr>
+<tr class="separator:a08ffd7f0efc2ff9993a00842afa3c9ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeaecbc5ebc40c1243f449e4e2e45af31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeaecbc5ebc40c1243f449e4e2e45af31"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>Hasting_ratio</b> (<a class="el" href="classTTessel_1_1Flip.html">TTessel::Flip</a> &amp;, double *)</td></tr>
+<tr class="separator:aeaecbc5ebc40c1243f449e4e2e45af31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c34fac84f9e2917f80fd4f8fcb9e328"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6c34fac84f9e2917f80fd4f8fcb9e328"></a>
+<a class="el" href="structModifCounts.html">ModifCounts</a>&#160;</td><td class="memItemRight" valign="bottom"><b>step</b> (unsigned long int=1)</td></tr>
+<tr class="separator:a6c34fac84f9e2917f80fd4f8fcb9e328"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Markovian T-tessellation. </p>
@@ -155,13 +201,54 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 <p>Types of modifications applicable to a T-tessellation. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdcabad12fab312eb0f69bc2699f3fbc0217"></a>SPLIT</em>&#160;</td><td class="fielddoc">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca544d7b3662d608aa70d921eeb68ff39b"></a>SPLIT</em>&#160;</td><td class="fielddoc">
 <p>split (of a face) </p>
 </td></tr>
-<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca035543c27f41ce7dcd07503a52703297"></a>MERGE</em>&#160;</td><td class="fielddoc">
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdcade09fac334ad58999acb82cd05eae812"></a>MERGE</em>&#160;</td><td class="fielddoc">
 <p>merge (of two faces separated by a non-blocking segment) </p>
 </td></tr>
-<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdcaec0f79d7244755d2fb912871c637d8c6"></a>FLIP</em>&#160;</td><td class="fielddoc">
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca997eeb8cdd359593fe886ef56db0a7b6"></a>FLIP</em>&#160;</td><td class="fielddoc">
+<p>a segment is shortened, another one is lengthened </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca544d7b3662d608aa70d921eeb68ff39b"></a>SPLIT</em>&#160;</td><td class="fielddoc">
+<p>split (of a face) </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdcade09fac334ad58999acb82cd05eae812"></a>MERGE</em>&#160;</td><td class="fielddoc">
+<p>merge (of two faces separated by a non-blocking segment) </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca997eeb8cdd359593fe886ef56db0a7b6"></a>FLIP</em>&#160;</td><td class="fielddoc">
+<p>a segment is shortened, another one is lengthened </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdc"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="classSMFChain.html#a0e9f3f62a09d5043f0e924c9d5360fdc">SMFChain::ModType</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca544d7b3662d608aa70d921eeb68ff39b"></a>SPLIT</em>&#160;</td><td class="fielddoc">
+<p>split (of a face) </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdcade09fac334ad58999acb82cd05eae812"></a>MERGE</em>&#160;</td><td class="fielddoc">
+<p>merge (of two faces separated by a non-blocking segment) </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca997eeb8cdd359593fe886ef56db0a7b6"></a>FLIP</em>&#160;</td><td class="fielddoc">
+<p>a segment is shortened, another one is lengthened </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca544d7b3662d608aa70d921eeb68ff39b"></a>SPLIT</em>&#160;</td><td class="fielddoc">
+<p>split (of a face) </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdcade09fac334ad58999acb82cd05eae812"></a>MERGE</em>&#160;</td><td class="fielddoc">
+<p>merge (of two faces separated by a non-blocking segment) </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a0e9f3f62a09d5043f0e924c9d5360fdca997eeb8cdd359593fe886ef56db0a7b6"></a>FLIP</em>&#160;</td><td class="fielddoc">
 <p>a segment is shortened, another one is lengthened </p>
 </td></tr>
 </table>
@@ -383,13 +470,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>/home/kien/labo/lite/include/<a class="el" href="ttessel_8h_source.html">ttessel.h</a></li>
-<li>/home/kien/labo/lite/lib/ttessel.cpp</li>
+<li>wrap/R/RLiTe/src/<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h_source.html">ttessel.h</a></li>
+<li>wrap/R/RLiTe/src/ttessel.cpp</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jun 26 2015 23:35:42 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 15 2015 19:24:21 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

@@ -94,7 +94,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>Halfedge class used by the <a class="el" href="classLineTes.html" title="Polygonal tessellation of a bounded rectangular domain. ">LineTes</a> class.  
  <a href="classLineTes__halfedge.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="ttessel_8h_source.html">ttessel.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h_source.html">ttessel.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for LineTes_halfedge:</div>
 <div class="dyncontent">
@@ -160,6 +160,54 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a6798fc7e64ee9ad0454474fe74ba5b60"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#a6798fc7e64ee9ad0454474fe74ba5b60">is_one_edge_segment</a> ()</td></tr>
 <tr class="memdesc:a6798fc7e64ee9ad0454474fe74ba5b60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test whether a halfedge starting a segment is also ending the segment.  <a href="#a6798fc7e64ee9ad0454474fe74ba5b60">More...</a><br/></td></tr>
 <tr class="separator:a6798fc7e64ee9ad0454474fe74ba5b60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0a245c8be5d47fba64af05593f21adc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac0a245c8be5d47fba64af05593f21adc"></a>
+LineTes::Halfedge_handle&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#ac0a245c8be5d47fba64af05593f21adc">get_prev_hf</a> ()</td></tr>
+<tr class="memdesc:ac0a245c8be5d47fba64af05593f21adc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return previous halfedge along the segment. <br/></td></tr>
+<tr class="separator:ac0a245c8be5d47fba64af05593f21adc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61cbef337ffeb09ea3cbfd5dc735a86a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a61cbef337ffeb09ea3cbfd5dc735a86a"></a>
+LineTes::Halfedge_handle&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#a61cbef337ffeb09ea3cbfd5dc735a86a">get_next_hf</a> ()</td></tr>
+<tr class="memdesc:a61cbef337ffeb09ea3cbfd5dc735a86a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return next halfedge along the segment. <br/></td></tr>
+<tr class="separator:a61cbef337ffeb09ea3cbfd5dc735a86a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacc0a6c18ca33a26bd88e526b64fda20"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#aacc0a6c18ca33a26bd88e526b64fda20">get_dir</a> ()</td></tr>
+<tr class="memdesc:aacc0a6c18ca33a26bd88e526b64fda20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test halfedge direction against the segment direction.  <a href="#aacc0a6c18ca33a26bd88e526b64fda20">More...</a><br/></td></tr>
+<tr class="separator:aacc0a6c18ca33a26bd88e526b64fda20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1bbb2a69072d7b6d3fecacfb5915100"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1bbb2a69072d7b6d3fecacfb5915100"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#ac1bbb2a69072d7b6d3fecacfb5915100">get_length</a> ()</td></tr>
+<tr class="memdesc:ac1bbb2a69072d7b6d3fecacfb5915100"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the halfedge length. <br/></td></tr>
+<tr class="separator:ac1bbb2a69072d7b6d3fecacfb5915100"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa68105fbc4e62e51f69b1983367a800a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa68105fbc4e62e51f69b1983367a800a"></a>
+<a class="el" href="classLineTes.html#aeeeef2f9d542ea192eb5a4c53335a7c8">LineTes::Seg_handle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#aa68105fbc4e62e51f69b1983367a800a">get_segment</a> ()</td></tr>
+<tr class="memdesc:aa68105fbc4e62e51f69b1983367a800a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a handle of the segment containing the halfedge. <br/></td></tr>
+<tr class="separator:aa68105fbc4e62e51f69b1983367a800a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2d3952e3c83fb13986bd0155c25997e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLineTes.html#aeeeef2f9d542ea192eb5a4c53335a7c8">LineTes::Seg_handle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#ac2d3952e3c83fb13986bd0155c25997e">segment</a> ()</td></tr>
+<tr class="memdesc:ac2d3952e3c83fb13986bd0155c25997e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a handle of the segment containing the halfedge.  <a href="#ac2d3952e3c83fb13986bd0155c25997e">More...</a><br/></td></tr>
+<tr class="separator:ac2d3952e3c83fb13986bd0155c25997e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a9954820afb5244db86eca51e8b5836"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a9954820afb5244db86eca51e8b5836"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_length</b> ()</td></tr>
+<tr class="separator:a0a9954820afb5244db86eca51e8b5836"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb966cd7912e42c392a9d39edc962026"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb966cd7912e42c392a9d39edc962026"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#acb966cd7912e42c392a9d39edc962026">set_length</a> (double l)</td></tr>
+<tr class="memdesc:acb966cd7912e42c392a9d39edc962026"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the length attribute of an halfedge. <br/></td></tr>
+<tr class="separator:acb966cd7912e42c392a9d39edc962026"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72da338151bb3bf55fcf206c6c693f7d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a72da338151bb3bf55fcf206c6c693f7d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_prev_hf</b> (LineTes::Halfedge_handle)</td></tr>
+<tr class="separator:a72da338151bb3bf55fcf206c6c693f7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2768d543fce1959d7fdfb8c00669213e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2768d543fce1959d7fdfb8c00669213e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_next_hf</b> (LineTes::Halfedge_handle)</td></tr>
+<tr class="separator:a2768d543fce1959d7fdfb8c00669213e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7c0ac1920372ed953e0b8ff1f28a9c7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7c0ac1920372ed953e0b8ff1f28a9c7"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_dir</b> ()</td></tr>
+<tr class="separator:ad7c0ac1920372ed953e0b8ff1f28a9c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6837a76df37da320e27a904143a3edc6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6837a76df37da320e27a904143a3edc6"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>set_dir</b> (bool d)</td></tr>
+<tr class="separator:a6837a76df37da320e27a904143a3edc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52ec7c012f6ebfc699c77f8e72fde897"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a52ec7c012f6ebfc699c77f8e72fde897"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#a52ec7c012f6ebfc699c77f8e72fde897">set_segment</a> (<a class="el" href="classLineTes.html#aeeeef2f9d542ea192eb5a4c53335a7c8">LineTes::Seg_handle</a> s)</td></tr>
+<tr class="memdesc:a52ec7c012f6ebfc699c77f8e72fde897"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define the segment containing the halfedge. <br/></td></tr>
+<tr class="separator:a52ec7c012f6ebfc699c77f8e72fde897"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6798fc7e64ee9ad0454474fe74ba5b60"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes__halfedge.html#a6798fc7e64ee9ad0454474fe74ba5b60">is_one_edge_segment</a> ()</td></tr>
+<tr class="memdesc:a6798fc7e64ee9ad0454474fe74ba5b60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test whether a halfedge starting a segment is also ending the segment.  <a href="#a6798fc7e64ee9ad0454474fe74ba5b60">More...</a><br/></td></tr>
+<tr class="separator:a6798fc7e64ee9ad0454474fe74ba5b60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Halfedge class used by the <a class="el" href="classLineTes.html" title="Polygonal tessellation of a bounded rectangular domain. ">LineTes</a> class. </p>
@@ -211,6 +259,32 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
+<a class="anchor" id="aacc0a6c18ca33a26bd88e526b64fda20"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool LineTes_halfedge::get_dir </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Test halfedge direction against the segment direction. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if the halfedge and the segment have the same direction, false if they are opposite. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a6798fc7e64ee9ad0454474fe74ba5b60"></a>
 <div class="memitem">
 <div class="memproto">
@@ -234,6 +308,58 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 <p>Test whether a halfedge starting a segment is also ending the segment. </p>
 <dl class="section pre"><dt>Precondition</dt><dd>the halfedge handle should not be null. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a6798fc7e64ee9ad0454474fe74ba5b60"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool LineTes_halfedge::is_one_edge_segment </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Test whether a halfedge starting a segment is also ending the segment. </p>
+<dl class="section pre"><dt>Precondition</dt><dd>the halfedge handle should not be null. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ac2d3952e3c83fb13986bd0155c25997e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classLineTes.html#aeeeef2f9d542ea192eb5a4c53335a7c8">LineTes::Seg_handle</a> LineTes_halfedge::segment </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return a handle of the segment containing the halfedge. </p>
+<dl class="section note"><dt>Note</dt><dd>Redondant method. Is it really used? </dd></dl>
 
 </div>
 </div>
@@ -302,13 +428,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>/home/kien/labo/lite/include/<a class="el" href="ttessel_8h_source.html">ttessel.h</a></li>
-<li>/home/kien/labo/lite/lib/ttessel.cpp</li>
+<li>wrap/R/RLiTe/src/<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h_source.html">ttessel.h</a></li>
+<li>wrap/R/RLiTe/src/ttessel.cpp</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jun 26 2015 23:35:42 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 15 2015 19:24:21 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

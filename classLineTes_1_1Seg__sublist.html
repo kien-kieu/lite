@@ -98,7 +98,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>Sublist of <a class="el" href="classLineTes_1_1Seg.html" title="Segment in a line tessellation. ">Seg</a> objects.  
  <a href="classLineTes_1_1Seg__sublist.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="ttessel_8h_source.html">ttessel.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h_source.html">ttessel.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for LineTes::Seg_sublist:</div>
 <div class="dyncontent">
@@ -110,6 +110,13 @@ Inheritance diagram for LineTes::Seg_sublist:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a229e6148025cb36344e510f4a552ca96"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a229e6148025cb36344e510f4a552ca96"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes_1_1Seg__sublist.html#a229e6148025cb36344e510f4a552ca96">add</a> (<a class="el" href="classLineTes.html#aeeeef2f9d542ea192eb5a4c53335a7c8">Seg_handle</a> s)</td></tr>
+<tr class="memdesc:a229e6148025cb36344e510f4a552ca96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a segment at the end of the segment list. <br/></td></tr>
+<tr class="separator:a229e6148025cb36344e510f4a552ca96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0a925da22f637d346b2a8e06804f84a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes_1_1Seg__sublist.html#aa0a925da22f637d346b2a8e06804f84a">suppress</a> (<a class="el" href="classLineTes.html#aeeeef2f9d542ea192eb5a4c53335a7c8">Seg_handle</a> s)</td></tr>
+<tr class="memdesc:aa0a925da22f637d346b2a8e06804f84a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove a segment from the segment list.  <a href="#aa0a925da22f637d346b2a8e06804f84a">More...</a><br/></td></tr>
+<tr class="separator:aa0a925da22f637d346b2a8e06804f84a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a229e6148025cb36344e510f4a552ca96"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a229e6148025cb36344e510f4a552ca96"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineTes_1_1Seg__sublist.html#a229e6148025cb36344e510f4a552ca96">add</a> (<a class="el" href="classLineTes.html#aeeeef2f9d542ea192eb5a4c53335a7c8">Seg_handle</a> s)</td></tr>
 <tr class="memdesc:a229e6148025cb36344e510f4a552ca96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a segment at the end of the segment list. <br/></td></tr>
@@ -155,13 +162,46 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
+<a class="anchor" id="aa0a925da22f637d346b2a8e06804f84a"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool LineTes::Seg_sublist::suppress </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classLineTes.html#aeeeef2f9d542ea192eb5a4c53335a7c8">Seg_handle</a>&#160;</td>
+          <td class="paramname"><em>s</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remove a segment from the segment list. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">s</td><td>: handle of the segment to be suppressed.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Yield a warning and return false if the input segment is not found in the list. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>/home/kien/labo/lite/include/<a class="el" href="ttessel_8h_source.html">ttessel.h</a></li>
+<li>wrap/R/RLiTe/src/<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h_source.html">ttessel.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jun 26 2015 23:35:42 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 15 2015 19:24:21 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
