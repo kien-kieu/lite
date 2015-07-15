@@ -63,4 +63,4 @@ cd ../../..
 
 echo -e "\nDone. Don't forget to push the doc to remote repositories."
 echo -e "For instance\n"
-echo -e "git push origin gh-pages"
+echo -e "cd build/doc/html;git push origin gh-pages"
