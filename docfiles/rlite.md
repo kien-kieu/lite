@@ -35,16 +35,23 @@ Or within a R interactive session, RLiTe can be installed running
 
 Windows users
 -------------
-Both CGAL and Rcpp are available under Windows. So what's the problem? To make them talk! The only successful way of installing RLiTe under Windows we found until now is based on [MSYS2](http://sourceforge.net/projects/msys2). The procedure below was set up by Rémy Drouilhet.
+Both CGAL and Rcpp are available under Windows. So what's the problem? To make them talk! The only successful way of installing RLiTe under Windows we found until now is based on [MSYS2](http://msys2.github.io). The procedure below was set up by Rémy Drouilhet.
 
-First install MSYS2. A standard install is OK.
+First install MSYS2. A standard install is OK. You may install either the 32-bits or the 64-bits version (assumed below). *However, at the moment, it is only possible to install the 32-bits version of RLiTe.* Follow the instructions provided on MSYS2 Web pages in order to achieve the installation.
 
-Edit the PATH environment variable, add msysroot\mingw32\bin to PATH where msysroot is the directory where MSYS2 has been installed.
+Next open the Mingw-w64 Win32 terminal and install gcc, make and CGAL:
 
-Next open the MSYS2 shell and install the CGAL package
+     pacman -S mingw-w64-i686-gcc
+     pacman -S make
+     pacman -S mingw-w64-i686-cgal
 
-    pacman -S mingw-w64-i686-cgal 
+Add to the PATH environment variable of Windows the directory containing the 32-bits version of R directory (for instance C:\R\R-3.2.1\bin\i386).
 
-Finally download the Windows binaries versions of Rcpp and RLite available from LiTe download pages and install them (first Rcpp, then RLiTe).
+Reopen the Mingw-w64 Win32 terminal, run R and install both Rcpp and RLiTe
 
-The above procedure may not be very convenient if you are using Rcpp for other R packages. We are trying to regularly update the Rcpp binaries provided on LiTe download pages, but it may happen to be slightly outdated. In such a case, you may build yourself the Windows binaries for Rcpp. Download the Rcpp package source and build the binary following the R documentation guidelines.
+       install.packages("http://cran.univ-lyon1.fr/src/contrib/Rcpp_0.11.6.tar.gz",INSTALL_opts="--no-multiarch")
+       install.packages("https://github.com/kien-kieu/lite/blob/release-x.y/build/wrap/R/RLiTe_x.y.tar.gz",INSTALL_opts="--no-multiarch")
+       
+Add to the PATH environment variable of Windows the path to the subdirectory mingw32\bin of MSYS2. For instance, the path may be C:\msys64\mingw32\bin.
+
+Run R (32-bits version) and load RLiTe.
