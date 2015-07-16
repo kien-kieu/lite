@@ -88,12 +88,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </ul>
 <h2>Download </h2>
 <p>At the moment only the installation from package source is really supported. This means in practice that mostly Unix-like systems (Linux, Mac OS X) are supported. No standard Windows binaries are provided. The procedure for Windows given at the end of this pages is still rather experimental.</p>
-<p>Download the package source at <a href="https://github.com/kien-kieu/lite/blob/vv1.1/build/wrap/R/RLiTe_v1.1.tar.gz">https://github.com/kien-kieu/lite/blob/vv1.1/build/wrap/R/RLiTe_v1.1.tar.gz</a> 
+<p>Download the package source at <a href="https://github.com/kien-kieu/lite/blob/v1./build/wrap/R/RLiTe_1..tar.gz">https://github.com/kien-kieu/lite/blob/v1./build/wrap/R/RLiTe_1..tar.gz</a> 
 <h2>Installation of RLiTe </h2>
 <p>RLiTe can be installed as a standard R package. For instance, the following command line should do the job. </p>
-<pre class="fragment">R CMD INSTALL RLiTe_v1.1.tar.gz
+<pre class="fragment">R CMD INSTALL RLiTe_1..tar.gz
 </pre><p>Or within a R interactive session, RLiTe can be installed running</p>
-<p>install.packages("RLiTe_v1.1.tar.gz",repos=NULL)</p>
+<p>install.packages("RLiTe_1..tar.gz",repos=NULL)</p>
 <h2>Windows users </h2>
 <p>Both CGAL and Rcpp are available under Windows. So what's the problem? To make them talk! The only successful way of installing RLiTe under Windows we found until now is based on <a href="http://msys2.github.io">MSYS2</a>. The procedure below was set up by Rémy Drouilhet.</p>
 <p>First install MSYS2. A standard install is OK. You may install either the 32-bits or the 64-bits version (assumed below). <em>However, at the moment, it is only possible to install the 32-bits version of RLiTe.</em> Follow the instructions provided on MSYS2 Web pages in order to achieve the installation of MSYS2.</p>
@@ -106,13 +106,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <pre class="fragment">   /c/R/R-3.2.1/bin/i386/R --no-save
 </pre><p>and install both Rcpp and RLiTe </p>
 <pre class="fragment">   install.packages("Rcpp",repos="http://cran.univ-lyon1.fr",INSTALL_opts="--no-multiarch")
-   install.packages("RLiTe_v1.1.tar.gz",INSTALL_opts="--no-multiarch")
+   install.packages("RLiTe_1..tar.gz",INSTALL_opts="--no-multiarch")
 </pre><p>Add to the PATH environment variable of Windows the absolute path to the subdirectory mingw32 of MSYS2. For instance, the path may be C:\msys64\mingw32\bin.</p>
 <p>Run R as usual (32-bits version) and load RLiTe. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 13:38:58 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Jul 16 2015 13:46:24 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
