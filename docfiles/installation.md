@@ -14,7 +14,7 @@ Download
 --------
 
 ### Release version of LiTe
-Source files can be downloaded as an archive from https://github.com/kien-kieu/lite.git/releases. Unpack the archive into a given directory.
+Source files can be downloaded as an archive from https://github.com/kien-kieu/lite/releases. Unpack the archive into a given directory.
 
 ### Latest version of LiTe
 Source files of the latest development version of LiTe are also available through git:
