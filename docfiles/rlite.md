@@ -37,21 +37,25 @@ Windows users
 -------------
 Both CGAL and Rcpp are available under Windows. So what's the problem? To make them talk! The only successful way of installing RLiTe under Windows we found until now is based on [MSYS2](http://msys2.github.io). The procedure below was set up by Rémy Drouilhet.
 
-First install MSYS2. A standard install is OK. You may install either the 32-bits or the 64-bits version (assumed below). *However, at the moment, it is only possible to install the 32-bits version of RLiTe.* Follow the instructions provided on MSYS2 Web pages in order to achieve the installation.
+First install MSYS2. A standard install is OK. You may install either the 32-bits or the 64-bits version (assumed below). *However, at the moment, it is only possible to install the 32-bits version of RLiTe.* Follow the instructions provided on MSYS2 Web pages in order to achieve the installation of MSYS2.
 
-Next open the Mingw-w64 Win32 terminal and install gcc, make and CGAL:
+Next open the MinGW-w64 Win32 terminal and install gcc, make and CGAL:
 
      pacman -S mingw-w64-i686-gcc
      pacman -S make
      pacman -S mingw-w64-i686-cgal
 
-Add to the PATH environment variable of Windows the directory containing the 32-bits version of R directory (for instance C:\\R\\R-3.2.1\\bin\\i386).
+Download the RLiTe package source (see above).
 
-Reopen the Mingw-w64 Win32 terminal, run R and install both Rcpp and RLiTe
+Reopen the Mingw-w64 Win32 terminal, run R (32-bits version), e.g.:
 
-       install.packages("http://cran.univ-lyon1.fr/src/contrib/Rcpp_0.11.6.tar.gz",INSTALL_opts="--no-multiarch")
-       install.packages("https://github.com/kien-kieu/lite/blob/release-x.y/build/wrap/R/RLiTe_x.y.tar.gz",INSTALL_opts="--no-multiarch")
+       /c/R/R-3.2.1/bin/i386/R --no-save
+
+and install both Rcpp and RLiTe
+
+       install.packages("Rcpp",repos="http://cran.univ-lyon1.fr",INSTALL_opts="--no-multiarch")
+       install.packages("RLiTe_x.y.tar.gz",INSTALL_opts="--no-multiarch")
        
-Add to the PATH environment variable of Windows the path to the subdirectory mingw32\bin of MSYS2. For instance, the path may be C:\\msys64\\mingw32\\bin.
+Add to the PATH environment variable of Windows the absolute path to the subdirectory mingw32\bin of MSYS2. For instance, the path may be C:\\msys64\\mingw32\\bin.
 
-Run R (32-bits version) and load RLiTe.
+Run R as usual (32-bits version) and load RLiTe.
