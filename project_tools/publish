@@ -52,7 +52,7 @@ mv CMakeCache.bak CMakeCache.txt
 # Substitute x.y with the latest release id in rlite.html
 cd doc/html
 if [ -n "$LATESTTAG" ]; then
-    RN=${LATESTTAG:1:-1} # e.g. v1.1 -> 1.1
+    RN=${LATESTTAG:1:${#LATESTTAG}-1} # e.g. v1.1 -> 1.1
     sed -i 's/where x\.y.*//' rlite.html
     sed -i "s/x\.y/$RN/g" rlite.html
 fi
