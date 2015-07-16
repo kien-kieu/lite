@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Line Tessellation (LiTe) library
-# |||Development version
+# Release 1.1
 # Authors: Katarzyna Adamczyk and Kiên Kiêu.
-# |||Copyright INRA 2006-yyyy.
+# Copyright INRA 2006-2015.
 # Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
 # License: GPL v3.
 
@@ -33,9 +33,9 @@ git checkout -b release-$rel_id
 
 # Edit file headers
 # Write release identifier
-find . -name .git -prune -o -type f -exec sed -i "s/|||Development version/Release $rel_id/" {} \;
+find . -name .git -prune -o -type f -exec sed -i "s/Release 1.1/Release $rel_id/" {} \;
 # Write current year in copyright statement
-find . -name .git -prune -o -type f -exec sed -i "s/|||Copyright INRA 2006-yyyy/Copyright INRA 2006-$year/" {} \;
+find . -name .git -prune -o -type f -exec sed -i "s/Copyright INRA 2006-2015/Copyright INRA 2006-$year/" {} \;
 
 # Edit script lite-config (version number)
 sed -i "s/^version=development/version=$rel_id/" lite-config.in

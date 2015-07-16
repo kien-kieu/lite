@@ -1,7 +1,7 @@
 % Line Tessellation (LiTe) library
-% |||Development version
+% Release 1.1
 % Authors: Katarzyna Adamczyk and Kiên Kiêu.
-% |||Copyright INRA 2006-yyyy.
+% Copyright INRA 2006-2015.
 % Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
 % License: GPL v3.
 \name{ModelAcuteAngles}

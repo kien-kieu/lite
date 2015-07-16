@@ -1,7 +1,7 @@
 Package: RLiTe
 Type: Package
 Title: Simulation and inference of Gibbs T-tessellations
-Version: 99.99
+Version: 1.1
 Date: @TODAY@
 Author: Kien Kieu, Katarzyna Adamczyk-Chauvat
 Maintainer: Kien Kieu <kien.kieu@jouy.inra.fr>
