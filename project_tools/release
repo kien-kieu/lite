@@ -57,9 +57,10 @@ mv CMakeCache.bak CMakeCache.txt
 cd -
 
 # Tell git not to ignore the generated package file
-echo '!build/wrap/R/RLiTe_*'|cat .gitignore - > .gitignore.new
-rm -f .gitignore
-mv .gitignore.new .gitignore
+git add -f build/wrap/R/RLiTe_$rel_id.tar.gz
+# echo '!build/wrap/R/RLiTe_*'|cat .gitignore - > .gitignore.new
+# rm -f .gitignore
+# mv .gitignore.new .gitignore
 
 # Commit and tag
 git add wrap/* # done in two steps, otherwise fails because too many files are changed
