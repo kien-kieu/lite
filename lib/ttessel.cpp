@@ -1250,8 +1250,11 @@ void LineTes::read(std::istream& is) {
   }
   insert_window(w);
   for (Size i=0;i!=scoords.size();i++) {
-    Segment s(Point2(NT(scoords[i][0]),NT(scoords[i][1])),
-	      Point2(NT(scoords[i][2]),NT(scoords[i][3])));
+    NT x0(scoords[i][0]);
+    NT y0(scoords[i][1]);
+    NT x1(scoords[i][2]);
+    NT y1(scoords[i][3]);
+    Segment s(Point2(x0,x1),Point2(x1,y1));
     insert_segment(s);
   }
 }
