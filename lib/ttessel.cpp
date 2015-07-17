@@ -30,7 +30,7 @@ CGAL::Random *rnd = 0;
  *
  * Equivalent to the empty CGAL::Arrangement_2 constructor
  */
-LineTes::LineTes() : Arrangement() {};
+LineTes::LineTes() : Arrangement() {}
 /** \brief Define the rectangular domain delimiting the tessellation
  *
  * The LineTes class is designed for representing tessellation of
@@ -606,10 +606,7 @@ LineTes::Halfedge_handle LineTes::merge_edge(LineTes::Halfedge_handle e1,
   s->set_halfedge_handle(hf);
   
   return hf;
-};
-
-
-
+}
 
 LineTes::Halfedge_handle LineTes::add_edge(X_monotone_curve_2 c,
 					   Vertex_handle v1, 
@@ -1325,7 +1322,7 @@ void LineTes_halfedge::set_dir(bool d) {
  *
  * Invoke the empty constructor of the parent class LineTes.
  */
-TTessel::TTessel() : LineTes() {};
+TTessel::TTessel() : LineTes() {}
 
 /** \brief Generate a TTessel object from a LineTes Object
  * \param lt : the LineTes object to copy
@@ -1886,7 +1883,7 @@ return m;}
 
 /** \brief Default constructor that creates an empty Split object
  */
-TTessel::Split::Split() {}; 
+TTessel::Split::Split() {}
 /** \brief Constructor that creates an effective Split object
  * \param e : halfedge handle bounding the cell to be split where the 
  *            splitting segment starts
@@ -2103,7 +2100,7 @@ bool TTessel::Split::is_valid() {
 
 /** \brief Default constructor that generates an empty Merge object.
  */
-TTessel::Merge::Merge() {}; 
+TTessel::Merge::Merge() {}
 /** \brief Constructor that generates an effective Merge object
  * \param he : halfedge handle defining the edge to be removed
  */
@@ -2493,7 +2490,7 @@ void fill(CatVector& v,FVector& x) {
     v.faces[i] = x[j];
   for (unsigned int i=0;i<v.segs.size();i++)
     v.segs[i] = x[j];
-};
+}
 /** \brief Generate a vector of doubles from a CatVector object
  */ 
 std::vector<double> asVectorOfDoubles(const CatVector& v) {
@@ -2507,14 +2504,14 @@ std::vector<double> asVectorOfDoubles(const CatVector& v) {
   for (unsigned int i=0;i<v.segs.size();i++)
     res.push_back(v.segs[i]);
   return res;
-};
+}
 /** \brief Generate a FVector object from CatVector object
  */
 FVector asFVector(const CatVector& v) {
   std::vector<double> buf = asVectorOfDoubles(v);
   FVector res(buf.begin(),buf.end());
   return res;
-};
+}
 /** \brief Print a CatVector to an output stream
  */
 std::ostream& operator<<(std::ostream &os, const CatVector &p) {
@@ -2578,7 +2575,7 @@ FMatrix asFMatrix(const CatMatrix& m) {
     buf.push_back(asFVector(m.segs[i]));
   FMatrix res(buf);
   return res;
-};
+}
 /** \brief Outer product of two CatVector objects
  */
 CatMatrix outer(const CatVector &v1, const CatVector &v2) {
@@ -2592,7 +2589,7 @@ CatMatrix outer(const CatVector &v1, const CatVector &v2) {
   for(unsigned int i=0;i!=v1.segs.size();i++)
     m.segs.push_back(v1.segs[i]*v2);
   return m;
-  }
+}
 
 
 /******************************************************************************/
@@ -2761,7 +2758,7 @@ double  Energy::variation(TTessel::Modification& modif){
  * /param tv : the numerical value of the theta component to be added */
 void  Energy::add_theta_vertices(double tv){
   theta.vertices.push_back(tv);
-};
+}
 /** \brief Add a theta component for a edge feature in the energy formula 
  *
  * /param te : the numerical value of the theta component to be added */
@@ -2783,7 +2780,7 @@ void  Energy::add_theta_segs(double ts){
 /** \brief Remove all theta components associated with vertex features*/
 void  Energy::del_theta_vertices(){
   theta.vertices.clear();
-};
+}
 /** \brief Remove all theta components associated with edge features*/
 void  Energy::del_theta_edges(){
   theta.edges.clear();
@@ -2804,7 +2801,7 @@ void  Energy::del_theta_segs(){
  *             vertex.*/
 void  Energy::add_features_vertices(double (*fv)(Point2,TTessel*) ){
   features.vertices.push_back(fv);
-};
+}
 /** \brief Add an edge feature in the energy formula
  *
  * \param fe : a pointer to a function that takes as input arguments
@@ -2813,7 +2810,7 @@ void  Energy::add_features_vertices(double (*fv)(Point2,TTessel*) ){
  *             edge.*/
 void  Energy::add_features_edges(double (*fe)(Segment,TTessel*) ){
   features.edges.push_back(fe);
-};
+}
 /** \brief Add a face feature in the energy formula
  *
  * \param ff : a pointer to a function that takes as input arguments
@@ -2822,7 +2819,7 @@ void  Energy::add_features_edges(double (*fe)(Segment,TTessel*) ){
  *             face.*/
 void  Energy::add_features_faces(double (*ff)(Polygon,TTessel*) ){
   features.faces.push_back(ff);
-};
+}
 /** \brief Add a segment feature in the energy formula
  *
  * \param fs : a pointer to a function that takes as input arguments
@@ -2831,23 +2828,23 @@ void  Energy::add_features_faces(double (*ff)(Polygon,TTessel*) ){
  *             segment.*/
 void  Energy::add_features_segs(double (*fs)(std::vector<Point2>,TTessel*) ){
   features.segs.push_back(fs);
-};
+}
 /** \brief Remove all vertex features from the energy formula*/
 void  Energy::del_features_vertices(){
   features.vertices.clear();
-};
+}
 /** \brief Remove all edge features from the energy formula*/
 void  Energy::del_features_edges(){
   features.edges.clear();
-};
+}
 /** \brief Remove all face features from the energy formula*/
 void  Energy::del_features_faces(){
   features.faces.clear();
-};
+}
 /** \brief Remove all segment features from the energy formula*/
 void  Energy::del_features_segs(){
   features.segs.clear();
-};
+}
 
 /******************************************************************************/
 /*                       METHODS FOR THE CLASS SMFChain                       */

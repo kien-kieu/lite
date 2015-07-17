@@ -1008,7 +1008,7 @@ double                   is_segment_internal(std::vector<Point2>,TTessel*);
  * minus the number of segment as a tessellation feature.*/
 inline double            minus_is_segment_internal(std::vector<Point2> s,
 						   TTessel* t){
-  return -is_segment_internal(s,t);};
+  return -is_segment_internal(s,t);}
 double                   min_angle(Polygon, TTessel*);
 double                   sum_of_faces_squared_areas(TTessel*);
 double                   sum_of_min_angles(TTessel*);
