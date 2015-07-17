@@ -1254,7 +1254,7 @@ void LineTes::read(std::istream& is) {
     NT y0(scoords[i][1]);
     NT x1(scoords[i][2]);
     NT y1(scoords[i][3]);
-    Segment s(Point2(x0,x1),Point2(x1,y1));
+    Segment s(Point2(x0,y0),Point2(x1,y1));
     insert_segment(s);
   }
 }
