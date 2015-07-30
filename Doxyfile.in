@@ -9,13 +9,10 @@
 PROJECT_NAME           = LiTe
 OUTPUT_DIRECTORY       = doc
 OUTPUT_LANGUAGE        = English
-INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@
+INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/include/ttessel.h \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/ttessel.cpp \
+                         @CMAKE_CURRENT_SOURCE_DIR@/docfiles
 RECURSIVE              = YES
-EXCLUDE                = @CMAKE_CURRENT_SOURCE_DIR@/include/random_lines.h \
-                         @CMAKE_CURRENT_SOURCE_DIR@/applications \
-			 @CMAKE_CURRENT_SOURCE_DIR@/demos \
-			 @CMAKE_CURRENT_SOURCE_DIR@/readme.md
-EXCLUDE_PATTERNS       = */.svn/*
 EXTRACT_ALL            = NO
 WARNINGS               = NO
 GENERATE_LATEX         = NO
