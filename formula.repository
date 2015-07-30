@@ -1,14 +1,14 @@
-\form#0:$\phi_i$
-\form#1:$u$
-\form#2:\[ \phi_i(uT)-\phi_i(T) \]
-\form#3:\[ \sum_i \theta_i (\phi_i(uT)-\phi_i(T)) \]
-\form#4:$v$
-\form#5:\[ \frac{\pi}{2}-\phi(v), \]
-\form#6:$\phi(v)$
-\form#7:$\pi/2$
-\form#8:\[ \sum_i \theta_i \phi_i(T) \]
-\form#9:$\theta_i$
-\form#10:\[ \phi_i(T) = \sum_x f_i(x) \]
+\form#0:\[ \sum_i \theta_i \phi_i(T) \]
+\form#1:$\theta_i$
+\form#2:$\phi_i$
+\form#3:\[ \phi_i(T) = \sum_x f_i(x) \]
+\form#4:$u$
+\form#5:\[ \phi_i(uT)-\phi_i(T) \]
+\form#6:\[ \sum_i \theta_i (\phi_i(uT)-\phi_i(T)) \]
+\form#7:$v$
+\form#8:\[ \frac{\pi}{2}-\phi(v), \]
+\form#9:$\phi(v)$
+\form#10:$\pi/2$
 \form#11:$E$
 \form#12:$T$
 \form#13:\[ P(dT) \propto \exp\left(-E(T)\right). \]

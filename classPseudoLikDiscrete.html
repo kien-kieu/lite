@@ -95,7 +95,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>Discrete approximation of the log-pseudolikelihood of a Gibbsian T-tessellation.  
  <a href="classPseudoLikDiscrete.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h_source.html">ttessel.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="ttessel_8h_source.html">ttessel.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for PseudoLikDiscrete:</div>
 <div class="dyncontent">
@@ -103,7 +103,6 @@ Inheritance diagram for PseudoLikDiscrete:</div>
   <img src="classPseudoLikDiscrete.png" usemap="#PseudoLikDiscrete_map" alt=""/>
   <map id="PseudoLikDiscrete_map" name="PseudoLikDiscrete_map">
 <area href="classPLInferenceNOIS.html" title="Pseudo-likelihood inference of a Gibsian T-tessellation with alternate updates. " alt="PLInferenceNOIS" shape="rect" coords="0,56,117,80"/>
-<area href="classPLInferenceNOIS.html" title="Pseudo-likelihood inference of a Gibsian T-tessellation with alternate updates. " alt="PLInferenceNOIS" shape="rect" coords="127,56,244,80"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -120,77 +119,37 @@ Public Member Functions</h2></td></tr>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a347f9318bda909594e95d613c5de587a">SetEnergy</a> (<a class="el" href="classEnergy.html">Energy</a> *e)</td></tr>
 <tr class="memdesc:a347f9318bda909594e95d613c5de587a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the <a class="el" href="classEnergy.html" title="Energy of a Gibbsian random T-tessellation. ">Energy</a> data member. <br/></td></tr>
 <tr class="separator:a347f9318bda909594e95d613c5de587a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad88b414fd069d92d3102aa13965f6403"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#ad88b414fd069d92d3102aa13965f6403">AddSplits</a> (<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#a1c40db1d9b56c27240e420765695f1c4">Size</a>)</td></tr>
+<tr class="memitem:ad88b414fd069d92d3102aa13965f6403"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#ad88b414fd069d92d3102aa13965f6403">AddSplits</a> (<a class="el" href="ttessel_8h.html#a1c40db1d9b56c27240e420765695f1c4">Size</a>)</td></tr>
 <tr class="memdesc:ad88b414fd069d92d3102aa13965f6403"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increment the sample of dummy splits.  <a href="#ad88b414fd069d92d3102aa13965f6403">More...</a><br/></td></tr>
 <tr class="separator:ad88b414fd069d92d3102aa13965f6403"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7cb716c88ae259d8dfb58498d9810ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#ad7cb716c88ae259d8dfb58498d9810ab">AddGivenSplit</a> (<a class="el" href="classTTessel_1_1Split.html">TTessel::Split</a>)</td></tr>
 <tr class="memdesc:ad7cb716c88ae259d8dfb58498d9810ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a given dummy split.  <a href="#ad7cb716c88ae259d8dfb58498d9810ab">More...</a><br/></td></tr>
 <tr class="separator:ad7cb716c88ae259d8dfb58498d9810ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a003167ea7cc0d41590fa82524a877dcd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a003167ea7cc0d41590fa82524a877dcd"></a>
-std::vector&lt; <a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a003167ea7cc0d41590fa82524a877dcd">GetSplitStatistics</a> ()</td></tr>
+std::vector&lt; <a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a003167ea7cc0d41590fa82524a877dcd">GetSplitStatistics</a> ()</td></tr>
 <tr class="memdesc:a003167ea7cc0d41590fa82524a877dcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the split term of the discrete approximation of the log-pseudolikelihood. <br/></td></tr>
 <tr class="separator:a003167ea7cc0d41590fa82524a877dcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0091ef76d26befb3b8b370f18391ece"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac0091ef76d26befb3b8b370f18391ece"></a>
-std::vector&lt; <a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#ac0091ef76d26befb3b8b370f18391ece">GetFlipStatistics</a> ()</td></tr>
+std::vector&lt; <a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#ac0091ef76d26befb3b8b370f18391ece">GetFlipStatistics</a> ()</td></tr>
 <tr class="memdesc:ac0091ef76d26befb3b8b370f18391ece"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the flip term of the discrete approximation of the log-pseudolikelihood. <br/></td></tr>
 <tr class="separator:ac0091ef76d26befb3b8b370f18391ece"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd4fe5ebbcedf1e466393d5b7d3e54ca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abd4fe5ebbcedf1e466393d5b7d3e54ca"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#abd4fe5ebbcedf1e466393d5b7d3e54ca">ClearSplits</a> ()</td></tr>
 <tr class="memdesc:abd4fe5ebbcedf1e466393d5b7d3e54ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all dummy splits. <br/></td></tr>
 <tr class="separator:abd4fe5ebbcedf1e466393d5b7d3e54ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45c0916175ce8e6c87ccb6aa8a823782"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a45c0916175ce8e6c87ccb6aa8a823782">GetValue</a> (<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
+<tr class="memitem:a45c0916175ce8e6c87ccb6aa8a823782"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a45c0916175ce8e6c87ccb6aa8a823782">GetValue</a> (<a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
 <tr class="memdesc:a45c0916175ce8e6c87ccb6aa8a823782"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return log-pseudo-likelihood value.  <a href="#a45c0916175ce8e6c87ccb6aa8a823782">More...</a><br/></td></tr>
 <tr class="separator:a45c0916175ce8e6c87ccb6aa8a823782"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a78f641537e87519fa6b73cfc08c7d73e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a78f641537e87519fa6b73cfc08c7d73e">GetGradient</a> (<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
+<tr class="memitem:a78f641537e87519fa6b73cfc08c7d73e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a78f641537e87519fa6b73cfc08c7d73e">GetGradient</a> (<a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
 <tr class="memdesc:a78f641537e87519fa6b73cfc08c7d73e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return pseudo-likelihood gradient.  <a href="#a78f641537e87519fa6b73cfc08c7d73e">More...</a><br/></td></tr>
 <tr class="separator:a78f641537e87519fa6b73cfc08c7d73e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb8e855e0d43b3f247b908f96524ca2a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abb8e855e0d43b3f247b908f96524ca2a"></a>
-<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#a08598a57d463d1930531dc6df5d4f6ad">CatMatrix</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#abb8e855e0d43b3f247b908f96524ca2a">GetHessian</a> (<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
+<a class="el" href="ttessel_8h.html#a08598a57d463d1930531dc6df5d4f6ad">CatMatrix</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#abb8e855e0d43b3f247b908f96524ca2a">GetHessian</a> (<a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
 <tr class="memdesc:abb8e855e0d43b3f247b908f96524ca2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the Hessian of the log-pseudolikelihood. <br/></td></tr>
-<tr class="separator:abb8e855e0d43b3f247b908f96524ca2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa58db599b19a72fe42a9bff209a88cac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa58db599b19a72fe42a9bff209a88cac"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>PseudoLikDiscrete</b> (<a class="el" href="classEnergy.html">Energy</a> *)</td></tr>
-<tr class="separator:aa58db599b19a72fe42a9bff209a88cac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb50a15ff56b68d5940ae37ab5a3996b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb50a15ff56b68d5940ae37ab5a3996b"></a>
-<a class="el" href="classEnergy.html">Energy</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#afb50a15ff56b68d5940ae37ab5a3996b">GetEnergy</a> ()</td></tr>
-<tr class="memdesc:afb50a15ff56b68d5940ae37ab5a3996b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="classEnergy.html" title="Energy of a Gibbsian random T-tessellation. ">Energy</a> data member. <br/></td></tr>
-<tr class="separator:afb50a15ff56b68d5940ae37ab5a3996b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a347f9318bda909594e95d613c5de587a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a347f9318bda909594e95d613c5de587a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a347f9318bda909594e95d613c5de587a">SetEnergy</a> (<a class="el" href="classEnergy.html">Energy</a> *e)</td></tr>
-<tr class="memdesc:a347f9318bda909594e95d613c5de587a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the <a class="el" href="classEnergy.html" title="Energy of a Gibbsian random T-tessellation. ">Energy</a> data member. <br/></td></tr>
-<tr class="separator:a347f9318bda909594e95d613c5de587a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad88b414fd069d92d3102aa13965f6403"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad88b414fd069d92d3102aa13965f6403"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>AddSplits</b> (<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#a1c40db1d9b56c27240e420765695f1c4">Size</a>)</td></tr>
-<tr class="separator:ad88b414fd069d92d3102aa13965f6403"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7cb716c88ae259d8dfb58498d9810ab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7cb716c88ae259d8dfb58498d9810ab"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>AddGivenSplit</b> (<a class="el" href="classTTessel_1_1Split.html">TTessel::Split</a>)</td></tr>
-<tr class="separator:ad7cb716c88ae259d8dfb58498d9810ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a003167ea7cc0d41590fa82524a877dcd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a003167ea7cc0d41590fa82524a877dcd"></a>
-std::vector&lt; <a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a003167ea7cc0d41590fa82524a877dcd">GetSplitStatistics</a> ()</td></tr>
-<tr class="memdesc:a003167ea7cc0d41590fa82524a877dcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the split term of the discrete approximation of the log-pseudolikelihood. <br/></td></tr>
-<tr class="separator:a003167ea7cc0d41590fa82524a877dcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0091ef76d26befb3b8b370f18391ece"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac0091ef76d26befb3b8b370f18391ece"></a>
-std::vector&lt; <a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#ac0091ef76d26befb3b8b370f18391ece">GetFlipStatistics</a> ()</td></tr>
-<tr class="memdesc:ac0091ef76d26befb3b8b370f18391ece"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the flip term of the discrete approximation of the log-pseudolikelihood. <br/></td></tr>
-<tr class="separator:ac0091ef76d26befb3b8b370f18391ece"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd4fe5ebbcedf1e466393d5b7d3e54ca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abd4fe5ebbcedf1e466393d5b7d3e54ca"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>ClearSplits</b> ()</td></tr>
-<tr class="separator:abd4fe5ebbcedf1e466393d5b7d3e54ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45c0916175ce8e6c87ccb6aa8a823782"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45c0916175ce8e6c87ccb6aa8a823782"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>GetValue</b> (<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
-<tr class="separator:a45c0916175ce8e6c87ccb6aa8a823782"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a78f641537e87519fa6b73cfc08c7d73e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a78f641537e87519fa6b73cfc08c7d73e"></a>
-<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>&#160;</td><td class="memItemRight" valign="bottom"><b>GetGradient</b> (<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
-<tr class="separator:a78f641537e87519fa6b73cfc08c7d73e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb8e855e0d43b3f247b908f96524ca2a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abb8e855e0d43b3f247b908f96524ca2a"></a>
-<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#a08598a57d463d1930531dc6df5d4f6ad">CatMatrix</a>&#160;</td><td class="memItemRight" valign="bottom"><b>GetHessian</b> (<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>)</td></tr>
 <tr class="separator:abb8e855e0d43b3f247b908f96524ca2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a3e89fc723d0f3e95715aeccf206f9579"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a3e89fc723d0f3e95715aeccf206f9579">operator&lt;&lt;</a> (std::ostream &amp;, const <a class="el" href="classPseudoLikDiscrete.html">PseudoLikDiscrete</a> &amp;)</td></tr>
-<tr class="memdesc:a3e89fc723d0f3e95715aeccf206f9579"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send T-tessellation pseudolikelihood data to an output stream.  <a href="#a3e89fc723d0f3e95715aeccf206f9579">More...</a><br/></td></tr>
-<tr class="separator:a3e89fc723d0f3e95715aeccf206f9579"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e89fc723d0f3e95715aeccf206f9579"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPseudoLikDiscrete.html#a3e89fc723d0f3e95715aeccf206f9579">operator&lt;&lt;</a> (std::ostream &amp;, const <a class="el" href="classPseudoLikDiscrete.html">PseudoLikDiscrete</a> &amp;)</td></tr>
 <tr class="memdesc:a3e89fc723d0f3e95715aeccf206f9579"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send T-tessellation pseudolikelihood data to an output stream.  <a href="#a3e89fc723d0f3e95715aeccf206f9579">More...</a><br/></td></tr>
 <tr class="separator:a3e89fc723d0f3e95715aeccf206f9579"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -245,7 +204,7 @@ Friends</h2></td></tr>
         <tr>
           <td class="memname">void PseudoLikDiscrete::AddSplits </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#a1c40db1d9b56c27240e420765695f1c4">Size</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="ttessel_8h.html#a1c40db1d9b56c27240e420765695f1c4">Size</a>&#160;</td>
           <td class="paramname"><em>n</em></td><td>)</td>
           <td></td>
         </tr>
@@ -268,9 +227,9 @@ Friends</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a> PseudoLikDiscrete::GetGradient </td>
+          <td class="memname"><a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a> PseudoLikDiscrete::GetGradient </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>&#160;</td>
           <td class="paramname"><em>theta</em></td><td>)</td>
           <td></td>
         </tr>
@@ -295,7 +254,7 @@ Friends</h2></td></tr>
         <tr>
           <td class="memname">double PseudoLikDiscrete::GetValue </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="ttessel_8h.html#aa4c4cb19e5725483554fa2435b4165f8">CatVector</a>&#160;</td>
           <td class="paramname"><em>theta</em></td><td>)</td>
           <td></td>
         </tr>
@@ -357,57 +316,14 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a3e89fc723d0f3e95715aeccf206f9579"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::ostream&amp; operator&lt;&lt; </td>
-          <td>(</td>
-          <td class="paramtype">std::ostream &amp;&#160;</td>
-          <td class="paramname"><em>os</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="classPseudoLikDiscrete.html">PseudoLikDiscrete</a> &amp;&#160;</td>
-          <td class="paramname"><em>pld</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Send T-tessellation pseudolikelihood data to an output stream. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">os</td><td>: output stream </td></tr>
-    <tr><td class="paramname">pld</td><td>: the pseudolikelihood of a T-tessellation </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>wrap/R/RLiTe/src/<a class="el" href="build_2wrap_2R_2RLiTe_2src_2ttessel_8h_source.html">ttessel.h</a></li>
-<li>wrap/R/RLiTe/src/ttessel.cpp</li>
+<li>/home/kien/labo/lite/include/<a class="el" href="ttessel_8h_source.html">ttessel.h</a></li>
+<li>/home/kien/labo/lite/lib/ttessel.cpp</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jul 16 2015 14:11:29 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Jul 30 2015 15:59:14 for LiTe by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>
