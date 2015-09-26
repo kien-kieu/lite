@@ -37,7 +37,8 @@ if ( CGAL_FOUND )
     add_custom_target (Docs ALL
       COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/Doxyfile
       SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
-    install(DIRECTORY ${PROJECT_BINARY_DIR}/doc/html DESTINATION share/doc/lite)
+    install(DIRECTORY ${PROJECT_BINARY_DIR}/doc/html DESTINATION share/doc/lite
+            PATTERN ".git" EXCLUDE)
   endif()
 else()
     message(STATUS "This program requires the CGAL library, and will not be compiled.")
