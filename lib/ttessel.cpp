@@ -69,12 +69,12 @@ void LineTes::insert_window(Polygon& p) {
   } while (pv1!=pv_end);
 
   /* Test whether the polygon is convex */
-  if (!CGAL::is_convex_2(window.vertices_begin(),window.vertices_end())) {
-    std::cerr << "Window must be a convex polygon" << std::endl;
-    std::cerr << "Proposed window:" << std::endl;
-    std::cerr << window << std::endl;
-    exit(EXIT_FAILURE);
-  }
+  // if (!CGAL::is_convex_2(window.vertices_begin(),window.vertices_end())) {
+  //   std::cerr << "Window must be a convex polygon" << std::endl;
+  //   std::cerr << "Proposed window:" << std::endl;
+  //   std::cerr << window << std::endl;
+  //   exit(EXIT_FAILURE);
+  // }
 
   /* Now insert the window edges in the arrangement */
 
@@ -1936,14 +1936,23 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
 
   // Computation of e2 and p2
 
-  e2 = e1->next(); 
+  TTessel::Halfedge_handle ee = e1->next();
+  Point2 pp;
+  NT minDist = -1;
   
-  while (e2!=e1) {
-    inter = CGAL::intersection(Segment(e2->source()->point(),
-				       e2->target()->point()),l);
-    if (CGAL::assign(p2,inter))
-      break;
-    e2 = e2->next(); 
+  while (ee!=e1) {
+    inter = CGAL::intersection(Segment(ee->source()->point(),
+				       ee->target()->point()),l);
+    if (CGAL::assign(pp,inter)) {
+      NT distp1p2 = CGAL::squared_distance(ee->source()->point(),
+      					   ee->target()->point());
+      if (minDist>distp1p2 || minDist==-1) {
+      	minDist = distp1p2;
+      	e2 = ee;
+      	p2 = pp;
+      }
+    }
+    ee = ee->next(); 
   }
   if (e2==e1)
     std::cerr << "Split constructor : intersection of l with e2 not found"
@@ -3361,6 +3370,8 @@ Segment clip_segment_by_convex_polygon(Segment S, Polygon P) {
   }
   return Segment(Intervertices[0],Intervertices[1]);
 }
+
+}
 /** \brief Predict added length when lengthening an edge in an arrangement
  * \param[in] e : halfedge that would be lengthened.
  * \param[out] ehit : halfedge where lengthening would end.
@@ -3655,7 +3666,7 @@ double is_point_inside_window(Point2 pt,LineTes* t){
  * \return a double resulting from conversion from a Boolean.
  */
 double is_point_inside_window(Point2 pt,TTessel* t){
-  // repeated code, anyway to avoid that without slowing computation too much?
+  // repeated code, any way to avoid that without slowing computation too much?
   return (double)t->get_window().has_on_bounded_side(pt);
 }
 
@@ -3745,10 +3756,15 @@ double face_perimeter(Polygon f, TTessel* t){
   }
   return l;
 }
-
+/** \brief Return the shape parameter of a tessellation face.
+ *
+ * \param f : tessellation face as a polygon
+ * \param t : the tessellation to be considered
+ *
+ * The shape parameter is the ratio between the perimeter
+ * and 4 times the squared root of the area. */
 double face_shape(Polygon f, TTessel* t){
-  return face_perimeter(f,t);
-    ///(4*sqrt(CGAL::to_double(f.area()))); 
+  return face_perimeter(f,t)/(4*sqrt(CGAL::to_double(f.area()))); 
 }
 
 /** \brief Return the angle between two planar vectors
