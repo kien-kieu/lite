@@ -31,7 +31,7 @@ RLiTe can be installed as a standard R package. For instance, the following comm
 
 Or within a R interactive session, RLiTe can be installed running
 
-   install.packages("RLiTe_x.y.tar.gz",repos=NULL)
+    install.packages("RLiTe_x.y.tar.gz",repos=NULL)
 
 Windows users
 -------------
@@ -56,6 +56,6 @@ and install both Rcpp and RLiTe
        install.packages("Rcpp",repos="http://cran.univ-lyon1.fr",INSTALL_opts="--no-multiarch")
        install.packages("RLiTe_x.y.tar.gz",INSTALL_opts="--no-multiarch")
        
-Add to the PATH environment variable of Windows the absolute path to the subdirectory mingw32\bin of MSYS2. For instance, the path may be C:\\msys64\\mingw32\\bin.
+Add to the PATH environment variable of Windows the absolute path to the subdirectory mingw32\\bin of MSYS2. For instance, the path may be C:\\msys64\\mingw32\\bin.
 
 Run R as usual (32-bits version) and load RLiTe.
