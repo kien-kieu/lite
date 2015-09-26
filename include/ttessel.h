@@ -984,19 +984,20 @@ bool                     is_a_T_vertex(LineTes::Vertex_handle,
 				       bool verbose=false);
 unsigned long int        number_of_internal_vertices(TTessel&);
 Polygon                  face2poly(TTessel::Face_handle);
+double                   angle_between_vectors(Vector v1,Vector v2);
+double                   sum_of_faces_squared_areas(TTessel*);
+double                   sum_of_min_angles(TTessel*);
+double                   sum_of_angles_obt(TTessel*);
+double                   sum_of_segment_squared_sizes(TTessel* t);
+
 /** \defgroup features Features of T-tessellations
  *
  * Functions that can be used by Energy objects for defining a Gibbs model
  * of T-tessellation. %Features are measured on vertices, edges, faces 
- * or segments.*/
-double                   face_number(Polygon,TTessel*);
-double                   face_area_2(Polygon,TTessel*);
-double                   face_sum_of_angles(Polygon,TTessel*);
-double                   face_shape(Polygon,TTessel*);
-double                   angle_between_vectors(Vector v1,Vector v2);
-double                   edge_length(Segment,TTessel*);
+ * or segments. @{*/
 double                   is_point_inside_window(Point2, LineTes*);
 double                   is_point_inside_window(Point2, TTessel*);
+double                   edge_length(Segment,TTessel*);
 double                   seg_number(std::vector<Point2>,TTessel*);
 double                   is_segment_internal(std::vector<Point2>,TTessel*);
 /** \brief Return -1
@@ -1009,12 +1010,14 @@ double                   is_segment_internal(std::vector<Point2>,TTessel*);
 inline double            minus_is_segment_internal(std::vector<Point2> s,
 						   TTessel* t){
   return -is_segment_internal(s,t);}
+double                   face_number(Polygon,TTessel*);
+double                   face_area_2(Polygon,TTessel*);
+double                   face_perimeter(Polygon, TTessel*);
+double                   face_shape(Polygon,TTessel*);
+double                   face_sum_of_angles(Polygon,TTessel*);
 double                   min_angle(Polygon, TTessel*);
-double                   sum_of_faces_squared_areas(TTessel*);
-double                   sum_of_min_angles(TTessel*);
-double                   sum_of_angles_obt(TTessel*);
 double                   segment_size_2(std::vector<Point2>,TTessel*);
-double                   sum_of_segment_squared_sizes(TTessel* t);
+/** @}*/
 
 /*  FONCTIONS POUR CHRONOMETRER */
 //inline std::clock_t      tic(void){return std::clock();}
