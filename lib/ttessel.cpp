@@ -1919,10 +1919,9 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
     u = v;
     v = w;
     }*/
-  w = -(u+x*(v-u));
-  NT a2(a), b2(b), w2(w); 
-  Line l(a2,b2,w2);
-  
+  w = u+x*(v-u);
+  NT a2(a), b2(b), c2(-w); 
+  Line l(a2,b2,c2);
   // Computation of p1
   CGAL::Object inter;
   inter = CGAL::intersection(Segment(e1->source()->point(),
@@ -1939,13 +1938,19 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
   TTessel::Halfedge_handle ee = e1->next();
   Point2 pp;
   NT minDist = -1;
-  
+  Line l_dir;
+  if (l.has_on_negative_side(e1->target()->point())) {
+    l_dir = l;
+  } else {
+    l_dir = l.opposite();
+  }
+  Rayon r(p1,l_dir);
+
   while (ee!=e1) {
     inter = CGAL::intersection(Segment(ee->source()->point(),
-				       ee->target()->point()),l);
+				       ee->target()->point()),r);
     if (CGAL::assign(pp,inter)) {
-      NT distp1p2 = CGAL::squared_distance(ee->source()->point(),
-      					   ee->target()->point());
+      NT distp1p2 = CGAL::squared_distance(p1,pp);
       if (minDist>distp1p2 || minDist==-1) {
       	minDist = distp1p2;
       	e2 = ee;
@@ -2279,17 +2284,24 @@ TTessel::Flip::Flip(Halfedge_handle he) : e1(he) {
   Rayon r(seg_deb,Vector(e3->source()->point(),e3->target()->point())); 
 
   // Search of the halfedge e2 hit by the ray r along the face to be split
-  e2 = hf_it_deb->next();
-  while (e2!= hf_it_deb) {
+  NT minDist = -1;
+  Point2 pp;
+  Halfedge_handle ee = hf_it_deb->next();
+  while (ee != hf_it_deb->prev()) {
     CGAL::Object inter;
-    inter = CGAL::intersection(r,Segment(e2->source()->point(),
-					 e2->target()->point()));
-    if (CGAL::assign(p2,inter)) {
-      break;	    
+    inter = CGAL::intersection(r,Segment(ee->source()->point(),
+					 ee->target()->point()));
+    if (CGAL::assign(pp,inter)) {
+      NT distsegdebpp = CGAL::squared_distance(seg_deb,pp);
+      if (minDist>distsegdebpp || minDist==-1) {
+      	minDist = distsegdebpp;
+      	e2 = ee;
+	p2 = pp;
+      }
     }
-    e2 = e2->next(); 
+    ee = ee->next(); 
   }    
-  if (e2==hf_it_deb)
+  if (minDist<0)
     std::cerr << "Flip constructor: e2 and p2 not found" << std::endl;
 }
 /** \brief Return the list of tessellation elements modified by a flip
@@ -3370,7 +3382,44 @@ Segment clip_segment_by_convex_polygon(Segment S, Polygon P) {
   }
   return Segment(Intervertices[0],Intervertices[1]);
 }
-
+/** \brief Clip a segment by a polygon
+ * \param S : segment to be clipped.
+ * \param P : clipping polygon.
+ * \return clipped segment, that is the longest intersection between the segment and
+ * the polygon.
+ * 
+ * When the clipping polygon is not convex, its intersection with the segment
+ * may consists of several segments. In such a case, the longest clipped segment is returned. If there are several clipped segments with maximal length, an arbitrarily chosen one is returned.
+ */
+Segment clip_segment_by_polygon(Segment S, Polygon P) {
+  typedef CGAL::Extended_cartesian<NT> EKernel;
+  typedef CGAL::Nef_polyhedron_2<EKernel> Nef;
+  std::vector<Nef::Point> Pvertices, Svertices;
+  for (Size i=0;i!=P.size();++i) 
+    Pvertices.push_back(Nef::Point(P[i].x(),P[i].y()));
+  Nef nefP(Pvertices.begin(),Pvertices.end());
+  Svertices.push_back(Nef::Point(S[0].x(),S[0].y()));
+  Svertices.push_back(Nef::Point(S[1].x(),S[1].y()));
+  Nef nefS(Svertices.begin(),Svertices.end());
+  Nef nefInter = nefS.intersection(nefP);
+  Segment longestSegment;
+  Nef::Explorer ex = nefInter.explorer();
+  NT maxLength = 0;
+  for (Nef::Explorer::Halfedge_const_iterator e=ex.halfedges_begin();
+       e!=ex.halfedges_end();e++) {
+    if (ex.is_standard(ex.source(e)) && ex.is_standard(ex.target(e))) {
+      Point2 p1 = Point2(ex.point(ex.source(e)).x(),
+			 ex.point(ex.source(e)).y());
+      Point2 p2 = Point2(ex.point(ex.target(e)).x(),
+			 ex.point(ex.target(e)).y());
+      NT len = CGAL::squared_distance(p1,p2);
+      if (len>maxLength) {
+	maxLength = len;
+	longestSegment = Segment(p1,p2);
+      }
+    }
+  }
+  return longestSegment;
 }
 /** \brief Predict added length when lengthening an edge in an arrangement
  * \param[in] e : halfedge that would be lengthened.

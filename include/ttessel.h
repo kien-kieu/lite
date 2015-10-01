@@ -972,6 +972,7 @@ class PLInferenceNOIS : public PseudoLikDiscrete{
 bool                     are_aligned(Point2 p, Point2 q, Point2 r, 
 				     bool verbose=false);
 Segment                  clip_segment_by_convex_polygon(Segment, Polygon);
+Segment                  clip_segment_by_polygon(Segment, Polygon);
 double                   precompute_lengthening(Arrangement::Halfedge_handle,
 						Arrangement::Halfedge_handle*,
 						Point2*);
