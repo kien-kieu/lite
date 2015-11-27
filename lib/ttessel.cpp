@@ -3421,6 +3421,54 @@ Segment clip_segment_by_polygon(Segment S, Polygon P) {
   }
   return longestSegment;
 }
+/** \brief Clip a segment by a polygon with holes
+ * \param S : segment to be clipped.
+ * \param P : clipping polygon.
+ * \return clipped segment, that is the longest intersection between the segment and
+ * the polygon.
+ * 
+ * When the clipping polygon is not convex, its intersection with the segment
+ * may consists of several aligned segments and isolated points. In such a case, the longest clipped segment is returned. If there are several clipped segments with maximal length, an arbitrarily chosen one is returned.
+ */
+Segment clip_segment_by_holed_polygon(Segment S, Polygon_with_holes P) {
+  typedef CGAL::Extended_cartesian<NT> EKernel;
+  typedef CGAL::Nef_polyhedron_2<EKernel> Nef;
+  std::vector<Nef::Point> Svertices, Pvertices;
+  for (Size i=0;i!=P.outer_boundary().size();++i) 
+    Pvertices.push_back(Nef::Point(P.outer_boundary()[i].x(),
+				   P.outer_boundary()[i].y()));
+  Nef nefP(Pvertices.begin(),Pvertices.end());
+  for (Polygon_with_holes::Hole_const_iterator h=P.holes_begin();
+       h != P.holes_end();h++) {
+    std::vector<Nef::Point> Hvertices;
+    for (Size i=0;i!=(*h).size();++i) 
+      Hvertices.push_back(Nef::Point((*h)[i].x(),(*h)[i].y()));
+    Nef PHole(Hvertices.begin(),Hvertices.end());
+    nefP = nefP.difference(PHole);
+  }
+  Svertices.push_back(Nef::Point(S[0].x(),S[0].y()));
+  Svertices.push_back(Nef::Point(S[1].x(),S[1].y()));
+  Nef nefS(Svertices.begin(),Svertices.end());
+  Nef nefInter = nefS.intersection(nefP);
+  Segment longestSegment;
+  Nef::Explorer ex = nefInter.explorer();
+  NT maxLength = 0;
+  for (Nef::Explorer::Halfedge_const_iterator e=ex.halfedges_begin();
+       e!=ex.halfedges_end();e++) {
+    if (ex.is_standard(ex.source(e)) && ex.is_standard(ex.target(e))) {
+      Point2 p1 = Point2(ex.point(ex.source(e)).x(),
+			 ex.point(ex.source(e)).y());
+      Point2 p2 = Point2(ex.point(ex.target(e)).x(),
+			 ex.point(ex.target(e)).y());
+      NT len = CGAL::squared_distance(p1,p2);
+      if (len>maxLength) {
+	maxLength = len;
+	longestSegment = Segment(p1,p2);
+      }
+    }
+  }
+  return longestSegment;
+}
 /** \brief Predict added length when lengthening an edge in an arrangement
  * \param[in] e : halfedge that would be lengthened.
  * \param[out] ehit : halfedge where lengthening would end.

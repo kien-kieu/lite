@@ -41,8 +41,8 @@ n'est implémentée.*/
 // Two following headers required for clip_segment_by_convex_polygon
 #include <CGAL/Extended_cartesian.h>
 #include <CGAL/Nef_polyhedron_2.h>
-
-
+#include <CGAL/Polygon_with_holes_2.h>
+#include <CGAL/Boolean_set_operations_2.h>
 
 /******************************************************************************/
 /*          TYPE DEFINITIONS AND FORWARD CLASS DECLARATIONS                   */
@@ -88,6 +88,9 @@ typedef CGAL::Aff_transformation_2<Kernel>                      Transformation;
 /** \typedef Polygon
  * \brief CGAL class representing a polygon*/
 typedef CGAL::Polygon_2<Kernel>                                 Polygon;
+/** \typedef Polygon_with_holes
+ * \brief CGAL class representing a polygon with holes*/
+typedef CGAL::Polygon_with_holes_2<Kernel>                      Polygon_with_holes;
 /** \typedef Points
  * \brief Class representing a series of points*/
 typedef std::vector<Point2>                                     Points;
