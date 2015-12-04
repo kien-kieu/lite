@@ -31,62 +31,61 @@ CGAL::Random *rnd = 0;
  * Equivalent to the empty CGAL::Arrangement_2 constructor
  */
 LineTes::LineTes() : Arrangement() {}
-/** \brief Define the rectangular domain delimiting the tessellation
+/** \brief Define the the tessellation domain as a rectangle
  *
- * The LineTes class is designed for representing tessellation of
- * bounded rectangular domains. The insert_window method should be
- * used as a first step where one defines the domain to be
- * tessellated.
+ * The insert_window method should be used as a first step when
+ * handling line tessellations.
  */
 void LineTes::insert_window(Rectangle r) {
   Polygon p;
   for (int i=0;i<4;i++) {
     p.push_back(r[i]);
   }
-  insert_window(p);
+  HPolygon hp(p);
+  insert_window(hp);
 }
-/** \brief Define the polygonal domain delimiting the tessellation
+/** \brief Define the tessellation domain
  *
- * Do not use this method at the moment as non-rectangular domains
- * are not fully supported by the LineTes class.
+ * The tessellation domain can be a union of disjoint polygons with
+ * holes.
  */
-void LineTes::insert_window(Polygon& p) {
+void LineTes::insert_window(HPolygons& p) {
   Halfedge_handle e;
   Vertex_handle v,v0;
 
   // Reset private member window
   window.clear();
-  /* Start by removing all unnecessary vertices */
-  Polygon::Vertex_circulator pv2 = p.vertices_circulator();
-  pv2--;
-  Polygon::Vertex_circulator pv1 = pv2++, pv0 = pv1++, pv_end = pv1;
-  pv2++;
-  do {
-    if(!CGAL::collinear(*pv0,*pv1,*pv2)) {
-      window.push_back(*pv1);
-    }
-    pv0++; pv1++; pv2++;
-  } while (pv1!=pv_end);
-
-  /* Test whether the polygon is convex */
-  // if (!CGAL::is_convex_2(window.vertices_begin(),window.vertices_end())) {
-  //   std::cerr << "Window must be a convex polygon" << std::endl;
-  //   std::cerr << "Proposed window:" << std::endl;
-  //   std::cerr << window << std::endl;
-  //   exit(EXIT_FAILURE);
-  // }
+  for (HPolygons::const_iterator pi=p.begin();pi!=p.end();pi++) {
+    HPolygon sp = simplify(*pi);
+    window.push_back(sp);
+  }
 
   /* Now insert the window edges in the arrangement */
-
-  v = insert_in_face_interior(window[0],unbounded_face());
-  v0 = v;
-
-  for (int i=0;i<window.size()-1;i++) {
-    if (window[i]<=window[i+1]) {
-      e = insert_from_left_vertex(Curve(window[i],window[i+1]),v);
-    } else {
-      e = insert_from_right_vertex(Curve(window[i+1],window[i]),v);
-    }
+  for (HPolygons::const_iterator pi=window.begin();pi!=window.end();pi++) {
+    Polygons b = boundaries(*pi);
+    for (Polygons::const_iterator bi=b.begin();bi!=b.end();bi++) {
+      v = insert_in_face_interior((*bi)[0],unbounded_face());
+      v0 = v;
+      for (int i=0;i<bi->size()-1;i++) {
+	if ((*bi)[i]<=(*bi)[i+1]) {
+	  e = insert_from_left_vertex(Curve((*bi)[i],(*bi)[i+1]),v);
+	} else {
+	  e = insert_from_right_vertex(Curve((*bi)[i+1],(*bi)[i]),v);
+	}
+	v = e->target();
+	e->set_length();
+	e->twin()->set_length(e->get_length());
+	set_junction(e,NULL_HALFEDGE_HANDLE);
+	set_junction(NULL_HALFEDGE_HANDLE,e);
+	e->set_dir(true);
+	e->twin()->set_dir(false);
+	Seg_handle s = new Seg;
+	s->set_halfedge_handle(e);
+	e->set_segment(s); e->twin()->set_segment(s);
+	all_segments.add(s);
+      } 
+      // Last insertion is particular because vertices pre-exist at both ends of the added curve
+      e = insert_at_vertices(Curve(bi->size()-1],(*bi)[0]),v,v0);
     v = e->target();
     e->set_length();
     e->twin()->set_length(e->get_length());
@@ -98,20 +97,7 @@ void LineTes::insert_window(Polygon& p) {
     s->set_halfedge_handle(e);
     e->set_segment(s); e->twin()->set_segment(s);
     all_segments.add(s);
-  } 
-  // Last insertion is particular because vertices pre-exist at both ends of the added curve
-  e = insert_at_vertices(Curve(window[window.size()-1],window[0]),v,v0);
-  v = e->target();
-  e->set_length();
-  e->twin()->set_length(e->get_length());
-  set_junction(e,NULL_HALFEDGE_HANDLE);
-  set_junction(NULL_HALFEDGE_HANDLE,e);
-  e->set_dir(true);
-  e->twin()->set_dir(false);
-  Seg_handle s = new Seg;
-  s->set_halfedge_handle(e);
-  e->set_segment(s); e->twin()->set_segment(s);
-  all_segments.add(s);
+  }
   if (!is_valid()) {
     std::cerr << "arrangement is not valid: " << std::endl;
   }
@@ -470,15 +456,27 @@ bool LineTes::check_halfedge_dir(LineTes::Halfedge_handle e, bool verbose) {
 /** \brief Return the number of sides of the tessellated domain
  */
 LineTes::Size LineTes::number_of_window_edges() {
-  return window.size();
+  Size nb = 0;
+  for (HPolygons::const_iterator hpi=window.begin();hpi!=window.end();hpi++) {
+    Polygons b = boundaries(*hpi);
+    for (Polygons::const_iterator pi=b.begin();pi!=b.end();pi++) {
+      nb += pi-size();
+    }
+  }
+  return nb;
 }
 /** \brief Return the perimeter of the tessellated domain
  */
-double LineTes::get_window_perimeter() {
+double LineTes::get_window_perimeter() { // ???
   double per=0.0;
-  for(Polygon::Edge_const_iterator e=window.edges_begin();e!=window.edges_end();e++) {
-    Vector v = (*e)[1]-(*e)[0];
-    per +=  sqrt(CGAL::to_double(v.x()*v.x()+v.y()*v.y()));
+  for (HPolygons::const_iterator hpi=window.begin();hpi!=window.end();hpi++) {
+    Polygons b = boundaries(*hpi);
+    for (Polygons::const_iterator pi=b.begin();pi!=b.end();pi++) {
+      for(Polygon::Edge_const_iterator e=pi->edges_begin();e!=pi->edges_end();
+	  e++) {
+	per += sqrt(CGAL::to_double(CGAL::squared_distance((*e)[0],(*e)[1])));
+      }
+    }
   }
   return per;
 }
@@ -821,16 +819,6 @@ LineTes::Seg_handle LineTes::insert_segment(Segment iseg) {
      Rectangle object. Therefore our implementation works only when
      the window is indeed an iso-rectangle. */
   Polygon w = get_window();
-  /* CGAL::Bbox_2 bbox = w.bbox();
-  Rectangle rw(bbox.xmin(),bbox.ymin(),bbox.xmax(),bbox.ymax()); // window as an iso-rectangle
-  Segment cseg; // clipped segment
-  CGAL::Object inter = CGAL::intersection(rw,iseg);
-  if (!CGAL::assign(cseg,inter)) {
-    std::cerr << "Insertion of segment, error when clipping segment to window";
-    std::cerr << "Window " << rw << std::endl;
-    std::cerr << "Segment " << iseg << std::endl;
-    std::cerr << std::endl;
-    } */
   Segment cseg = clip_segment_by_polygon(iseg,w);
   CGAL::insert(*this,cseg); // insert segment into the arrangement
   // identify new edges generated by the segment insertion
@@ -1170,20 +1158,28 @@ bool LineTes::is_a_T_tessellation(bool verbose, std::ostream& out) {
  * Output is done based on a format without loss of numerical
  * precision. Therefore it is possible to recover a LineTes object
  * from the output. The output format is as follows:
- * - A coordinate is output as two integers (numerator and denominator).
+ * - A coordinate is output as two integers (numerator and denominator
+ *   separated by a slash).
  * - A point is output as its two Cartesian coordinates.
  * - A line segment is output as its two end points.
  * - First, vertices of the tessellated domain are sent to the output 
- *   stream (single line).
+ *   stream. For each holed polygon of the domain, vertices of the outer 
+ *   boundary are output anti-clockwise (single line). Then vertices 
+ *   along holes are output clockwise (one line per hole). 
  * - Subsequently, internal segments are sent to the output stream
  *   (one per line).
  */	
 void LineTes::write(std::ostream& os) {
-  Polygon w = get_window();
+  HPolygons w = get_window();
   for (Size i=0;i<w.size();i++) {
-    os << w[i].x().exact() << " " << w[i].y().exact();
-    if (i!=(w.size()-1))
-      os << " ";
+    Polygons b = boundaries(w[i]);
+    for (Size j=0;j!=b.size();j++) {
+      for (Size k=0;k!=b[j].size();k++) {
+      os << b[j][k].x().exact() << " " << b[j][k].y().exact();
+      if (k!=(b[j].size()-1))
+	os << " ";
+      }
+    }
   }
   os << std::endl;
   for (Seg_list_iterator si=segments_begin();si!=segments_end();si++) {
@@ -1203,59 +1199,53 @@ void LineTes::write(std::ostream& os) {
  * LineTes::write documentation.
  */
 void LineTes::read(std::istream& is) {
+  HPolygon wel; // window element
+  Polygon weloub; // window element outer boundary
+  Polygons hb; // holes
+  std::vector<Segment> segs;
   std::string line;
+  // Clear the LineTes object
+  clear();
   // Read the coordinates of the domain corners
-  if(!std::getline(is,line)) {
-    std::cerr << "Could not read the domain coordinates" << std::endl;
-    std::cerr << "Reading aborted" << std::endl;
-    return;
-  }
-  std::istringstream iss(line);
-  std::vector<NT> wcoords;
-  while(true) {
-    CGAL::Gmpq buf;
-    if (iss>>buf) {
-      NT coord(buf);
-      wcoords.push_back(coord);
-    } else {
-      break;
-    }
-  }
-  // Now read segments
-  std::vector<std::vector<CGAL::Gmpq> > scoords;
   while (std::getline(is,line)) {
-    std::istringstream iss_bis(line);
-    CGAL::Gmpq x0, y0, x1, y1;
-    std::vector<CGAL::Gmpq> buf(4,0);
-    if (iss_bis >> buf[0] >> buf[1] >> buf[2] >> buf[3]) {
-      scoords.push_back(buf);
-    } else {
-      std::cerr << "Unexpected input when reading a line tessellation";
+    std::istringstream iss(line);
+    std::vector<NT> wcoords;
+    while (iss>>buf) {
+	NT coord(buf);
+	wcoords.push_back(coord);
+    }      
+    if (wcoords.size()%2 != 0) {
+      std::cerr << "Uneven number of coordinates on the current line";
       std::cerr << std::endl;
-      std::cerr << "Input line" << std::endl;
-      std::cerr << line << std::endl;
-      std::cerr << "Reading aborted" << std::endl;
       return;
     }
-  }
-  // Fill the LineTes object
-  clear();
-  Polygon w;
-  if (wcoords.size()%2 != 0) {
-    std::cerr << "Uneven number of coordinates on the first line" << std::endl;
-    return;
-  }
-  for (Size i=0;i!=wcoords.size();i+=2) {
-    w.push_back(Point2(wcoords[i],wcoords[i+1]));
-  }
-  insert_window(w);
-  for (Size i=0;i!=scoords.size();i++) {
-    NT x0(scoords[i][0]);
-    NT y0(scoords[i][1]);
-    NT x1(scoords[i][2]);
-    NT y1(scoords[i][3]);
-    Segment s(Point2(x0,y0),Point2(x1,y1));
-    insert_segment(s);
+    if (wcoords.size()>4) { // coordinates of domain vertices
+      if (w.size()>0) {
+	HPolygon wel(ccb,hb.begin(),hb.end()); // window element
+	window.push_back(wel);
+      }
+      Polygon ccb; // a boundary
+      for (Size i=0;i!=wcoords.size();i+=2) {
+	ccb.push_back(Point2(wcoords[i],wcoords[i+1]));
+      }
+      if (ccb.orientation()==CGAL::COUNTERCLOCKWISE) { // outer ccb
+	hb.clear();
+	welboub = ccb;
+      } else { 
+	if (ccb.orientation()==CGAL::CLOCKWISE) { // hole
+	  hb.push_back(ccb);
+	} else { // undefined orientation
+	  std::cerr << "Invalid orientation of a domain ccb" << std::endl;
+	}
+      }
+    } else { // segment
+      NT x0(wcoords[0]);
+      NT y0(wcoords[1]);
+      NT x1(wcoords[2]);
+      NT y1(wcoords[3]);
+      Segment s(Point2(x0,y0),Point2(x1,y1));
+      insert_segment(s);
+    }
   }
 }
 /******************************************************************************/
@@ -4051,4 +4041,62 @@ double sum_of_segment_squared_sizes(TTessel* t) {
   return s4;
 }
 
-// FIN KA : 26-06-06
+/** \brief Return the connected components of a holed polygon boundary
+ * 
+ * First polygon in the output is the outer boundary oriented 
+ * counterclockwise. Subsequent polygons are holes boundaries oriented
+ * clockwise.
+ */
+Polygons boundaries(HPolygon hp) {
+  Polygons b;
+  ob = hp.outer_boundary();
+  if (ob.orientation()!=CGAL::COUNTERCLOCKWISE) {
+    ob.reverse_orientation();
+  }
+  b.push_back(ob);
+  for (HPolygon::Hole_const_iterator h=hp.holes_begin();h!=hp.holes_end();h++) {
+    if (h->orientation()!=CGAL::CLOCKWISE) {
+      h->.reverse_orientation();
+    }
+    b.push_back(*h);
+  }
+  return b;
+}
+/** \brief Remove unnecessary vertices on a polygon
+ *
+ * A vertex is not necessary if it is collinear with its neighbours. 
+ */
+Polygon simplify(Polygon p) {
+  Halfedge_handle e;
+  Vertex_handle v,v0;
+
+  Polygon sp;
+  
+  /* Start by removing all unnecessary vertices */
+  Polygon::Vertex_circulator pv2 = p.vertices_circulator();
+  pv2--;
+  Polygon::Vertex_circulator pv1 = pv2++, pv0 = pv1++, pv_end = pv1;
+  pv2++;
+  do {
+    if(!CGAL::collinear(*pv0,*pv1,*pv2)) {
+      sp.push_back(*pv1);
+    }
+    pv0++; pv1++; pv2++;
+  } while (pv1!=pv_end);
+  return sp;
+}
+/** \brief Remove unnecessary vertices on a holed polygon
+ */
+HPolygon simplify(HPolygon p) {
+  Polygons b = boundaries(p);
+  Polygons::iterator hb = b.begin();
+  hb++;
+  Polygons::iterator he = b.end();
+  b[0] = simplify(b[0]);
+  for (Polygons::iterator h=hb;h!=he;h++) {
+    *h = simplify(*h);
+  }
+  HPolygon sp(b[0],hb,he);
+  return sp;
+}
+
