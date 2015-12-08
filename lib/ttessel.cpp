@@ -3823,23 +3823,30 @@ double face_number(Polygon f, TTessel* t){
 
 /** \brief Return the squared face area of a tessellation face
  *
- * \param f : tessellation face as a polygon.
+ * \param f : tessellation face as a (holed) polygon.
  * \param t : the tessellation to be considered.
  * \ingroup features*/
-double face_area_2(Polygon f, TTessel* t){
-    return to_double(f.area()*f.area());
+double face_area_2(HPolygon f, TTessel* t){
+  Polygons p = boundaries(f);
+  double area = 0.0; 
+  for (Size i=0;i!=p.size();i++) {
+    area += CGAL::to_double(p[i].area());
+  }
+  return area;
 }
 /** \brief Return the perimeter of a tessellation face
  *
- * \param f : tessellation face as a polygon.
+ * \param f : tessellation face as a (holed) polygon.
  * \param t : the tessellation to be considered.
  * \ingroup features*/ 
-double face_perimeter(Polygon f, TTessel* t){
-  
-  double l=0;
-
-  for (int i=0;i!=f.size();i++){
-    l += sqrt(CGAL::to_double(squared_distance(f[i],f[(i+1)%f.size()])));
+double face_perimeter(HPolygon f, TTessel* t){
+  Polygons p = boundaries(f);
+  double l = 0.0; 
+  for (Size i=0;i!=p.size();i++) {
+    for (Size j=0;j!=p[i].size();j++) {
+      l += sqrt(CGAL::to_double(squared_distance(p[i][j],
+						 p[i][(j+1)%p[i].size()])));
+    }
   }
   return l;
 }
