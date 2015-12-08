@@ -3942,28 +3942,29 @@ Polygon face2poly(TTessel::Face_handle f)
 }
 /** \brief Return the smallest angle in a tessellation face
  *
- * \param f : tessellation face as a polygon.
+ * \param f : tessellation face as a (holed) polygon.
  * \param t : the tessellation to be considered.
  * \ingroup features
  *
- * Angles between consecutive edges are considered. This function 
- * can be used by an Energy object for specifying the sum of face
- * smallest angle as a feature. That feature is of interest for 
- * penalizing faces with small angles.
+ * Angles between consecutive edges of the outer boundary are
+ * considered. This function can be used by an Energy object for
+ * specifying the sum of face smallest angle as a feature. That
+ * feature is of interest for penalizing faces with small angles.
 */
 double min_angle(Polygon f, TTessel* t){
   Vector v1,v2;
   Point2 p;
   double min_angle;
  
-  min_angle = angle_between_vectors(Vector(f[f.size()-1],f[0]),
-				    Vector(f[0],f[1]));
-  for(int i=0;i!=f.size();i++) {
-    int j=(i-1)%((int)f.size());
-    if (j<0) j=j+f.size();
-    p=f[i];
-    v1 = Vector(f[i],f[j]);
-    v2 = Vector(f[i],f[(i+1)%((int)f.size())]);
+  Polygon ob = f.outer_boundary();
+  min_angle = angle_between_vectors(Vector(ob[ob.size()-1],ob[0]),
+				    Vector(ob[0],ob[1]));
+  for(int i=0;i!=ob.size();i++) {
+    int j=(i-1)%((int)ob.size());
+    if (j<0) j=j+ob.size();
+    p=ob[i];
+    v1 = Vector(ob[i],ob[j]);
+    v2 = Vector(ob[i],ob[(i+1)%((int)ob.size())]);
     double a = angle_between_vectors(v1,v2);
     if (a<min_angle)
       min_angle = a;
