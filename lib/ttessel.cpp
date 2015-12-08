@@ -3977,14 +3977,14 @@ double min_angle(Polygon f, TTessel* t){
  */
 double sum_of_faces_squared_areas(TTessel* t){
 double sa = 0.;
-Polygon poly;
-      for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
-      	if (!f->is_unbounded()) { 
-        	poly = face2poly(f);
-	    	sa += face_area_2(face2poly(f),t);
-      	}
-       }
-return(sa);
+HPolygon poly;
+ for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
+   if (!f->is_unbounded()) { 
+     poly = face2poly(f);
+     sa += face_area_2(face2poly(f),t);
+   }
+ }
+ return(sa);
 }
 /** \brief Return the sum of smallest angles on all faces of a T-tessellation
  *
@@ -3992,7 +3992,7 @@ return(sa);
  */
 double sum_of_min_angles(TTessel* t){
   double sma = 0.;
-  Polygon poly;
+  HPolygon poly;
   for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
     if (!f->is_unbounded()) { 
       poly = face2poly(f);
@@ -4007,7 +4007,7 @@ double sum_of_min_angles(TTessel* t){
  */ 
 double sum_of_angles_obt(TTessel* t){
   double sao = 0.;
-  Polygon poly;
+  HPolygon poly;
   for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
     if (!f->is_unbounded()) { 
       poly = face2poly(f);
