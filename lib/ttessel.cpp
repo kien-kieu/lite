@@ -3811,13 +3811,13 @@ double is_segment_internal(std::vector<Point2> s, TTessel* t){
 
 /** \brief Return 1
  *
- * \param f: a polygon representing a tessellation face. 
+ * \param f: a (holed) polygon representing a tessellation face. 
  * \param t: the tessellation to be considered.
  * \ingroup features
  *
  * Silly function that can be used by an Energy object for 
  * specifying the number of tessellation face as a feature.*/
-double face_number(Polygon f, TTessel* t){
+double face_number(HPolygon f, TTessel* t){
   return 1;
 }
 
@@ -3852,13 +3852,13 @@ double face_perimeter(HPolygon f, TTessel* t){
 }
 /** \brief Return the shape parameter of a tessellation face.
  *
- * \param f : tessellation face as a polygon
+ * \param f : tessellation face as a (holed) polygon
  * \param t : the tessellation to be considered
  *
  * The shape parameter is the ratio between the perimeter
  * and 4 times the squared root of the area. */
-double face_shape(Polygon f, TTessel* t){
-  return face_perimeter(f,t)/(4*sqrt(CGAL::to_double(f.area()))); 
+double face_shape(HPolygon f, TTessel* t){
+  return face_perimeter(f,t)/(4*pow(CGAL::to_double(face_area_2(f,t)),0.25)); 
 }
 
 /** \brief Return the angle between two planar vectors
@@ -3880,13 +3880,13 @@ double angle_between_vectors(Vector v1,Vector v2){
   return  acos(CGAL::to_double(p)/sqrt(CGAL::to_double(n1_2*n2_2)));
 }
 /** \brief Measure the deviation of a T-tessellation face from a rectangle
- * \param f : T-tessellation face as a polygon.
+ * \param f : T-tessellation face as a (holed) polygon.
  * \param t : the T-tessellation to be considered.
  * \ingroup features
  * 
- * Only vertices where incident edges form an acute angle contribute 
- * to the measure. The additive contribution of such a vertex \f$v\f$ 
- * is
+ * Only vertices of the outer boundary where incident edges form an
+ * acute angle contribute to the measure. The additive contribution of
+ * such a vertex \f$v\f$ is
  * \f[
  * \frac{\pi}{2}-\phi(v),
  * \f]
@@ -3895,19 +3895,20 @@ double angle_between_vectors(Vector v1,Vector v2){
  * edges are almost perpendicular. It is close to \f$\pi/2\f$ if the 
  * edges are almost aligned. 
 */
-double face_sum_of_angles(Polygon f, TTessel* t){
+double face_sum_of_angles(HPolygon f, TTessel* t){
   Vector v1,v2;
   Point2 p;
   double tot_angle=0;
 
-  for(int i=0;i!=f.size();i++) {
-    int j=(i-1)%((int)f.size());
-    if (j<0) j=j+f.size();
-    p=f[i];
+  Polygon ob = f.outer_boundary();
+  for(int i=0;i!=ob.size();i++) {
+    int j=(i-1)%((int)ob.size());
+    if (j<0) j=j+ob.size();
+    p=ob[i];
     //if (is_point_inside_window(p,t)>.5)
       {
-	v1 = Vector(f[i],f[j]);
-        v2 = Vector(f[i],f[(i+1)%((int)f.size())]);
+	v1 = Vector(ob[i],ob[j]);
+        v2 = Vector(ob[i],ob[(i+1)%((int)ob.size())]);
 	double a = CGAL_PI/2-angle_between_vectors(v1,v2);
 	if (a>=0)
 	  tot_angle += a;
