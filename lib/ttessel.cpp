@@ -3917,28 +3917,29 @@ double face_sum_of_angles(HPolygon f, TTessel* t){
   return tot_angle;
 }
 
-/** \brief Returns a Polygon object representing a face of the
+/** \brief Returns a HPolygon object representing a face of the
  *     tessellation. 
  *
  * Only vertices joining non-aligned edges are specified during the
- * Polygon construction.
+ * HPolygon construction.
  **/
-Polygon face2poly(TTessel::Face_handle f)
-{
-  Polygon poly;
-  TTessel::Ccb_halfedge_circulator e;
-  
-  e =f->outer_ccb();
-  TTessel::Halfedge_handle e_first=e;
-
-  do {
-    if (e->get_next_hf()==NULL_HALFEDGE_HANDLE || (e->get_next_hf()!=e->next())) 
-    poly.push_back(e->target()->point());
-    e++;
-  }
-  while (e!=e_first);
-
-    return(poly);
+HPolygon face2poly(TTessel::Face_handle f) {
+  std::vector<TTessel::Ccb_halfedge_circulator> ccbs;
+  ccbs.push_back(f->outer_ccb);
+  ccbs.insert(ccbs.end(),f->holes_begin(),f->holes_end());
+  Polygons poly(ccbs.size());
+  for (Size i=0;i!=ccbs.size();i++) {
+    e = ccbs[i];
+    TTessel::Halfedge_handle e_first=e;
+    do {
+      if (e->get_next_hf()==NULL_HALFEDGE_HANDLE || 
+	  (e->get_next_hf()!=e->next())) 
+	poly[i].push_back(e->target()->point());
+      e++;
+    }
+    while (e!=e_first);
+    HPolygon res(poly[0],poly+1,poly.end());
+    return(res);
 }
 /** \brief Return the smallest angle in a tessellation face
  *
