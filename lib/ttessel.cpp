@@ -41,8 +41,15 @@ void LineTes::insert_window(Rectangle r) {
   for (int i=0;i<4;i++) {
     p.push_back(r[i]);
   }
+  insert_window(p);
+}
+/** \bried Define the tessellation domain as a polygon without hole
+ */
+void LineTes::insert_window(Polygon& p) {
   HPolygon hp(p);
-  insert_window(hp);
+  HPolygons hps;
+  hps.push_back(hp);
+  insert_window(hps);
 }
 /** \brief Define the tessellation domain
  *
@@ -52,6 +59,7 @@ void LineTes::insert_window(Rectangle r) {
 void LineTes::insert_window(HPolygons& p) {
   Halfedge_handle e;
   Vertex_handle v,v0;
+  Face_handle f;
 
   // Reset private member window
   window.clear();
@@ -59,7 +67,7 @@ void LineTes::insert_window(HPolygons& p) {
     HPolygon sp = simplify(*pi);
     window.push_back(sp);
   }
-
+  
   /* Now insert the window edges in the arrangement */
   for (HPolygons::const_iterator pi=window.begin();pi!=window.end();pi++) {
     Polygons b = boundaries(*pi);
@@ -85,18 +93,24 @@ void LineTes::insert_window(HPolygons& p) {
 	all_segments.add(s);
       } 
       // Last insertion is particular because vertices pre-exist at both ends of the added curve
-      e = insert_at_vertices(Curve(bi->size()-1],(*bi)[0]),v,v0);
-    v = e->target();
-    e->set_length();
-    e->twin()->set_length(e->get_length());
-    set_junction(e,NULL_HALFEDGE_HANDLE);
-    set_junction(NULL_HALFEDGE_HANDLE,e);
-    e->set_dir(true);
-    e->twin()->set_dir(false);
-    Seg_handle s = new Seg;
-    s->set_halfedge_handle(e);
-    e->set_segment(s); e->twin()->set_segment(s);
-    all_segments.add(s);
+      e = insert_at_vertices(Curve((*bi)[size()-1],(*bi)[0]),v,v0);
+      v = e->target();
+      e->set_length();
+      e->twin()->set_length(e->get_length());
+      set_junction(e,NULL_HALFEDGE_HANDLE);
+      set_junction(NULL_HALFEDGE_HANDLE,e);
+      e->set_dir(true);
+      e->twin()->set_dir(false);
+      Seg_handle s = new Seg;
+      s->set_halfedge_handle(e);
+      e->set_segment(s); e->twin()->set_segment(s);
+      f = e->face();
+      if (bi->orientation()==CGAL::CLOCKWISE) { 
+	// the inserted polygon is a hole
+	f->set_inside(false);
+      }
+      all_segments.add(s);
+    }
   }
   if (!is_valid()) {
     std::cerr << "arrangement is not valid: " << std::endl;
@@ -1303,9 +1317,16 @@ void LineTes_halfedge::set_dir() {
 void LineTes_halfedge::set_dir(bool d) {
   dir = d;
 }
+/******************************************************************************/
+/*                METHODS FOR THE BASE CLASS LineTes_face                 */
+/******************************************************************************/
 
-
-
+/** \brief Basic constructor
+ *
+ * Invoke the parent constructor, set attribute inside to true.
+ */
+LineTes_face::LineTes_face() : CGAL::Arr_face_base<Curve>(),
+				       inside(true) {}
 
 /******************************************************************************/
 /*                     METHODS FOR THE CLASS TTessel                          */
@@ -1351,29 +1372,39 @@ TTessel::TTessel(LineTes& lt) {
   }
 }
 
-/** \brief Define the rectangular domain to be tessellated.
+/** \brief Define domain to be tessellated as a rectangle.
  */
 void TTessel::insert_window(Rectangle r) {
-  LineTes::insert_window(r);
-  int_length = 0;
+  Polygon p;
   for (int i=0;i<4;i++) {
-    Vector v(r[i],r[i+1]);
-    int_length += sqrt(CGAL::to_double(v.x()*v.x()+v.y()*v.y()));
+    p.push_back(r[i]);
   }
+  insert_window(p);
 }
-
-/** \brief Define the polygonal domain to be tessellated
- *
- * Do not use this method at the moment as non-rectangular domains
- * are not fully supported by the LineTes class.
+/** \brief Define the domain to be tessellated as a polygon without hole.
  */
 void TTessel::insert_window(Polygon& p) {
-  LineTes::insert_window(p);
-  int_length = 0;
-  for (Polygon::Edge_const_iterator e=p.edges_begin();e!=p.edges_end();e++) 
-    int_length += sqrt(CGAL::to_double(e->squared_length()));
+  HPolygon hp(p);
+  HPolygons uhp;
+  uhp.push_back(hp);
+  insert_window(uhp);
 }
-
+/** \brief Define the domain to be tessellated.
+ *
+ * The domain is a union of holed polygons.
+ */
+void TTessel::insert_window(HPolygons& uhp) {
+  LineTes::insert_window(uhp);
+  int_length = 0;
+  for (HPolygons::const_iterator hp=uhp.begin();hp!=uhp.end();hp++) {
+    Polygons b = boundaries(*hp);
+    for (Polygon::const_iterator p=b.begin();p!=b.end();p++) {
+      for (Polygon::Edge_const_iterator e=p->edges_begin();
+	   e!=p->edges_end();e++) 
+	int_length += sqrt(CGAL::to_double(e->squared_length()));
+    }
+  }
+}
 /** \brief Split a T-tessellation
  *
  * A cell of the current tessellation is split by a new

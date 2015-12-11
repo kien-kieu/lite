@@ -116,10 +116,12 @@ class LineTes_halfedge; // forward declaration
 /** \typedef Dcel
  * \brief Class used as a template parameter for the Arrangement class
  * 
- * Use of non-standard halfedges (class LineTes_halfedge)*/
+ * Use of non-standard halfedges (class LineTes_halfedge) and 
+ * non-standard faces*/
 typedef CGAL::Arr_dcel_base<CGAL::Arr_vertex_base<Point2>,
-		            LineTes_halfedge,
-		            CGAL::Arr_face_base>                Dcel;
+  LineTes_halfedge,
+  LineTes_face>                       Dcel;
+//		            CGAL::Arr_face_base>                Dcel;
 /** \typedef Arrangement
  * \brief Class representing a tessellation*/
 typedef CGAL::Arrangement_2<Traits,Dcel>                        Arrangement;
@@ -247,6 +249,7 @@ class LineTes : public Arrangement {
   LineTes();
   
   virtual void                  insert_window(Rectangle);
+  virtual void                  insert_window(Polygon&);
   virtual void                  insert_window(HPolygons&);
   Halfedge_handle               split_from_edge(Halfedge_handle, Point2, 
 					             Halfedge_handle, Point2);
@@ -391,7 +394,25 @@ public:
   bool dir;
   LineTes::Seg_handle             segment_ptr;
 };
+/******************************************************************************/
+/*            DÉFINITION DE LA CLASSE LineTes_face                            */
+/******************************************************************************/
 
+/** \brief Face class used by the LineTes class
+ *
+ * The LineTes_face class derives from the CGAL class
+ * Arr_face_base. It has one more Boolean attribute named inside. It true, the
+ * face is a tessellation face inside the domain. Otherwise, the face is
+ * outside the domain.
+ */
+class LineTes_face : public CGAL::Arr_face_base<Curve> {
+ public:
+  LineTes_face()
+  inline void set_inside(bool b) {inside = b;}
+  inline bool get_inside() {return inside;}
+ private:
+  bool inside;
+};
 /******************************************************************************/
 /*                DEFINITIONS RELATED TO I/L-VERTEX PROCESSING                */
 /******************************************************************************/
@@ -580,6 +601,7 @@ public:
   TTessel();
   TTessel(LineTes&);
   virtual void         insert_window(Rectangle);
+  virtual void         insert_window(Polygon&);
   virtual void         insert_window(HPolygons&);
   Halfedge_handle      update(Split);
   Face_handle          update(Merge);
