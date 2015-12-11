@@ -1682,11 +1682,11 @@ TTessel::Seg_sublist_iterator TTessel::non_blocking_segments_end() {
 
 /** \brief Return all faces of the tessellation as polygons
  */
-Polygons TTessel::all_faces() {
-  Polygons res;
+HPolygons TTessel::all_faces() {
+  HPolygons res;
   for (Face_iterator f = faces_begin(); f!= faces_end(); f++) {
     if (!f->is_unbounded()) {
-      Polygon p = face2poly(f);
+      HPolygon p = face2poly(f);
       res.push_back(p);
     }
   }
@@ -3952,7 +3952,7 @@ HPolygon face2poly(TTessel::Face_handle f) {
  * specifying the sum of face smallest angle as a feature. That
  * feature is of interest for penalizing faces with small angles.
 */
-double min_angle(Polygon f, TTessel* t){
+double min_angle(HPolygon f, TTessel* t){
   Vector v1,v2;
   Point2 p;
   double min_angle;
@@ -3977,15 +3977,15 @@ double min_angle(Polygon f, TTessel* t){
  * \param t : the tessellation to be considered.
  */
 double sum_of_faces_squared_areas(TTessel* t){
-double sa = 0.;
-HPolygon poly;
- for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
-   if (!f->is_unbounded()) { 
-     poly = face2poly(f);
-     sa += face_area_2(face2poly(f),t);
-   }
- }
- return(sa);
+  double sa = 0.;
+  HPolygon poly;
+  for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
+    if (!f->is_unbounded()) { 
+      poly = face2poly(f);
+      sa += face_area_2(face2poly(f),t);
+    }
+  }
+  return(sa);
 }
 /** \brief Return the sum of smallest angles on all faces of a T-tessellation
  *
