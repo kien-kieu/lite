@@ -28,9 +28,10 @@ CGAL::Random *rnd = 0;
 
 /** \brief Empty LineTes constructor
  *
- * Equivalent to the empty CGAL::Arrangement_2 constructor
- */
-LineTes::LineTes() : Arrangement() {}
+  */
+LineTes::LineTes() : Arrangement() {
+  unbounded_face()->set_data(false);
+}
 /** \brief Define the the tessellation domain as a rectangle
  *
  * The insert_window method should be used as a first step when
@@ -107,7 +108,9 @@ void LineTes::insert_window(HPolygons& p) {
       f = e->face();
       if (bi->orientation()==CGAL::CLOCKWISE) { 
 	// the inserted polygon is a hole
-	f->set_inside(false);
+	f->set_data(false);
+      } else {
+	f->set_data(true);
       }
       all_segments.add(s);
     }
@@ -142,6 +145,10 @@ LineTes::Halfedge_handle LineTes::split_from_edge(Halfedge_handle e1, Point2 p1,
 				    Curve(p2,e2->target()->point())));
   new_e = add_edge(Curve(p1,p2),e1_new->target(),e2_new->target());
 
+  // Both faces apart new edge are inside the domain
+  new_e->face()->set_data(true);
+  new_e->twin()->face()->set_data(true);
+
   return new_e;
 }
 /** \brief Split a tessellation cell from a vertex to an edge
@@ -149,10 +156,15 @@ LineTes::Halfedge_handle LineTes::split_from_edge(Halfedge_handle e1, Point2 p1,
  * \param e : handle of the edge where the splitting segment ends.
  * \param p: point where the splitting segment ends.
  * \return  handle of one of the halfedges along the splitting segment.
+ * \pre e should not bound the external face. If so, return 
+ * NULL_HALFEDGE_HANDLE.
  */
 LineTes::Halfedge_handle LineTes::split_from_vertex(Vertex_handle v,
 						    Halfedge_handle e,
 						    Point2 p) {
+  if (is_on_boundary(e)==2) 
+    return NULL_HALFEDGE_HANDLE;
+
   bool merge_required = false;
   Curve c;
   if (v->degree()==1) {
@@ -170,6 +182,10 @@ LineTes::Halfedge_handle LineTes::split_from_vertex(Vertex_handle v,
   if (merge_required) {
     new_e = merge_edge(v->incident_halfedges(),new_e,c);
   }
+  // Both faces apart the new edge are inside the domain
+  new_e->face()->set_data(true);
+  new_e->twin()->face()->set_data(true);
+
   return new_e;
 }
 /** \brief Suppress an edge from the tessellation
@@ -216,7 +232,7 @@ LineTes::Face_handle LineTes::suppress_edge(Halfedge_handle e) {
 	       Curve(v2->incident_halfedges()->source()->point(),
 		     v2->incident_halfedges()->get_next_hf()->target()->point()));
   }
-
+  f->set_data(true); // new face inside the domain
   return f;
 }
 /** \brief Clear a tessellation
@@ -506,8 +522,8 @@ void LineTes::print_all_segments(bool endsOnly) {
  *
  * Test if an edge lies on the window boundary. Return
  * - 0 if the edge is internal.
- * - 1 if the halfedge bounds an internal (bounded) face.
- * - 2 if the halfedge bounds the external (unbounded) face.
+ * - 1 if the halfedge bounds an internal face.
+ * - 2 if the halfedge bounds the external face.
  */
 int LineTes::is_on_boundary(Halfedge_handle e){
   Face_handle f_e,f_e_twin;
@@ -515,12 +531,12 @@ int LineTes::is_on_boundary(Halfedge_handle e){
   f_e = e->face();
   f_e_twin = e->twin()->face();
 
-  if (!f_e->is_unbounded() && !f_e_twin->is_unbounded()) 
+  if (!f_e->data() && !f_e_twin->data()) 
     return 0;
-  else { // One of the faces bounded by the edge is unbounded
-    if (!f_e->is_unbounded()) 
+  else { // One of the faces bounded by the edge is inside the domain
+    if (f_e->data()) // The face bounded by the halfedge is inside
       return 1;
-    else 
+    else  // The face bounded by the halfedge is outside
       return 2;
   }
 }

@@ -28,7 +28,7 @@ n'est implémentée.*/
 #include <CGAL/Linear_algebraCd.h>
 #include <CGAL/double.h>
 #include <CGAL/Arr_segment_traits_2.h>
-#include <CGAL/Arr_default_dcel.h>
+#include <CGAL/Arr_extended_dcel.h>
 #include <CGAL/Arrangement_2.h>
 #include <CGAL/IO/Arr_iostream.h>
 #include <CGAL/Arr_walk_along_line_point_location.h>
@@ -118,10 +118,9 @@ class LineTes_halfedge; // forward declaration
  * 
  * Use of non-standard halfedges (class LineTes_halfedge) and 
  * non-standard faces*/
-typedef CGAL::Arr_dcel_base<CGAL::Arr_vertex_base<Point2>,
-  LineTes_halfedge,
-  LineTes_face>                       Dcel;
-//		            CGAL::Arr_face_base>                Dcel;
+typedef CGAL::Arr_face_extended_dcel<Traits,bool,
+  CGAL::Arr_vertex_base<Point2>,
+  LineTes_halfedge,GAL::Arr_face_base>                          Dcel;
 /** \typedef Arrangement
  * \brief Class representing a tessellation*/
 typedef CGAL::Arrangement_2<Traits,Dcel>                        Arrangement;
@@ -331,7 +330,7 @@ extern LineTes::Face_handle NULL_FACE_HANDLE;
 extern LineTes::Seg_handle NULL_SEG_HANDLE;
 
 /******************************************************************************/
-/*            DÉFINITION DE LA CLASSE LineTes_halfedge                        */
+/*            DEFINITION OF THE CLASS LineTes_halfedge                        */
 /******************************************************************************/
 
 /** \brief Halfedge class used by the LineTes class
@@ -393,25 +392,6 @@ public:
   LineTes::Halfedge_handle        prev_hf;
   bool dir;
   LineTes::Seg_handle             segment_ptr;
-};
-/******************************************************************************/
-/*            DÉFINITION DE LA CLASSE LineTes_face                            */
-/******************************************************************************/
-
-/** \brief Face class used by the LineTes class
- *
- * The LineTes_face class derives from the CGAL class
- * Arr_face_base. It has one more Boolean attribute named inside. It true, the
- * face is a tessellation face inside the domain. Otherwise, the face is
- * outside the domain.
- */
-class LineTes_face : public CGAL::Arr_face_base<Curve> {
- public:
-  LineTes_face()
-  inline void set_inside(bool b) {inside = b;}
-  inline bool get_inside() {return inside;}
- private:
-  bool inside;
 };
 /******************************************************************************/
 /*                DEFINITIONS RELATED TO I/L-VERTEX PROCESSING                */
