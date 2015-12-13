@@ -1726,7 +1726,7 @@ TTessel::Seg_sublist_iterator TTessel::non_blocking_segments_end() {
 HPolygons TTessel::all_faces() {
   HPolygons res;
   for (Face_iterator f = faces_begin(); f!= faces_end(); f++) {
-    if (!f->is_unbounded()) {
+    if (f->data()) {
       HPolygon p = face2poly(f);
       res.push_back(p);
     }
@@ -1796,7 +1796,7 @@ TTessel::Halfedge_handle TTessel::alt_length_weighted_random_halfedge() {
   double select = rnd->get_double(0,til);
   Halfedge_handle res = halfedges_end();
   for (Halfedge_iterator e=halfedges_begin();e!=halfedges_end();e++) {
-    if (e->face()->is_unbounded())
+    if (e->face()->data())
       continue;
     cumlen += e->get_length();
     if (cumlen>select) {
@@ -1817,7 +1817,7 @@ std::vector<TTessel::Halfedge_handle> TTessel::alt_length_weighted_random_halfed
   std::sort(select.begin(),select.end(),std::greater<double>());
   std::vector<Halfedge_handle> res;
   for (Halfedge_iterator e=halfedges_begin();e!=halfedges_end();e++) {
-    if (e->face()->is_unbounded())
+    if (!e->face()->data())
       continue;
     cumlen += e->get_length();
     while (cumlen>select.back()) {
@@ -1843,7 +1843,7 @@ TTessel::Halfedge_handle TTessel::random_halfedge() {
     Size ri = (Size) rnd->get_int(0,n);
     for (Size i=0;i!=ri;i++)
       e++;
-    if (!e->face()->is_unbounded())
+    if (e->face()->data())
       found = true;
   }
   return e; 
@@ -1857,7 +1857,7 @@ void TTessel::printRCALI(std::ostream& out){
   out <<  number_of_faces() - number_of_unbounded_faces() << std::endl;
   int faces_counter=0;
   for (Face_iterator f = faces_begin();f!=faces_end();f++) {
-    if (! f->is_unbounded())
+    if (f->data())
       {
 	faces_counter +=1;
 	Ccb_halfedge_circulator e=f->outer_ccb();
@@ -2677,7 +2677,7 @@ void Energy::set_ttessel(TTessel *t) {
   for (Size i=0;i!=theta.faces.size();i++) {
     for (TTessel::Face_iterator f=ttes->faces_begin();f!=ttes->faces_end();
 	 f++){
-      if (!f->is_unbounded()) // only internal faces
+      if (f->data()) // only internal faces
 	    value += theta.faces[i]*features.faces[i](face2poly(f),ttes);
 	 
     }
@@ -4042,7 +4042,7 @@ double sum_of_faces_squared_areas(TTessel* t){
   double sa = 0.;
   HPolygon poly;
   for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
-    if (!f->is_unbounded()) { 
+    if (f->data()) { 
       poly = face2poly(f);
       sa += face_area_2(face2poly(f),t);
     }
@@ -4057,7 +4057,7 @@ double sum_of_min_angles(TTessel* t){
   double sma = 0.;
   HPolygon poly;
   for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
-    if (!f->is_unbounded()) { 
+    if (f->data()) { 
       poly = face2poly(f);
       sma += min_angle(face2poly(f),t);
     }
@@ -4072,7 +4072,7 @@ double sum_of_angles_obt(TTessel* t){
   double sao = 0.;
   HPolygon poly;
   for (TTessel::Face_iterator f = t->faces_begin();f!=t->faces_end();f++) {
-    if (!f->is_unbounded()) { 
+    if (f->data()) { 
       poly = face2poly(f);
       sao +=face_sum_of_angles(poly,t);
     }
