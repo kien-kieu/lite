@@ -120,7 +120,7 @@ class LineTes_halfedge; // forward declaration
  * non-standard faces*/
 typedef CGAL::Arr_face_extended_dcel<Traits,bool,
   CGAL::Arr_vertex_base<Point2>,
-  LineTes_halfedge,GAL::Arr_face_base>                          Dcel;
+  LineTes_halfedge,CGAL::Arr_face_base>                          Dcel;
 /** \typedef Arrangement
  * \brief Class representing a tessellation*/
 typedef CGAL::Arrangement_2<Traits,Dcel>                        Arrangement;
@@ -981,7 +981,8 @@ bool                     are_aligned(Point2 p, Point2 q, Point2 r,
 				     bool verbose=false);
 Segment                  clip_segment_by_convex_polygon(Segment, Polygon);
 Segment                  clip_segment_by_polygon(Segment, Polygon);
-Segment                  clip_segment_by_holed_polygon(Segment, HPolygon);
+Segment                  clip_segment_by_polygon(Segment, HPolygon);
+Segment                  clip_segment_by_polygon(Segment, HPolygons);
 double                   precompute_lengthening(Arrangement::Halfedge_handle,
 						Arrangement::Halfedge_handle*,
 						Point2*);
