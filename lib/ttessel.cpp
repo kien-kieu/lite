@@ -2028,16 +2028,11 @@ ModList TTessel::Split::modified_elements() {
   modifs.add_edges.push_back(Segment(get_p1(),get_p2()));
 
   // Suppressed face
+  TTessel::Face_handle del_face = get_e1()->face();
+  HPolygon del_poly = face2poly(del_face);
+  modifs.del_faces.push_back(del_poly);
 
-  Polygon poly;
-  TTessel::Ccb_halfedge_circulator e_circ=get_e1()->ccb();
-  do {
-    poly.push_back(e_circ->target()->point());
-  } while (++e_circ!=get_e1());
-  modifs.del_faces.push_back(poly);
-
-  // Add faces
-
+  // Added faces
   poly.erase(poly.vertices_begin(),poly.vertices_end());
   poly.push_back(get_p1());
   do {

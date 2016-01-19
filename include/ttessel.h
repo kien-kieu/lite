@@ -435,8 +435,8 @@ struct ModList {
   std::vector<Point2>               add_vertices; ///< list of new vertices
   std::vector<Segment>              del_edges;    ///< list of deleted edges
   std::vector<Segment>              add_edges;    ///< list of new edges
-  std::vector<HPolygon>             del_faces;    ///< list of deleted faces
-  std::vector<HPolygon>             add_faces;    ///< list of new faces
+  HPolygons                         del_faces;    ///< list of deleted faces
+  HPolygons                         add_faces;    ///< list of new faces
   std::vector<std::vector<Point2> > del_segs;     ///< list of deleted segments
   std::vector<std::vector<Point2> > add_segs;     ///< list of new segments
 };
