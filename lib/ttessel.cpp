@@ -2033,13 +2033,15 @@ ModList TTessel::Split::modified_elements() {
   modifs.del_faces.push_back(del_poly);
 
   // Added faces
-  poly.erase(poly.vertices_begin(),poly.vertices_end());
+  Polygon poly;
   poly.push_back(get_p1());
+  TTessel::Ccb_halfedge_circulator e_circ = get_e1()->ccb();
   do {
     poly.push_back(e_circ->target()->point());
   } while (++e_circ!=get_e2());
   poly.push_back(get_p2());
-  modifs.add_faces.push_back(poly);
+  HPolygon added_hpoly_1(poly);
+  modifs.add_faces.push_back(added_hpoly_1);
   // Another one
   poly.erase(poly.vertices_begin(),poly.vertices_end());
   poly.push_back(get_p2());
@@ -2047,7 +2049,8 @@ ModList TTessel::Split::modified_elements() {
     poly.push_back(e_circ->target()->point());
   } while (++e_circ!=get_e1());
   poly.push_back(get_p1());
-  modifs.add_faces.push_back(poly);
+  HPolygon added_hpoly_2(poly);
+  modifs.add_faces.push_back(added_hpoly_2);
 
   // Segment s1 is suppressed
   std::vector<Point2> seg = get_e1()->segment()->list_of_points();
@@ -2186,7 +2189,8 @@ ModList TTessel::Merge::modified_elements() {
   do {
     poly.push_back(e_circ->target()->point());
   } while (++e_circ!=get_e()->twin());
-  modifs.del_faces.push_back(poly);
+  HPolygon hpoly_1(poly);
+  modifs.del_faces.push_back(hpoly_1);
   
   // Face 2
   
@@ -2197,8 +2201,8 @@ ModList TTessel::Merge::modified_elements() {
   do {
     poly.push_back(e_circ->target()->point());
   } while (++e_circ!=get_e());
-
-  modifs.del_faces.push_back(poly);
+  HPolygon hpoly_2(poly);
+  modifs.del_faces.push_back(hpoly_2);
  
    // Added face
    
@@ -2211,8 +2215,8 @@ ModList TTessel::Merge::modified_elements() {
   do {
     poly.push_back(e_circ->target()->point());
   } while (++e_circ!=e1()->get_prev_hf());
-
-  modifs.add_faces.push_back(poly);
+  HPolygon added_hpoly(poly);
+  modifs.add_faces.push_back(added_hpoly);
   
 
   // Suppressed and added segments
@@ -2389,23 +2393,22 @@ ModList TTessel::Flip::modified_elements() {
     modifs.add_edges.push_back(Segment(s2_split[0],s2_merge[1]));
   }
   
-  
-  
-    
-      // 2 suppressed faces
+  // 2 suppressed faces
 
   Polygon poly;
   TTessel::Ccb_halfedge_circulator e_circ = get_e1()->ccb();
   do {
     poly.push_back(e_circ->target()->point());
   } while (++e_circ!=get_e1());
-  modifs.del_faces.push_back(poly);
+  HPolygon del_hpoly_1(poly);
+  modifs.del_faces.push_back(del_hpoly_1);
   poly.erase(poly.vertices_begin(),poly.vertices_end());
   e_circ=get_e1()->twin()->ccb();
   do {
     poly.push_back(e_circ->target()->point());
   } while (++e_circ!=get_e1()->twin());
-  modifs.del_faces.push_back(poly);
+  HPolygon del_hpoly_2(poly);
+  modifs.del_faces.push_back(del_hpoly_2);
 
   // 2 added faces
 
@@ -2431,7 +2434,8 @@ ModList TTessel::Flip::modified_elements() {
     poly.push_back(e_circ->target()->point());
     e_circ++;
   }
-  modifs.add_faces.push_back(poly);
+  HPolygon extended_hpoly(poly);
+  modifs.add_faces.push_back(extended_hpoly);
   
   // Shortened face
   
@@ -2446,9 +2450,8 @@ ModList TTessel::Flip::modified_elements() {
     poly.push_back(e_circ->target()->point());
     e_circ++;
   } while (e_circ!=get_e1() && e_circ!=get_e2()); 
-  
-  
-  modifs.add_faces.push_back(poly);
+  HPolygon shortened_hpoly(poly);
+  modifs.add_faces.push_back(shortened_hpoly);
   
   // Segments
 
@@ -2744,11 +2747,11 @@ CatVector Energy::statistic_variation(TTessel::Modification& modif){
   // Faces
   for (unsigned int i=0;i!=theta.faces.size();i++){
     loc_var=0;
-    for (std::vector<Polygon>::iterator i_fc=ml.del_faces.begin(); 
+    for (HPolygons::iterator i_fc=ml.del_faces.begin(); 
 	 i_fc!=ml.del_faces.end();i_fc++){
       loc_var -=(features.faces[i])(*i_fc,ttes);
     } 
-    for (std::vector<Polygon>::iterator i_fc=ml.add_faces.begin(); 
+    for (HPolygons::iterator i_fc=ml.add_faces.begin(); 
 	 i_fc!=ml.add_faces.end();i_fc++){
       loc_var += (features.faces[i])(*i_fc,ttes);
     }
@@ -2867,7 +2870,7 @@ void  Energy::add_features_edges(double (*fe)(Segment,TTessel*) ){
  *             a face (as a polygon) and the T-tessellation. The function
  *             should return the contribution to the energy of the given
  *             face.*/
-void  Energy::add_features_faces(double (*ff)(Polygon,TTessel*) ){
+void  Energy::add_features_faces(double (*ff)(HPolygon,TTessel*) ){
   features.faces.push_back(ff);
 }
 /** \brief Add a segment feature in the energy formula
@@ -3379,7 +3382,39 @@ bool are_aligned(Point2 p, Point2 q, Point2 r,bool verbose) {
   }
   return true;
 }
-/** \brief Clip a segment by a convex polygon
+/* \brief Test whether a point is in the interior of a holed polygon
+ * \param pt : point to be tested.
+ * \param poly : polygon with holes.
+ * \note Return false if the point lies on the boundary of the polygon.
+ */
+bool is_inside(Point2 pt,HPolygon& poly) {
+  if (poly.outer_boundary().bounded_side(pt)!=CGAL::ON_BOUNDED_SIDE) {
+    return false;
+  }
+  for (HPolygon::Hole_const_iterator hi=poly.holes_begin();
+       hi!=poly.holes_end();hi++) {
+    if (hi->bounded_side(pt)!=CGAL::ON_UNBOUNDED_SIDE) {
+      return false;
+    }
+  }
+  return true;
+}
+/* \brief Test whether a point is in the interior of a union
+ * of holed polygons
+ * \param pt : point to be tested.
+ * \param polys : polygons with holes.
+ * \note Return false if the point lies on the boundary of one of 
+ * the polygons.
+ */
+bool is_inside(Point2 pt,HPolygons& polys) {
+  for (Size i=0;i!=polys.size();i++) {
+    if (is_inside(pt,polys[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+ /** \brief Clip a segment by a convex polygon
  * \param S : segment to be clipped.
  * \param P : clipping polygon.
  * \return clipped segment, that is the intersection between the segment and
@@ -3464,7 +3499,7 @@ Segment clip_segment_by_polygon(Segment S, HPolygon P) {
     Pvertices.push_back(Nef::Point(P.outer_boundary()[i].x(),
 				   P.outer_boundary()[i].y()));
   Nef nefP(Pvertices.begin(),Pvertices.end());
-  for (Polygon_with_holes::Hole_const_iterator h=P.holes_begin();
+  for (HPolygon::Hole_const_iterator h=P.holes_begin();
        h != P.holes_end();h++) {
     std::vector<Nef::Point> Hvertices;
     for (Size i=0;i!=(*h).size();++i) 
@@ -3514,7 +3549,7 @@ Segment clip_segment_by_polygon(Segment S, HPolygons P) {
   if (P.size()>1) {
     exit(EXIT_FAILURE);
   }
-  return clip_segment_by_polygon(s,P[0]);
+  return clip_segment_by_polygon(S,P[0]);
 }
 /** \brief Predict added length when lengthening an edge in an arrangement
  * \param[in] e : halfedge that would be lengthened.
@@ -3804,16 +3839,17 @@ unsigned long int number_of_internal_vertices(TTessel& t){
  * \return a double resulting from conversion from a Boolean.
  */
 double is_point_inside_window(Point2 pt,LineTes* t){
-  return (double)t->get_window().has_on_bounded_side(pt);
+  HPolygons domain = t->get_window();
+  return (double)is_inside(pt,domain);
 }
 /** \brief Test whether a point is in the interior of the tessellated domain
  * \return a double resulting from conversion from a Boolean.
  */
 double is_point_inside_window(Point2 pt,TTessel* t){
   // repeated code, any way to avoid that without slowing computation too much?
-  return (double)t->get_window().has_on_bounded_side(pt);
+  HPolygons domain = t->get_window();
+  return (double)is_inside(pt,domain);
 }
-
 
 /** \brief Return the length of an internal T-tessellation segment
  *
@@ -3855,12 +3891,22 @@ double is_segment_internal(std::vector<Point2> s, TTessel* t){
   if (is_point_inside_window(p1,t)>.5 || is_point_inside_window(p2,t)>.5)
     return 1.0;
   // Both segment ends are on the boundary
-  Polygon dom = t->get_window();
+  HPolygons dom = t->get_window();
   // Test whether both lie on the same domain side
-  for (Polygon::Edge_const_iterator e=dom.edges_begin();
-       e!=dom.edges_end();e++) {
-    if (e->has_on(p1) && e->has_on(p2)) {
-      return 0.0;
+  for (Size i=0;i!=dom.size();i++) {
+    Polygons borders;
+    borders.push_back(dom[i].outer_boundary());
+    for (HPolygon::Hole_const_iterator hi=dom[i].holes_begin();
+	 hi!=dom[i].holes_end();hi++) {
+      borders.push_back(*hi);
+    }
+    for (Size j=0;j!=borders.size();j++) {
+      for (Polygon::Edge_const_iterator e=borders[j].edges_begin();
+	   e!=borders[j].edges_end();e++) {
+	if (e->has_on(p1) && e->has_on(p2)) {
+	  return 0.0;
+	}
+      }
     }
   }
   return 1.0;
@@ -3982,21 +4028,23 @@ double face_sum_of_angles(HPolygon f, TTessel* t){
  **/
 HPolygon face2poly(TTessel::Face_handle f) {
   std::vector<TTessel::Ccb_halfedge_circulator> ccbs;
-  ccbs.push_back(f->outer_ccb);
+  ccbs.push_back(f->outer_ccb());
   ccbs.insert(ccbs.end(),f->holes_begin(),f->holes_end());
   Polygons poly(ccbs.size());
   for (Size i=0;i!=ccbs.size();i++) {
-    e = ccbs[i];
+    TTessel::Ccb_halfedge_circulator e = ccbs[i];
     TTessel::Halfedge_handle e_first=e;
     do {
       if (e->get_next_hf()==NULL_HALFEDGE_HANDLE || 
 	  (e->get_next_hf()!=e->next())) 
 	poly[i].push_back(e->target()->point());
       e++;
-    }
-    while (e!=e_first);
-    HPolygon res(poly[0],poly+1,poly.end());
-    return(res);
+    } while (e!=e_first);
+  }
+  Polygons::iterator hi(poly.begin());
+  hi++;
+  HPolygon res(poly[0],hi,poly.end());
+  return(res);
 }
 /** \brief Return the smallest angle in a tessellation face
  *
@@ -4116,16 +4164,17 @@ double sum_of_segment_squared_sizes(TTessel* t) {
  */
 Polygons boundaries(HPolygon hp) {
   Polygons b;
-  ob = hp.outer_boundary();
+  Polygon ob(hp.outer_boundary());
   if (ob.orientation()!=CGAL::COUNTERCLOCKWISE) {
     ob.reverse_orientation();
   }
   b.push_back(ob);
   for (HPolygon::Hole_const_iterator h=hp.holes_begin();h!=hp.holes_end();h++) {
-    if (h->orientation()!=CGAL::CLOCKWISE) {
-      h->.reverse_orientation();
+    Polygon poly(*h);
+    if (poly.orientation()!=CGAL::CLOCKWISE) {
+      poly.reverse_orientation();
     }
-    b.push_back(*h);
+    b.push_back(poly);
   }
   return b;
 }
@@ -4134,9 +4183,6 @@ Polygons boundaries(HPolygon hp) {
  * A vertex is not necessary if it is collinear with its neighbours. 
  */
 Polygon simplify(Polygon p) {
-  Halfedge_handle e;
-  Vertex_handle v,v0;
-
   Polygon sp;
   
   /* Start by removing all unnecessary vertices */

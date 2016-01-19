@@ -979,6 +979,8 @@ class PLInferenceNOIS : public PseudoLikDiscrete{
 
 bool                     are_aligned(Point2 p, Point2 q, Point2 r, 
 				     bool verbose=false);
+bool                     is_inside(Point2, HPolygon&);
+bool                     is_inside(Point2, HPolygons&);
 Segment                  clip_segment_by_convex_polygon(Segment, Polygon);
 Segment                  clip_segment_by_polygon(Segment, Polygon);
 Segment                  clip_segment_by_polygon(Segment, HPolygon);
