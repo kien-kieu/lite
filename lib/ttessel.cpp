@@ -531,7 +531,7 @@ int LineTes::is_on_boundary(Halfedge_handle e){
   f_e = e->face();
   f_e_twin = e->twin()->face();
 
-  if (!f_e->data() && !f_e_twin->data()) 
+  if (f_e->data() && f_e_twin->data()) 
     return 0;
   else { // One of the faces bounded by the edge is inside the domain
     if (f_e->data()) // The face bounded by the halfedge is inside
@@ -1796,7 +1796,7 @@ TTessel::Halfedge_handle TTessel::alt_length_weighted_random_halfedge() {
   double select = rnd->get_double(0,til);
   Halfedge_handle res = halfedges_end();
   for (Halfedge_iterator e=halfedges_begin();e!=halfedges_end();e++) {
-    if (e->face()->data())
+    if (!e->face()->data())
       continue;
     cumlen += e->get_length();
     if (cumlen>select) {
