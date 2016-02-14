@@ -1005,7 +1005,20 @@ double                   sum_of_segment_squared_sizes(TTessel* t);
 Polygons                 boundaries(HPolygon);
 Polygon                  simplify(Polygon);
 HPolygon                 simplify(HPolygon);
-
+std::vector<Point2>      ccb_insert_edge(LineTes::Halfedge_handle&,
+					 LineTes::Halfedge_handle&,
+					 Point2&,Point2&);
+bool                     is_on_same_ccb(LineTes::Halfedge_handle&,
+					LineTes::Halfedge_handle&);
+std::vector<bool>        is_on_same_ccb(LineTes::Halfedge_handle&,
+					std::vector<LineTes::Halfedge_handle>&);
+bool                     has_holes(LineTes::Face_handle&);
+std::vector<bool>        filter_holes(HPolygon::Hole_const_iterator,
+				      HPolygon::Hole_const_iterator,
+				      Polygon&);
+Size                     hole_index(LineTes::Halfedge_handle,
+				    LineTes::Hole_iterator,
+				    LineTes::Hole_iterator);
 /** \defgroup features Features of T-tessellations
  *
  * Functions that can be used by Energy objects for defining a Gibbs model
