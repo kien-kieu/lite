@@ -5,7 +5,7 @@
    Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
    License: GPL v3. */
 
-//include <RcppCommon.h>
+//#include <RcppCommon.h>
 #include <iostream>
 #include <fstream>
 #define STRICT_R_HEADERS /* otherwise conflict between R_ext/Constants.h and 
@@ -15,7 +15,13 @@
 namespace Rcpp {
   template<> SEXP wrap(const CatVector&);
   template<> CatVector as(SEXP);
+  template<> SEXP wrap(const Polygon&);
+  template<> Polygon as(SEXP);
   template<> SEXP wrap(const Polygons&);
+  template<> SEXP wrap(const HPolygon&);
+  template<> HPolygon as(SEXP);
+  template<> SEXP wrap(const HPolygons&);
+  template<> HPolygons as(SEXP);
 }
 RCPP_EXPOSED_CLASS(LineTes)
 RCPP_EXPOSED_CLASS(TTessel)
@@ -39,14 +45,10 @@ void setPolygonalDomain(LineTes *tes, Rcpp::NumericMatrix coords) {
   }
   tes->insert_window(domain);
 }
-Rcpp::NumericMatrix getDomain(LineTes *tes) {
-  Polygon w = tes->get_window();
-  Rcpp::NumericMatrix rw(w.size(),2);
-  for (int i=0;i!=w.size();i++) {
-    rw(i,0) = CGAL::to_double(w[i][0]);
-    rw(i,1) = CGAL::to_double(w[i][1]);
-  }
-  return rw;
+void setDomainAsHoledPolygons(LineTes *tes, Rcpp::List R_hpolygons) {
+  tes->clear();
+  HPolygons hpolygons = Rcpp::as<HPolygons>(R_hpolygons);
+  tes->insert_window(hpolygons);
 }
 Rcpp::NumericMatrix getSegmentCoords(LineTes *tes) {
   int n = (int) tes->number_of_segments();
@@ -132,41 +134,39 @@ Rcpp::NumericVector getAcuteAngles(TTessel *tes, bool onlyInternal) {
   Rcpp::NumericVector res(2*tes->number_of_segments(),0.0);
   Rcpp::NumericVector::iterator res_it = res.begin();
   for (TTessel::Face_iterator f = tes->faces_begin();f!=tes->faces_end();f++) {
-    if(f->is_unbounded()) continue;
-    Polygon poly = face2poly(f);
+    if(!f->data()) continue;
+    HPolygon hpoly = face2poly(f);
+    Polygon poly = hpoly.outer_boundary();
     for(int i = 0;i != poly.size();i++) { 
       int j = (i-1)%((int)poly.size());
       if (j <0 ) j = j+poly.size();
       Point2 p = poly[i];
       double tokeep ;
       if(onlyInternal) {
-	tokeep = is_point_inside_window(p,tes);
+  	tokeep = is_point_inside_window(p,tes);
       } else {
-	tokeep = 1.0;
+  	tokeep = 1.0;
       }
       if (tokeep>.5) {
-	Vector v1 = Vector(poly[i],poly[j]);
-	Vector v2 = Vector(poly[i],poly[(i+1)%((int)poly.size())]);
-	double angle = angle_between_vectors(v1,v2);
-	if (angle<CGAL_PI/2) {
-	  *res_it += angle;
-	  res_it++;
-	}
+  	Vector v1 = Vector(poly[i],poly[j]);
+  	Vector v2 = Vector(poly[i],poly[(i+1)%((int)poly.size())]);
+  	double angle = angle_between_vectors(v1,v2);
+  	if (angle<CGAL_PI/2) {
+  	  *res_it += angle;
+  	  res_it++;
+  	}
       }
     }
   }
   Rcpp::NumericVector res_red(res.begin(),res_it);
   return res_red;
 }
-// To be changed when the domain will be a polygon
 Rcpp::NumericVector getCellAreas(TTessel *tes) {
-  Rcpp::NumericVector res(tes->number_of_segments()-4+1);
-  Rcpp::NumericVector::iterator res_it = res.begin();
+  Rcpp::NumericVector res;
   for (TTessel::Face_iterator f = tes->faces_begin();f!=tes->faces_end();f++) {
-    if (!f->is_unbounded()) { 
-      Polygon poly = face2poly(f);
-      *res_it = to_double(poly.area());
-      res_it++;
+    if (f->data()) { 
+      HPolygon poly = face2poly(f);
+      res.push_back(sqrt(face_area_2(poly,tes)));
     }
   }
   return res;
@@ -190,13 +190,13 @@ Rcpp::NumericMatrix getAdjacencyLengths(TTessel *tes) {
     double len = e->get_length();
     TTessel::Face_handle f1 = e->face();
     TTessel::Face_handle f2 = e->twin()->face();
-    if (!f1->is_unbounded() && !f2->is_unbounded()) {
+    if (f1->data() && f2->data()) {
       // find face indices. Rather tedious!
       int i1 = n;
       int i2 = n;
       int i = 0;
       for (TTessel::Face_iterator fi=fstart;fi!=fend;fi++) {
-	if(fi->is_unbounded())
+	if(!fi->data())
 	  continue;
 	TTessel::Face_handle f = fi;
 	if (f==f1) 
@@ -309,20 +309,81 @@ namespace Rcpp {
 }
 
 namespace Rcpp {
+  template <> SEXP wrap(const Polygon &poly) {
+    NumericMatrix coords(poly.size(),2);
+    for (Size i=0;i<poly.size();i++) {
+      coords(i,0) = CGAL::to_double(poly[i][0]);
+      coords(i,1) = CGAL::to_double(poly[i][1]);
+    }
+    return wrap(coords);
+  }
+  template <> Polygon as(SEXP x) {
+    NumericMatrix R_matrix(x);
+    Polygon res;
+    for (int i=0;i!=R_matrix.nrow();i++) {
+      Point2 v(R_matrix(i,0),R_matrix(i,1));
+      res.push_back(v);
+    }
+    return res;
+  }
   template<> SEXP wrap(const Polygons& polygons) {
-    std::vector<NumericMatrix> list;
+    List R_polygons;
     for (unsigned int i=0; i!=polygons.size(); i++) {
       Polygon p = polygons[i];
-      NumericMatrix coord(p.size(),2);
-      for (unsigned int j=0; j!=p.size(); j++) {
-	coord(j,0) = CGAL::to_double(p[j][0]);
-	coord(j,1) = CGAL::to_double(p[j][1]);
-      }
-      list.push_back(coord);
+      NumericMatrix coord = wrap<Polygon>(p);
+      R_polygons.push_back(coord);
     }
-    return Rcpp::wrap(list);
+    return Rcpp::wrap(R_polygons);
+  }
+  template <> SEXP wrap(const HPolygon &p) {
+    const Polygon outer = p.outer_boundary();
+    NumericMatrix outer_matrix = wrap<Polygon>(outer);
+    List holes;
+    for (HPolygon::Hole_const_iterator hi=p.holes_begin();
+	 hi!=p.holes_end();hi++) {
+      Polygon hole = *hi;
+      NumericMatrix hole_matrix = wrap<Polygon>(hole);
+      holes.push_back(hole_matrix);
+    }
+    List R_hpoly = List::create(Named("outer")=outer_matrix,
+				Named("holes")=holes);
+    return wrap(R_hpoly);
+  }
+  template <> HPolygon as(SEXP x) {
+    List R_hpoly(x);
+    NumericMatrix outer_matrix = R_hpoly["outer"];
+    Polygon outer = as<Polygon>(outer_matrix);
+    List hole_matrices = R_hpoly["holes"];
+    Polygons holes;
+    for (int j=0;j<hole_matrices.size();j++) {
+      NumericMatrix hole_matrix = hole_matrices[j];
+      Polygon hole = as<Polygon>(hole_matrix);
+      holes.push_back(hole);
+    }
+    HPolygon hpoly(outer,holes.begin(),holes.end());
+    return hpoly;
+  }
+  template <> SEXP wrap(const HPolygons& polygons) {
+    List res;
+    for (HPolygons::const_iterator hpi=polygons.begin();hpi!=polygons.end();
+	 hpi++) {
+      Rcpp::List R_hpoly = wrap<HPolygon>(*hpi);
+      res.push_back(R_hpoly);
+    }
+    return wrap(res);
+  }
+  template <> HPolygons as(SEXP x) {
+    List R_list(x);
+    HPolygons hpolys;
+    for (int i=0;i<R_list.size();i++) {
+      List R_hpoly = R_list[i];
+      HPolygon hpoly = as<HPolygon>(R_hpoly);
+      hpolys.push_back(hpoly);
+    }
+    return hpolys;
   }
 }
+
 // Rcpp::NumericVector R_get_theta(Energy *e) {
 //   Parameters par = e->get_theta();
 //   Rcpp::NumericVector theta = Parameters2NumericVector(par);
@@ -383,17 +444,17 @@ RCPP_MODULE(lite){
   using namespace Rcpp;
   class_<LineTes>("LineTes")
     .constructor("generate an empty LineTes object")
-    /* Something weird here. It is not possible to define the setDomain method
-       for LineTes and let TTessel inherit it. Furthermore, it is not possible
-       to define two methods for LineTes and TTessel with the same name but
-       "different" implementations.*/
     .method("is_valid",&LineTes::is_valid,
 	    "test validity of the line tessellation")
     .method("setDomain",&setDomain,
 	    "define the rectangular domain to be tessellated")
     .method("setDomain",&setPolygonalDomain,
 	    "define the polygonal domain to be tessellated")
-    .method("getDomain",&getDomain,"get the domain to be tessellated")
+    /*not possible to define a setDomain method with input 
+      argument a R list. Why? */
+    .method("setDomainAsHoledPolygons",&setDomainAsHoledPolygons,
+	    "define the domain to be tessellated as holed polygons")
+    .method("getDomain",&LineTes::get_window,"get the domain to be tessellated")
     .method("getSegmentCoords",&getSegmentCoords,
 	    "return the segment coordinates")
     .method("insert_segment",&insert_segment,"insert a line segment in a tessellation")

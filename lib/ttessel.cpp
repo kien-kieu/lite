@@ -70,10 +70,10 @@ void LineTes::insert_window(HPolygons& p) {
   }
   
   /* Now insert the window edges in the arrangement */
-  for (HPolygons::const_iterator pi=window.begin();pi!=window.end();pi++) {
+  for (HPolygons::iterator pi=window.begin();pi!=window.end();pi++) {
     Polygons b = boundaries(*pi);
-    for (Polygons::const_iterator bi=b.begin();bi!=b.end();bi++) {
-      v = insert_in_face_interior((*bi)[0],unbounded_face());
+    for (Polygons::iterator bi=b.begin();bi!=b.end();bi++) {
+      v = insert_point(*this,(*bi)[0]);
       v0 = v;
       for (int i=0;i<bi->size()-1;i++) {
 	if ((*bi)[i]<=(*bi)[i+1]) {
@@ -4313,6 +4313,7 @@ Polygons boundaries(HPolygon hp) {
   }
   b.push_back(ob);
   for (HPolygon::Hole_const_iterator h=hp.holes_begin();h!=hp.holes_end();h++) {
+    
     Polygon poly(*h);
     if (poly.orientation()!=CGAL::CLOCKWISE) {
       poly.reverse_orientation();
