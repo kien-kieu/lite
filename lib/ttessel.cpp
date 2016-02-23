@@ -102,16 +102,15 @@ void LineTes::insert_window(HPolygons& p) {
       set_junction(NULL_HALFEDGE_HANDLE,e);
       e->set_dir(true);
       e->twin()->set_dir(false);
+      if (bi->orientation()==CGAL::CLOCKWISE) { 
+	// the inserted polygon is a hole
+	e->twin()->face()->set_data(false);
+      } else { // the inserted polygon is an outer boundary
+	e->face()->set_data(true);
+      }
       Seg_handle s = new Seg;
       s->set_halfedge_handle(e);
       e->set_segment(s); e->twin()->set_segment(s);
-      f = e->face();
-      if (bi->orientation()==CGAL::CLOCKWISE) { 
-	// the inserted polygon is a hole
-	f->set_data(false);
-      } else {
-	f->set_data(true);
-      }
       all_segments.add(s);
     }
   }
@@ -1229,9 +1228,12 @@ void LineTes::write(std::ostream& os) {
  * LineTes::write documentation.
  */
 void LineTes::read(std::istream& is) {
+  HPolygons win;
   HPolygon wel; // window element
   Polygon weloub; // window element outer boundary
   Polygons hb; // holes
+  bool got_first_wel = false;
+  bool done_with_domain = false;
   std::vector<Segment> segs;
   std::string line;
   // Clear the LineTes object
@@ -1251,18 +1253,20 @@ void LineTes::read(std::istream& is) {
       return;
     }
     if (wcoords.size()>4) { // coordinates of domain vertices
-      if (window.size()>0) { 
-	/* An outer boundary and holes have been read already. They
-	   are stored in weloub and hb. Build a holed polygon and push
-	   it in window. */
-	HPolygon wel(weloub,hb.begin(),hb.end()); // window element
-	window.push_back(wel);
-      }
       Polygon ccb; // a boundary (internal or external)
       for (Size i=0;i!=wcoords.size();i+=2) {
 	ccb.push_back(Point2(wcoords[i],wcoords[i+1]));
       }
       if (ccb.orientation()==CGAL::COUNTERCLOCKWISE) { // outer ccb
+	if (got_first_wel) { 
+	  /* An outer boundary and holes have been read already. They
+	     are stored in weloub and hb. Build a holed polygon and push
+	     it in window. */
+	  HPolygon wel(weloub,hb.begin(),hb.end()); // window element
+	  win.push_back(wel);
+	} else {
+	  got_first_wel = true;
+	}
 	hb.clear();
 	weloub = ccb;
       } else { 
@@ -1273,6 +1277,12 @@ void LineTes::read(std::istream& is) {
 	}
       }
     } else { // segment
+      if (!done_with_domain) {
+	HPolygon wel(weloub,hb.begin(),hb.end()); // window element
+	win.push_back(wel);
+	insert_window(win);
+	done_with_domain = true;
+      }
       NT x0(wcoords[0]);
       NT y0(wcoords[1]);
       NT x1(wcoords[2]);
@@ -1931,7 +1941,6 @@ TTessel::Split::Split() {}
  */
 TTessel::Split::Split(Halfedge_handle e, double x, double angle) : 
   Modification(), e1(e) {
-
   // Computation of the splitting line
 
   Vector e1_vector(e1->source()->point(),e1->target()->point());
@@ -1939,7 +1948,7 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
 			  CGAL::to_double(e1_vector[0]));
   double l_angle = e1_angle+angle;
   double a = sin(l_angle);
-  double b = -cos(l_angle);
+  double b = -cos(l_angle); 
   double u,v,w;
   u = a*CGAL::to_double(e1->source()->point()[0])+
     b*CGAL::to_double(e1->source()->point()[1]);
@@ -1966,9 +1975,9 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
 
   // Computation of e2 and p2
 
-  TTessel::Halfedge_handle ee = e1->next();
-  Point2 pp;
-  NT minDist = -1;
+  // TTessel::Halfedge_handle ee = e1->next();
+  // Point2 pp;
+  // NT minDist = -1;
   Line l_dir;
   if (l.has_on_negative_side(e1->target()->point())) {
     l_dir = l;
@@ -1976,23 +1985,33 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
     l_dir = l.opposite();
   }
   Rayon r(p1,l_dir);
+  Halfedge_handle exit_edge;
+  Face_handle f = e1->face();
+  p2 = ray_exit_face(r,f,exit_edge);
+  e2 = exit_edge;
 
-  while (ee!=e1) {
-    inter = CGAL::intersection(Segment(ee->source()->point(),
-				       ee->target()->point()),r);
-    if (CGAL::assign(pp,inter)) {
-      NT distp1p2 = CGAL::squared_distance(p1,pp);
-      if (minDist>distp1p2 || minDist==-1) {
-      	minDist = distp1p2;
-      	e2 = ee;
-      	p2 = pp;
-      }
-    }
-    ee = ee->next(); 
-  }
-  if (e2==e1)
-    std::cerr << "Split constructor : intersection of l with e2 not found"
-	      << std::endl;
+  // bool p2_found(false);
+  // while (ee!=e1) {
+  //   inter = CGAL::intersection(Segment(ee->source()->point(),
+  // 				       ee->target()->point()),r);
+  //   std::cout << "Split constructor: computing intersection of ray with edge" << std::endl;//debug 
+  //   if (CGAL::assign(pp,inter)) {
+  //     std::cout << "Split constructor: ray hits the current edge" << std::endl;//debug
+  //     NT distp1p2 = CGAL::squared_distance(p1,pp);
+  //     if (minDist>distp1p2 || minDist==-1) {
+  //     	minDist = distp1p2;
+  //     	e2 = ee;
+  //     	p2 = pp;
+  // 	if (!p2_found) p2_found = true;
+  //     }
+  //   }
+  //   ee = ee->next(); 
+  //   std::cout << "Split constructor: advancing along e1 ccb" << std::endl;//debug
+  // }
+  // std::cout << "Split constructor: exit from loop along e1 ccb" << std::endl;//debug 
+  // if (!p2_found)
+  //   std::cerr << "Split constructor : intersection of l with e2 not found"
+  // 	      << std::endl;
 }
 /** \brief Compute elements of a T-tessellation that are modified by a split
  */ 
@@ -2058,19 +2077,22 @@ ModList TTessel::Split::modified_elements() {
     es.push_back(he2);
     es.push_back(f->outer_ccb());
     test = is_on_same_ccb(he1,es);
-    if (test[0]) {
-      if (test[1]) cas = 1;
-      else cas = 2;
-    } else {
-      if (test[1]) {
+    if (test[0]) { // e1 and e2 on same ccb
+      if (test[1]) cas = 1; // e1 and e2 on outer boundary
+      else cas = 2; // e1 and e2 on same inner boundary
+    } else { // e1 and e2 on different ccb's
+      if (test[1]) { // e1 on outer boundary and e2 on inner boundary
 	cas = 3;
 	e1_along_hole_boundary = false;
-      } else {
+      } else { 
+	/* e1 on inner boundary, e2 may be on another inner boundary
+	   or on the outer boundary */
 	TTessel::Halfedge_handle fob = f->outer_ccb();
-	if (is_on_same_ccb(e2,fob)) {
+	if (is_on_same_ccb(e2,fob)) { 
+	  /* e1 on inner boundary, e2 on outer boundary */
 	  cas = 3;
 	  e1_along_hole_boundary = true;
-	} else cas = 4;
+	} else cas = 4; // e1 and e2 on different inner boundaries
       }
     }
   }
@@ -2138,9 +2160,7 @@ ModList TTessel::Split::modified_elements() {
 	 hi!=fp.holes_end();hi++) {
       if (i==j) { // hole lying along the daughter face
 	holes1.push_back(ccb_buf);
-	continue;
-      }
-      if (inside[i]) {
+      } else if (inside[i]) {
 	holes2.push_back(*hi);
       }
       else
@@ -2184,6 +2204,10 @@ ModList TTessel::Split::modified_elements() {
       }
       i++;j++;
     }
+    // merge the two holes and add the result to the list of holes
+    vertices = ccb_insert_edge(he1,he2,pt1,pt2);
+    ccb_buf.insert(ccb_buf.vertices_end(),vertices.begin(),vertices.end());
+    holes1.push_back(ccb_buf);
     hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
     modifs.add_faces.push_back(hpoly1);
   }
@@ -3632,16 +3656,17 @@ Segment clip_segment_by_polygon(Segment S, HPolygon P) {
   typedef CGAL::Extended_cartesian<NT> EKernel;
   typedef CGAL::Nef_polyhedron_2<EKernel> Nef;
   std::vector<Nef::Point> Svertices, Pvertices;
-  for (Size i=0;i!=P.outer_boundary().size();++i) 
+  for (Size i=0;i<P.outer_boundary().size();++i) 
     Pvertices.push_back(Nef::Point(P.outer_boundary()[i].x(),
 				   P.outer_boundary()[i].y()));
   Nef nefP(Pvertices.begin(),Pvertices.end());
+  Nef::Explorer ex_nefP = nefP.explorer();
   for (HPolygon::Hole_const_iterator h=P.holes_begin();
-       h != P.holes_end();h++) {
+       h!=P.holes_end();h++) {
     std::vector<Nef::Point> Hvertices;
-    for (Size i=0;i!=(*h).size();++i) 
-      Hvertices.push_back(Nef::Point((*h)[i].x(),(*h)[i].y()));
-    Nef PHole(Hvertices.begin(),Hvertices.end());
+    for (Size j=0;j<(h->size());++j) 
+      Hvertices.push_back(Nef::Point((*h)[j].x(),(*h)[j].y()));
+    Nef PHole(Hvertices.rbegin(),Hvertices.rend());
     nefP = nefP.difference(PHole);
   }
   Svertices.push_back(Nef::Point(S[0].x(),S[0].y()));
@@ -4172,9 +4197,11 @@ double face_sum_of_angles(HPolygon f, TTessel* t){
 HPolygon face2poly(TTessel::Face_handle f) {
   std::vector<TTessel::Ccb_halfedge_circulator> ccbs;
   ccbs.push_back(f->outer_ccb());
-  ccbs.insert(ccbs.end(),f->holes_begin(),f->holes_end());
+  if (std::distance(f->holes_begin(),f->holes_end())>0) {
+    ccbs.insert(ccbs.end(),f->holes_begin(),f->holes_end());
+  }
   Polygons poly(ccbs.size());
-  for (Size i=0;i!=ccbs.size();i++) {
+  for (Size i=0;i<ccbs.size();i++) {
     TTessel::Ccb_halfedge_circulator e = ccbs[i];
     TTessel::Halfedge_handle e_first=e;
     do {
@@ -4183,6 +4210,7 @@ HPolygon face2poly(TTessel::Face_handle f) {
 	poly[i].push_back(e->target()->point());
       e++;
     } while (e!=e_first);
+    
   }
   Polygons::iterator hi(poly.begin());
   hi++;
@@ -4356,6 +4384,65 @@ HPolygon simplify(HPolygon p) {
   HPolygon sp(b[0],hb,he);
   return sp;
 }
+/** \brief Compute the intersection of a ray with a face boundary
+ * \param r : ray starting inside the face.
+ * \param f : LineTes face.
+ * \param e : on exit, the edge (on the face boundary) where the ray
+ *            exits the face for the first time.
+ * \return : the location where the ray exits the face.
+ * \pre : the ray source must be inside the face.
+ */ 
+Point2 ray_exit_face(Rayon &r,LineTes::Face_handle &f,
+		     LineTes::Halfedge_handle &e) {
+  /* The target halfedge may be on the outer ccb or on a "hole"
+     boundary. Approach below: visit all halfedges (on outer ccb or
+     along holes), compute intersection, if any keep the closest
+     one to the ray source. */
+  Point2 res;
+  std::vector<LineTes::Halfedge_handle> all_edges;
+  // push all halfedges of the outer ccb to vector all_edges
+  LineTes::Ccb_halfedge_circulator hc=f->outer_ccb();
+  LineTes::Halfedge_handle h0 = hc;
+  do {
+    all_edges.push_back(hc);
+    hc++;
+  } while (hc!=h0);
+  // push all halfedges on inner boundaries to vector all_edges
+  for (LineTes::Hole_iterator ho=f->holes_begin();ho!=f->holes_end();ho++) {
+    hc = *ho;
+    h0 = hc;
+    do {
+      all_edges.push_back(hc);
+      hc++;
+    } while (hc!=h0);
+  }
+  // find the intersections of the ray and keep the closest one
+  // to the ray source
+  double lp = std::numeric_limits<double>::max();
+  Point2 inter_location;
+  bool found(false);
+  for (std::vector<LineTes::Halfedge_handle>::iterator ce=all_edges.begin();
+       ce!=all_edges.end();ce++) {
+    CGAL::Object inter = CGAL::intersection(r,
+					    Segment((*ce)->source()->point(),
+						    (*ce)->target()->point())); 
+    if (CGAL::assign(inter_location,inter)) {
+      NT len2 = CGAL::squared_distance(r.source(),inter_location);
+      double len = sqrt(CGAL::to_double(len2));
+      if (len<lp && len>0) {
+	res = inter_location;
+	e = *ce;
+	lp = len;
+	if (!found) found = true;
+      }
+    }
+  }
+  if (!found) {
+    std::cerr << "ray_exit_face: intersection of ray with face ";
+    std::cerr << "boundaries not found";
+  }
+  return res;
+}  
 /** \brief Compute one of the new connected component boundary 
  * generated by a split joining two points inside two halfedges
  * bounding the same face.
@@ -4414,12 +4501,9 @@ std::vector<bool> is_on_same_ccb(LineTes::Halfedge_handle &e0,
   std::vector<bool> res(es.size(),false);
   LineTes::Ccb_halfedge_circulator e = e0->ccb();
   do {
-    for (Size i=0;i!=es.size();i++) {
+    for (Size i=0;i<es.size();i++) {
       if (es[i]==e) {
 	res[i] = true;
-	es.erase(es.begin()+i);
-	if (es.size()==0)
-	  return res;
       }
     }
     e++;
@@ -4439,6 +4523,7 @@ bool is_on_same_ccb(LineTes::Halfedge_handle &e0,
     if (e1==e) {
       return true;
     }
+    e++;
   } while (e!=e0);
   return false;
 }

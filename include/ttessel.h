@@ -1005,6 +1005,7 @@ double                   sum_of_segment_squared_sizes(TTessel* t);
 Polygons                 boundaries(HPolygon);
 Polygon                  simplify(Polygon);
 HPolygon                 simplify(HPolygon);
+Point2                   ray_exit_face(Rayon&,LineTes::Face_handle&,LineTes::Halfedge_handle&);  
 std::vector<Point2>      ccb_insert_edge(LineTes::Halfedge_handle&,
 					 LineTes::Halfedge_handle&,
 					 Point2&,Point2&);
