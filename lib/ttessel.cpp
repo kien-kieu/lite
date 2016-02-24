@@ -962,45 +962,13 @@ void LineTes::remove_ivertices(Size imax, bool verbose) {
 	double lm = e->get_length(); // removed length
 	// Computation of the added length
 	Rayon r(v->point(),Vector(e->source()->point(),e->target()->point()));
-	// find the halfedge hit by ray r and the intersection
-	/* Not that easy. The target halfedge may be on the outer ccb
-	   or on a "hole" boundary. Approach below: visit all
-	   halfedges (on ccb or along holes), compute intersection, if
-	   any keep the closest one. */
 	Face_handle f = e->face();
-	std::vector<Halfedge_handle> all_edges;
-	Ccb_halfedge_circulator hc=f->outer_ccb();
-	Halfedge_handle h0 = hc;
-	do {
-	  if (hc->source()!=v && hc->target()!=v)
-	    all_edges.push_back(hc);
-	  hc++;
-	} while (hc!=h0);
-	for (Hole_iterator ho=f->holes_begin();ho!=f->holes_end();ho++) {
-	  hc = *ho;
-	  h0 = hc;
-	  do {
-	  if (hc->source()!=v && hc->target()!=v)
-	    all_edges.push_back(hc);
-	  hc++;
-	  } while (hc!=h0);
-	}
-	double lp = std::numeric_limits<double>::max();
-	Point2 inter_location;
-	for (std::vector<Halfedge_handle>::iterator e=all_edges.begin();e!=all_edges.end();e++) {
-	  CGAL::Object inter = CGAL::intersection(r,
-	 					  Segment((*e)->source()->point(),
-	 						  (*e)->target()->point())); 
-	  if (CGAL::assign(inter_location,inter)) {
-	    double len = sqrt(CGAL::to_double(CGAL::squared_distance(v->point(),
-								inter_location)));
-	    if (len<lp) {
-	      ivertex.p = inter_location;
-	      ivertex.esplit = *e;
-	      lp = len;
-	    }
-	  }
-	}
+	Halfedge_handle esplit;
+	ivertex.p = ray_exit_face(r,f,esplit);
+	ivertex.esplit = esplit;
+	double lp = sqrt(CGAL::to_double(CGAL::squared_distance(v->point(),
+								ivertex.p)));
+
 	if (lm<=lp) {
 	  ivertex.changed_length = lm;
 	  ivertex.shorten = true;
