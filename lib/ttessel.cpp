@@ -1405,15 +1405,14 @@ TTessel::Halfedge_handle TTessel::update(Split spl) {
   // Update info
   int_length += 2*e->get_length();
   non_blocking_segments.add(e->segment());
-  Seg_handle s = e->next()->segment();
-  if (!is_on_boundary(s) && !s->number_of_edges_is_greater_than(2)) {
-    non_blocking_segments.suppress(s);
-    blocking_segments.add(s);
-  }
-  s = e->twin()->next()->segment();
-  if (!is_on_boundary(s) && !s->number_of_edges_is_greater_than(2)) {
-    non_blocking_segments.suppress(s);
-    blocking_segments.add(s);
+  Seg_handle s_at_ends[2] = {e->next()->segment(),
+			     e->twin()->next()->segment()};
+  for (unsigned i=0;i<2;i++) {
+    Seg_handle s = s_at_ends[i];
+    if (is_on_boundary(s)==0 && !s->number_of_edges_is_greater_than(2)) {
+      non_blocking_segments.suppress(s);
+      blocking_segments.add(s);
+    }
   }
   return e;
 }
@@ -1437,13 +1436,13 @@ TTessel::Face_handle TTessel::update(Merge me) {
   non_blocking_segments.suppress(s);
 
   s1 = e->next()->segment();
-  if (!is_on_boundary(s1) && !s1->number_of_edges_is_greater_than(2)) { 
+  if (is_on_boundary(s1)==0 && !s1->number_of_edges_is_greater_than(2)) { 
     non_blocking_segments.add(s1);  
     blocking_segments.suppress(s1);
   }
 
   s2 = e->twin()->next()->segment();
-  if (!is_on_boundary(s2) && !s2->number_of_edges_is_greater_than(2)) {
+  if (is_on_boundary(s2)==0 && !s2->number_of_edges_is_greater_than(2)) {
     non_blocking_segments.add(s2);  
     blocking_segments.suppress(s2);
   }
@@ -2170,7 +2169,7 @@ ModList TTessel::Split::modified_elements() {
       if (i!=j && i!=k) {
 	holes1.push_back(*hi);
       }
-      i++;j++;
+      i++;
     }
     // merge the two holes and add the result to the list of holes
     vertices = ccb_insert_edge(he1,he2,pt1,pt2);
@@ -2296,57 +2295,142 @@ ModList TTessel::Merge::modified_elements() {
   
   // Suppressed edges
 
- modifs.del_edges.push_back(Segment(get_e()->source()->point(),get_e()->target()->point()));
- modifs.del_edges.push_back(Segment(p2(),e2()->target()->point()));
- modifs.del_edges.push_back(Segment(e2()->get_prev_hf()->source()->point(),p2()));
- modifs.del_edges.push_back(Segment(p1(),e1()->target()->point()));
- modifs.del_edges.push_back(Segment(e1()->get_prev_hf()->source()->point(),p1()));
+  modifs.del_edges.push_back(Segment(get_e()->source()->point(),
+				     get_e()->target()->point()));
+  modifs.del_edges.push_back(Segment(p2(),e2()->target()->point()));
+  modifs.del_edges.push_back(Segment(e2()->get_prev_hf()->source()->point(),
+				     p2()));
+  modifs.del_edges.push_back(Segment(p1(),e1()->target()->point()));
+  modifs.del_edges.push_back(Segment(e1()->get_prev_hf()->source()->point(),
+				     p1()));
 
- // Added edges 
+  // Added edges 
 
- modifs.add_edges.push_back(Segment(e2()->get_prev_hf()->source()->point(),e2()->target()->point()));
- modifs.add_edges.push_back(Segment(e1()->get_prev_hf()->source()->point(),e1()->target()->point()));
+  modifs.add_edges.push_back(Segment(e2()->get_prev_hf()->source()->point(),
+				     e2()->target()->point()));
+  modifs.add_edges.push_back(Segment(e1()->get_prev_hf()->source()->point(),
+				     e1()->target()->point()));
 
+  // Face modifications
+
+  int cas = 0;
+  /* 4 possible cases
+     case 1: the removed edge is separating two tessellation faces. 
+     case 2: the removed edge is joining two vertices on the same inner
+             boundary of a tessellation face.
+     case 3: the removed edge is an isthmus where the outer boundary of a
+             tessellation face folds in the face interior and connects to
+	     a "hole".
+     case 4: the removed edge is an isthmus connecting two "holes". */
+  // Identify case
+  std::vector<bool> test;
+  Halfedge_handle he(get_e()), he_twin(he->twin());
+  Face_handle f1(he->face()), f2(he->twin()->face());
+  if (!has_holes(f1) && !has_holes(f2)) {
+    cas = 1;
+  } else {
+    std::vector<TTessel::Halfedge_handle> es;
+    es.push_back(he->twin());
+    es.push_back(f1->outer_ccb());
+    test = is_on_same_ccb(he,es);
+    if (test[0]) {
+      if (test[1]) {
+	cas = 3;
+      } else {
+	cas = 4;
+      }
+    } else {
+      if (!test[1]) {
+	cas = 2;
+      } else {
+	TTessel::Halfedge_handle f2_outer_ccb = f2->outer_ccb();
+	if (is_on_same_ccb(he_twin,f2_outer_ccb)) {
+	  cas = 1;
+	} else {
+	  cas = 2;
+	}
+      }
+    }
+  }
 
   // Suppressed faces
 
-  Polygon poly;
-  TTessel::Ccb_halfedge_circulator e_circ=e1()->ccb();
+  HPolygon f1_hpoly(face2poly(f1)), f2_hpoly;
+  /* Cases 1 and 2: two faces suppressed. Cases 3 and 4: modification
+     of an existing face => only 1 face suppressed. */
+  modifs.del_faces.push_back(f1_hpoly);
+  if (cas<=2) {
+    f2_hpoly = HPolygon(face2poly(f2));
+    modifs.del_faces.push_back(f2_hpoly);
+  } 
 
-  // Face 1  
-  poly.push_back(p1());
-  do {
-    poly.push_back(e_circ->target()->point());
-  } while (++e_circ!=get_e()->twin());
-  HPolygon hpoly_1(poly);
-  modifs.del_faces.push_back(hpoly_1);
-  
-  // Face 2
-  
-  poly.erase(poly.vertices_begin(),poly.vertices_end()); 
-  e_circ=e2()->ccb();
-  poly.push_back(p2());
-
-  do {
-    poly.push_back(e_circ->target()->point());
-  } while (++e_circ!=get_e());
-  HPolygon hpoly_2(poly);
-  modifs.del_faces.push_back(hpoly_2);
- 
-   // Added face
-   
-  poly.erase(poly.vertices_begin(),poly.vertices_end()); 
-  e_circ=e1()->ccb();
-  do {
-    poly.push_back(e_circ->target()->point());
-  } while (++e_circ!=e2()->get_prev_hf());
-  e_circ=e2()->ccb();
-  do {
-    poly.push_back(e_circ->target()->point());
-  } while (++e_circ!=e1()->get_prev_hf());
-  HPolygon added_hpoly(poly);
-  modifs.add_faces.push_back(added_hpoly);
-  
+  // Added faces
+  Polygon outer1, outer2, buf_poly;
+  Polygons holes1, holes2;
+  HPolygon hpoly1, daughter, mother;
+  TTessel::Face_handle mother_face;
+  std::vector<Point2> vertices, ccb1, ccb2;
+  Size i = 0, j;
+  TTessel::Halfedge_handle buf_e;
+  switch(cas) {
+  case 1:
+    vertices = ccb_remove_shared_edge(he);
+    outer1 = Polygon(vertices.begin(),vertices.end());
+    holes1 = Polygons(f1_hpoly.holes_begin(),f1_hpoly.holes_end());
+    holes1.insert(holes1.end(),f2_hpoly.holes_begin(),f2_hpoly.holes_end());
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    modifs.add_faces.push_back(hpoly1);
+    break;
+  case 2:
+    buf_e = f1->outer_ccb();
+    if (is_on_same_ccb(he,buf_e)) { // f1 is the daughter face
+      mother = f2_hpoly;
+      mother_face = f2;
+      daughter = f1_hpoly;
+    } else {
+      buf_e = f2->outer_ccb();
+      if (is_on_same_ccb(he,buf_e)) { // f1 is the mother face
+	mother = f1_hpoly;
+	mother_face = f1;
+	daughter = f2_hpoly;
+      }
+    }
+    outer1 = mother.outer_boundary();
+    j = hole_index(he,mother_face->holes_begin(),mother_face->holes_end());
+    holes1 = Polygons(daughter.holes_begin(),daughter.holes_end());
+    for (HPolygon::Hole_const_iterator hi=mother.holes_begin();
+	 hi!=mother.holes_end();hi++) {
+      if (i!=j)
+	holes1.push_back(*hi);
+      i++;
+    }
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    break;
+  case 3:
+    ccb_remove_link_edge(he,ccb1,ccb2);
+    outer1 = Polygon(ccb1.begin(),ccb1.end());
+    outer2 = Polygon(ccb2.begin(),ccb2.end());
+    if (outer1.orientation()!=CGAL::COUNTERCLOCKWISE) {
+      buf_poly = outer1;
+      outer1 = outer2;
+      outer2 = buf_poly;
+    }
+    holes1 = Polygons(f1_hpoly.holes_begin(),f1_hpoly.holes_end());
+    holes1.push_back(outer2);
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    modifs.add_faces.push_back(hpoly1);
+    break;
+  case 4:
+    outer1 = f1_hpoly.outer_boundary();
+    holes1 = Polygons(f1_hpoly.holes_begin(),f1_hpoly.holes_end());
+    ccb_remove_link_edge(he,ccb1,ccb2);
+    buf_poly = Polygon(ccb1.begin(),ccb1.end());
+    holes1.push_back(buf_poly);
+    buf_poly = Polygon(ccb2.begin(),ccb2.end());
+    holes1.push_back(buf_poly);
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    modifs.add_faces.push_back(hpoly1);
+  }
 
   // Suppressed and added segments
 
@@ -4455,6 +4539,58 @@ std::vector<Point2> ccb_insert_edge(LineTes::Halfedge_handle &e1,
     e++;
   } while (e!=e1);
   return res;
+}
+/** \brief Compute the CCB obtained by removing the shared edge
+ * of two adjacent CCB's
+ * \param e : a halfedge whose removal would merge two CCB's.
+ * \return : the points along the merged CCB
+ * \pre the CCB of e must be different from the CCB of its twin. 
+ * In other words, edge e should not be an isthmus.
+ */
+std::vector<Point2> ccb_remove_shared_edge(LineTes::Halfedge_handle &e) {
+  std::vector<Point2> res;
+  LineTes::Ccb_halfedge_circulator hc1 = e->ccb(), hc2 = e->twin()->ccb(),
+    done;
+  done = hc1;
+  hc1++;
+  do {
+    res.push_back(hc1->target()->point());
+    hc1++;
+  } while (hc1!=done);
+  done = hc2;
+  hc2++;
+  do {
+    res.push_back(hc2->target()->point());
+    hc2++;
+  } while (hc2!=done);
+  return res;
+}
+/** \brief Compute both CCB's generated by removing an link edge on a 
+ * face CCB.
+ * \param e : the link halfedge to be removed.
+ * \param front : points in the CCB in front of e.
+ * \param behind : point in the CCB behind e.
+ *
+ * A link edge is a pair of halfedges that belong to the same halfedge 
+ * cycle (CCB).
+ */
+void ccb_remove_link_edge(LineTes::Halfedge_handle &e,
+			  std::vector<Point2> &front, 
+			  std::vector<Point2> &behind) {
+  front.clear();
+  LineTes::Ccb_halfedge_circulator circ(e->ccb());
+  LineTes::Halfedge_handle done = e->twin();
+  circ++;
+  while (circ!=done) {
+    front.push_back(circ->target()->point());
+  }
+  behind.clear();
+  done = e;
+  circ = e->twin()->ccb();
+  circ++;
+  while (circ!=done) {
+    behind.push_back(circ->target()->point());
+  }
 }
 /** \brief Test whether some halfedges lie on the same connected
  * component boundary as a given halfedge.
