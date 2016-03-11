@@ -19,6 +19,7 @@
 //#include "short_names.h"
 //#include <cotime>
 #include <iostream>
+#include <exception>
 #include <CGAL/Cartesian.h>
 #include <CGAL/Gmpq.h>
 /* Calcul exact pour +,-,*,/. On peut sauvegarder la tessellation dans
@@ -269,6 +270,7 @@ class LineTes : public Arrangement {
    * Boundary and internal segments are included
    */
   inline Size                   number_of_segments(){return all_segments.size();}
+  Size                          number_of_internal_segments();
   bool                          is_valid(bool verbose=false);
   bool                          check_all_segments(bool verbose=false);
   bool                          check_segment(Seg_handle s, bool verbose=false);
@@ -982,9 +984,12 @@ bool                     are_aligned(Point2 p, Point2 q, Point2 r,
 bool                     is_inside(Point2, HPolygon&);
 bool                     is_inside(Point2, HPolygons&);
 Segment                  clip_segment_by_convex_polygon(Segment, Polygon);
-Segment                  clip_segment_by_polygon(Segment, Polygon);
-Segment                  clip_segment_by_polygon(Segment, HPolygon);
-Segment                  clip_segment_by_polygon(Segment, HPolygons);
+Segment clip_segment_by_polygon(Segment, Polygon) 
+     throw(std::domain_error const&);
+Segment clip_segment_by_polygon(Segment, HPolygon) 
+     throw(std::domain_error const&);
+Segment clip_segment_by_polygon(Segment, HPolygons) 
+     throw(std::domain_error const&);
 double                   precompute_lengthening(Arrangement::Halfedge_handle,
 						Arrangement::Halfedge_handle*,
 						Point2*);
@@ -1021,9 +1026,8 @@ bool                     has_holes(LineTes::Face_handle&);
 std::vector<bool>        filter_holes(HPolygon::Hole_const_iterator,
 				      HPolygon::Hole_const_iterator,
 				      Polygon&);
-Size                     hole_index(LineTes::Halfedge_handle,
-				    LineTes::Hole_iterator,
-				    LineTes::Hole_iterator);
+Size hole_index(LineTes::Halfedge_handle, LineTes::Hole_iterator,
+		LineTes::Hole_iterator) throw(std::domain_error const&);
 /** \defgroup features Features of T-tessellations
  *
  * Functions that can be used by Energy objects for defining a Gibbs model

@@ -102,7 +102,7 @@ void LineTes::insert_window(HPolygons& p) {
       set_junction(NULL_HALFEDGE_HANDLE,e);
       e->set_dir(true);
       e->twin()->set_dir(false);
-      if (bi->orientation()==CGAL::CLOCKWISE) { 
+      if (bi->area()<0) { 
 	// the inserted polygon is a hole
 	e->twin()->face()->set_data(false);
       } else { // the inserted polygon is an outer boundary
@@ -241,6 +241,17 @@ LineTes::Face_handle LineTes::suppress_edge(Halfedge_handle e) {
 void LineTes::clear() {
   Arrangement::clear();
   all_segments.clear();
+}
+/** \brief Return the number of internal segments in a line tessellation
+ *
+ * A segment is internal if it does no lie along the domain boundary.
+ */
+Size LineTes::number_of_internal_segments() {
+  Size count = 0;
+  for (Seg_list_iterator si=segments_begin();si!=segments_end();si++) {
+    if (!is_on_boundary(*si)) count++;
+  }
+  return count;
 }
 /** \brief Check whether the LineTes object is valid
  * \param verbose : if true, details are sent to std::clog. Default to false.
@@ -842,11 +853,6 @@ void LineTes::Seg::print(bool endsOnly) {
 LineTes::Seg_handle LineTes::insert_segment(Segment iseg) {
   typedef std::list<Halfedge_handle> Edges;
   // Clip the segment to the window
-  /* The window is a polygon. There is no way with CGAL to compute the
-     intersection of a segment with a polygon even if the polygon is
-     convex. The current approach is to convert the window into a
-     Rectangle object. Therefore our implementation works only when
-     the window is indeed an iso-rectangle. */
   HPolygons w = get_window();
   Segment cseg = clip_segment_by_polygon(iseg,w);
   CGAL::insert(*this,cseg); // insert segment into the arrangement
@@ -1225,7 +1231,7 @@ void LineTes::read(std::istream& is) {
       for (Size i=0;i!=wcoords.size();i+=2) {
 	ccb.push_back(Point2(wcoords[i],wcoords[i+1]));
       }
-      if (ccb.orientation()==CGAL::COUNTERCLOCKWISE) { // outer ccb
+      if (ccb.area()>0) { // outer ccb
 	if (got_first_wel) { 
 	  /* An outer boundary and holes have been read already. They
 	     are stored in weloub and hb. Build a holed polygon and push
@@ -1238,7 +1244,7 @@ void LineTes::read(std::istream& is) {
 	hb.clear();
 	weloub = ccb;
       } else { 
-	if (ccb.orientation()==CGAL::CLOCKWISE) { // hole
+	if (ccb.area()<0) { // hole
 	  hb.push_back(ccb);
 	} else { // undefined orientation
 	  std::cerr << "Invalid orientation of a domain ccb" << std::endl;
@@ -2107,15 +2113,16 @@ ModList TTessel::Split::modified_elements() {
     outer1.insert(outer1.vertices_end(),fp.outer_boundary().vertices_begin(),
 		  fp.outer_boundary().vertices_end());
     // Outer boundary of the daughter face
-    vertices = ccb_insert_edge(he1,he2,pt1,pt2);
+    vertices = ccb_insert_edge(he2,he1,pt2,pt1);
     ccb_buf.insert(ccb_buf.vertices_end(),vertices.begin(),vertices.end());
-    if (ccb_buf.bounded_side(he2->target()->point())!=CGAL::ON_UNBOUNDED_SIDE) {
-      vertices = ccb_insert_edge(he2,he1,pt2,pt1);
+    // if (ccb_buf.bounded_side(he2->target()->point())!=CGAL::ON_UNBOUNDED_SIDE) { // the outer boundary of the daughter face is C12
+    if (CGAL::bounded_side_2(ccb_buf.vertices_begin(),ccb_buf.vertices_end(),he2->target()->point())!=CGAL::ON_UNBOUNDED_SIDE) { // the outer boundary of the daughter face is C12
+      vertices = ccb_insert_edge(he1,he2,pt1,pt2);
       outer2.insert(outer2.vertices_end(),vertices.begin(),vertices.end());
-    } else {
+    } else { // if target of e2 is outside C21, C21 is the outer boundary of the daughter face
       outer2 = ccb_buf;
       ccb_buf.clear();
-      vertices = ccb_insert_edge(he2,he1,pt2,pt1);
+      vertices = ccb_insert_edge(he1,he2,pt1,pt2);
       ccb_buf.insert(ccb_buf.vertices_end(),vertices.begin(),vertices.end());
     }
     // Now ccb_buf contains the enlarged hole of the mother face containing
@@ -2130,8 +2137,9 @@ ModList TTessel::Split::modified_elements() {
       } else if (inside[i]) {
 	holes2.push_back(*hi);
       }
-      else
+      else {
 	holes1.push_back(*hi);
+      }
       i++;
     }
     hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
@@ -2179,7 +2187,7 @@ ModList TTessel::Split::modified_elements() {
     modifs.add_faces.push_back(hpoly1);
   }
   }
-
+  
   // Segment s1 is suppressed
   std::vector<Point2> seg = get_e1()->segment()->list_of_points();
   modifs.del_segs.push_back(seg);
@@ -2326,11 +2334,12 @@ ModList TTessel::Merge::modified_elements() {
   std::vector<bool> test;
   Halfedge_handle he(get_e()), he_twin(he->twin());
   Face_handle f1(he->face()), f2(he->twin()->face());
-  if (!has_holes(f1) && !has_holes(f2)) {
+  bool e_on_mother_inner_boundary;
+  if (f1!=f2 && !has_holes(f1) && !has_holes(f2)) { 
     cas = 1;
   } else {
     std::vector<TTessel::Halfedge_handle> es;
-    es.push_back(he->twin());
+    es.push_back(he_twin);
     es.push_back(f1->outer_ccb());
     test = is_on_same_ccb(he,es);
     if (test[0]) {
@@ -2342,12 +2351,14 @@ ModList TTessel::Merge::modified_elements() {
     } else {
       if (!test[1]) {
 	cas = 2;
+	e_on_mother_inner_boundary = true;
       } else {
 	TTessel::Halfedge_handle f2_outer_ccb = f2->outer_ccb();
 	if (is_on_same_ccb(he_twin,f2_outer_ccb)) {
 	  cas = 1;
 	} else {
 	  cas = 2;
+	  e_on_mother_inner_boundary = false;
 	}
       }
     }
@@ -2382,35 +2393,48 @@ ModList TTessel::Merge::modified_elements() {
     modifs.add_faces.push_back(hpoly1);
     break;
   case 2:
-    buf_e = f1->outer_ccb();
-    if (is_on_same_ccb(he,buf_e)) { // f1 is the daughter face
+    if (e_on_mother_inner_boundary) { // f1 is the mother face
+      mother = f1_hpoly;
+      mother_face = f1;
+      daughter = f2_hpoly;
+    } else { // f1 is the daughter face
       mother = f2_hpoly;
       mother_face = f2;
       daughter = f1_hpoly;
-    } else {
-      buf_e = f2->outer_ccb();
-      if (is_on_same_ccb(he,buf_e)) { // f1 is the mother face
-	mother = f1_hpoly;
-	mother_face = f1;
-	daughter = f2_hpoly;
-      }
     }
     outer1 = mother.outer_boundary();
-    j = hole_index(he,mother_face->holes_begin(),mother_face->holes_end());
+    if (e_on_mother_inner_boundary) {
+      j = hole_index(he,mother_face->holes_begin(),mother_face->holes_end());
+    } else {
+      j = hole_index(he_twin,mother_face->holes_begin(),
+		     mother_face->holes_end());
+    }
+    // push the daughter holes to the list of holes 
     holes1 = Polygons(daughter.holes_begin(),daughter.holes_end());
+    // now add the mother holes
     for (HPolygon::Hole_const_iterator hi=mother.holes_begin();
 	 hi!=mother.holes_end();hi++) {
-      if (i!=j)
+      if (i!=j) {
 	holes1.push_back(*hi);
+      } else { // mother hole reduced by merging
+	if (e_on_mother_inner_boundary) {
+	  vertices = ccb_remove_shared_edge(he);
+	} else {
+	  vertices = ccb_remove_shared_edge(he_twin);
+	}
+	buf_poly = Polygon(vertices.begin(),vertices.end());
+	holes1.push_back(buf_poly);
+      }
       i++;
     }
     hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    modifs.add_faces.push_back(hpoly1);
     break;
   case 3:
     ccb_remove_link_edge(he,ccb1,ccb2);
     outer1 = Polygon(ccb1.begin(),ccb1.end());
     outer2 = Polygon(ccb2.begin(),ccb2.end());
-    if (outer1.orientation()!=CGAL::COUNTERCLOCKWISE) {
+    if (outer1.area()<=0) {
       buf_poly = outer1;
       outer1 = outer2;
       outer2 = buf_poly;
@@ -2422,7 +2446,12 @@ ModList TTessel::Merge::modified_elements() {
     break;
   case 4:
     outer1 = f1_hpoly.outer_boundary();
+    // Holes : all those of the containing face except the one bounded
+    // by e
     holes1 = Polygons(f1_hpoly.holes_begin(),f1_hpoly.holes_end());
+    j = hole_index(he,f1->holes_begin(),f1->holes_end());
+    holes1.erase(holes1.begin()+j);
+    // Merge -> the hole bounded by e divides into two holes
     ccb_remove_link_edge(he,ccb1,ccb2);
     buf_poly = Polygon(ccb1.begin(),ccb1.end());
     holes1.push_back(buf_poly);
@@ -3601,12 +3630,17 @@ bool are_aligned(Point2 p, Point2 q, Point2 r,bool verbose) {
  * \note Return false if the point lies on the boundary of the polygon.
  */
 bool is_inside(Point2 pt,HPolygon& poly) {
-  if (poly.outer_boundary().bounded_side(pt)!=CGAL::ON_BOUNDED_SIDE) {
+  //if (poly.outer_boundary().bounded_side(pt)!=CGAL::ON_BOUNDED_SIDE) {
+  if (CGAL::bounded_side_2(poly.outer_boundary().vertices_begin(),
+			   poly.outer_boundary().vertices_end(),
+			   pt)!=CGAL::ON_BOUNDED_SIDE) {
     return false;
   }
   for (HPolygon::Hole_const_iterator hi=poly.holes_begin();
        hi!=poly.holes_end();hi++) {
-    if (hi->bounded_side(pt)!=CGAL::ON_UNBOUNDED_SIDE) {
+    // if (bounded_side(pt)!=CGAL::ON_UNBOUNDED_SIDE) {
+    if (CGAL::bounded_side_2(hi->vertices_begin(),hi->vertices_end(),pt)
+	!=CGAL::ON_UNBOUNDED_SIDE) {
       return false;
     }
   }
@@ -3661,11 +3695,14 @@ Segment clip_segment_by_convex_polygon(Segment S, Polygon P) {
  * \param P : clipping polygon.
  * \return clipped segment, that is the longest intersection between the segment and
  * the polygon.
+ * \exception<std::domain_error>{S does not hit P.}
  * 
  * When the clipping polygon is not convex, its intersection with the segment
  * may consists of several segments. In such a case, the longest clipped segment is returned. If there are several clipped segments with maximal length, an arbitrarily chosen one is returned.
  */
-Segment clip_segment_by_polygon(Segment S, Polygon P) {
+Segment clip_segment_by_polygon(Segment S, Polygon P) 
+  throw (std::domain_error const&) 
+{
   typedef CGAL::Extended_cartesian<NT> EKernel;
   typedef CGAL::Nef_polyhedron_2<EKernel> Nef;
   std::vector<Nef::Point> Pvertices, Svertices;
@@ -3676,6 +3713,11 @@ Segment clip_segment_by_polygon(Segment S, Polygon P) {
   Svertices.push_back(Nef::Point(S[1].x(),S[1].y()));
   Nef nefS(Svertices.begin(),Svertices.end());
   Nef nefInter = nefS.intersection(nefP);
+  if (nefInter.is_empty()) {
+    throw std::domain_error("function clip_segment_by_polygon failed to return"
+			    " a segment because the input segment does not hit"
+			    " the polygon");
+  } 
   Segment longestSegment;
   Nef::Explorer ex = nefInter.explorer();
   NT maxLength = 0;
@@ -3700,11 +3742,14 @@ Segment clip_segment_by_polygon(Segment S, Polygon P) {
  * \param P : clipping polygon.
  * \return clipped segment, that is the longest intersection between the segment and
  * the polygon.
+ * \exception<std::domain_error>{S does not hit P.}
  * 
  * When the clipping polygon is not convex, its intersection with the segment
  * may consists of several aligned segments and isolated points. In such a case, the longest clipped segment is returned. If there are several clipped segments with maximal length, an arbitrarily chosen one is returned.
  */
-Segment clip_segment_by_polygon(Segment S, HPolygon P) {
+Segment clip_segment_by_polygon(Segment S, HPolygon P)
+  throw (std::domain_error const&) 
+{
   typedef CGAL::Extended_cartesian<NT> EKernel;
   typedef CGAL::Nef_polyhedron_2<EKernel> Nef;
   std::vector<Nef::Point> Svertices, Pvertices;
@@ -3725,6 +3770,11 @@ Segment clip_segment_by_polygon(Segment S, HPolygon P) {
   Svertices.push_back(Nef::Point(S[1].x(),S[1].y()));
   Nef nefS(Svertices.begin(),Svertices.end());
   Nef nefInter = nefS.intersection(nefP);
+  if (nefInter.is_empty()) {
+    throw std::domain_error("function clip_segment_by_polygon failed to return"
+			    " a segment because the input segment does not hit"
+			    " the (holed) polygon");
+  } 
   Segment longestSegment;
   Nef::Explorer ex = nefInter.explorer();
   NT maxLength = 0;
@@ -3749,18 +3799,24 @@ Segment clip_segment_by_polygon(Segment S, HPolygon P) {
  * \param P : clipping polygons.
  * \return clipped segment, that is the longest intersection between the 
  * segment and the polygon.
- * 
+ * \exception<std::domain_error>{S does not hit P.}
  * The intersection between the segment and the polygons may consists
  * of several aligned segments and isolated points. In such a case,
  * the longest clipped segment is returned. If there are several
  * clipped segments with maximal length, an arbitrarily chosen one is
  * returned.
  */
-Segment clip_segment_by_polygon(Segment S, HPolygons P) {
+Segment clip_segment_by_polygon(Segment S, HPolygons P) 
+  throw (std::domain_error const&) 
+{
   Segment res, buf;
-  NT len_max = 0;
+  NT len_max = -1;
   for (HPolygons::const_iterator hpi=P.begin();hpi!=P.end();hpi++) {
-    buf = clip_segment_by_polygon(S,*hpi);
+    try {
+      buf = clip_segment_by_polygon(S,*hpi);
+    } catch(std::domain_error const& exception) {
+      continue;
+    }
     Point2 p1(buf.source());
     Point2 p2(buf.target());
     NT len = CGAL::squared_distance(p1,p2);
@@ -3769,6 +3825,10 @@ Segment clip_segment_by_polygon(Segment S, HPolygons P) {
       len_max = len;
     }
   }
+  if (len_max<0)
+    throw std::domain_error("function clip_segment_by_polygon failed to return"
+			    " a segment because the input segment does not hit"
+			    " any of the (holed) polygons");
   return res;
 }
 /** \brief Predict added length when lengthening an edge in an arrangement
@@ -4388,14 +4448,14 @@ double sum_of_segment_squared_sizes(TTessel* t) {
 Polygons boundaries(HPolygon hp) {
   Polygons b;
   Polygon ob(hp.outer_boundary());
-  if (ob.orientation()!=CGAL::COUNTERCLOCKWISE) {
+  if (ob.area()<0) {
     ob.reverse_orientation();
   }
   b.push_back(ob);
   for (HPolygon::Hole_const_iterator h=hp.holes_begin();h!=hp.holes_end();h++) {
     
     Polygon poly(*h);
-    if (poly.orientation()!=CGAL::CLOCKWISE) {
+    if (poly.area()>0) {
       poly.reverse_orientation();
     }
     b.push_back(poly);
@@ -4481,17 +4541,28 @@ Point2 ray_exit_face(Rayon &r,LineTes::Face_handle &f,
     if (CGAL::assign(inter_location,inter)) {
       NT len2 = CGAL::squared_distance(r.source(),inter_location);
       double len = sqrt(CGAL::to_double(len2));
-      if (len<lp && len>0) {
+      if (len==0) continue;
+      /* It may happen that both an halfedge and its twin bound the face. */
+      if (found && *ce==e->twin()) { 
+	/* Select the halfedge that has
+	   the source of the ray on its left */
+	Line ce_line((*ce)->source()->point(),(*ce)->target()->point());
+	if (ce_line.oriented_side(r.source())==CGAL::ON_POSITIVE_SIDE) {
+	  e = *ce;
+	} // otherwise retain the previous minimal halfedge e (twin of ce)
+	continue;
+      }
+      if (len<lp) { // ce is closest than e. Keep it. 
 	res = inter_location;
+	if (!found) found = true;
 	e = *ce;
 	lp = len;
-	if (!found) found = true;
       }
     }
   }
   if (!found) {
     std::cerr << "ray_exit_face: intersection of ray with face ";
-    std::cerr << "boundaries not found";
+    std::cerr << "boundaries not found" << std::endl;
   }
   return res;
 }  
@@ -4583,6 +4654,7 @@ void ccb_remove_link_edge(LineTes::Halfedge_handle &e,
   circ++;
   while (circ!=done) {
     front.push_back(circ->target()->point());
+    circ++;
   }
   behind.clear();
   done = e;
@@ -4590,6 +4662,7 @@ void ccb_remove_link_edge(LineTes::Halfedge_handle &e,
   circ++;
   while (circ!=done) {
     behind.push_back(circ->target()->point());
+    circ++;
   }
 }
 /** \brief Test whether some halfedges lie on the same connected
@@ -4654,7 +4727,9 @@ std::vector<bool> filter_holes(HPolygon::Hole_const_iterator begin,
 			       Polygon &poly) {
   std::vector<bool> res;
   for (HPolygon::Hole_const_iterator hi=begin;hi!=end;hi++) {
-    if (poly.bounded_side((*hi)[0])==CGAL::ON_BOUNDED_SIDE)
+    //if (poly.bounded_side((*hi)[0])==CGAL::ON_BOUNDED_SIDE)
+    if (CGAL::bounded_side_2(poly.vertices_begin(),poly.vertices_end(),(*hi)[0])
+	==CGAL::ON_BOUNDED_SIDE)
       res.push_back(true);
     else
       res.push_back(false);
@@ -4668,14 +4743,25 @@ std::vector<bool> filter_holes(HPolygon::Hole_const_iterator begin,
  * \param end : last hole boundary to be searched.
  * \return : the position of the hole whose boundary contains e. For
  * instance, if 0, the first hole was found to countain e in its boundary.
+ * \exception<std::domain_error>{if e was not found in any hole.}
  */
 Size hole_index(LineTes::Halfedge_handle e,LineTes::Hole_iterator begin,
-		LineTes::Hole_iterator end) {
+		LineTes::Hole_iterator end) throw(std::domain_error const&)
+{
   std::vector<TTessel::Halfedge_handle> vec_holes(begin,end);
   std::vector<bool> test_holes = is_on_same_ccb(e,vec_holes);
   std::vector<bool>::iterator hole_pos = std::find(test_holes.begin(),
 						   test_holes.end(),
 						   true);
+  if (hole_pos==test_holes.end()) {
+    std::ostringstream msg;
+    msg << "hole_index failed to find halfedge "
+	<< "(" << e->source()->point().x() << ","
+	<< e->source()->point().y() << ")-("
+	<< e->target()->point().x() << "," << e->target()->point().y()
+	<< ") in any of the provided holes.";
+    throw std::domain_error(msg.str());
+  }
   Size j = std::distance(test_holes.begin(),hole_pos);
   return j;
 }
