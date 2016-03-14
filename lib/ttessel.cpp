@@ -3695,7 +3695,7 @@ Segment clip_segment_by_convex_polygon(Segment S, Polygon P) {
  * \param P : clipping polygon.
  * \return clipped segment, that is the longest intersection between the segment and
  * the polygon.
- * \exception<std::domain_error>{S does not hit P.}
+ * \exception std::domain_error S does not hit P.
  * 
  * When the clipping polygon is not convex, its intersection with the segment
  * may consists of several segments. In such a case, the longest clipped segment is returned. If there are several clipped segments with maximal length, an arbitrarily chosen one is returned.
@@ -3742,7 +3742,7 @@ Segment clip_segment_by_polygon(Segment S, Polygon P)
  * \param P : clipping polygon.
  * \return clipped segment, that is the longest intersection between the segment and
  * the polygon.
- * \exception<std::domain_error>{S does not hit P.}
+ * \exception std::domain_error S does not hit P.
  * 
  * When the clipping polygon is not convex, its intersection with the segment
  * may consists of several aligned segments and isolated points. In such a case, the longest clipped segment is returned. If there are several clipped segments with maximal length, an arbitrarily chosen one is returned.
@@ -3799,7 +3799,7 @@ Segment clip_segment_by_polygon(Segment S, HPolygon P)
  * \param P : clipping polygons.
  * \return clipped segment, that is the longest intersection between the 
  * segment and the polygon.
- * \exception<std::domain_error>{S does not hit P.}
+ * \exception std::domain_error S does not hit P.
  * The intersection between the segment and the polygons may consists
  * of several aligned segments and isolated points. In such a case,
  * the longest clipped segment is returned. If there are several
@@ -4743,7 +4743,7 @@ std::vector<bool> filter_holes(HPolygon::Hole_const_iterator begin,
  * \param end : last hole boundary to be searched.
  * \return : the position of the hole whose boundary contains e. For
  * instance, if 0, the first hole was found to countain e in its boundary.
- * \exception<std::domain_error>{if e was not found in any hole.}
+ * \exception std::domain_error if e was not found in any hole.
  */
 Size hole_index(LineTes::Halfedge_handle e,LineTes::Hole_iterator begin,
 		LineTes::Hole_iterator end) throw(std::domain_error const&)
