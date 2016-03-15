@@ -1014,10 +1014,6 @@ Point2                   ray_exit_face(Rayon&,LineTes::Face_handle&,LineTes::Hal
 std::vector<Point2>      ccb_insert_edge(LineTes::Halfedge_handle&,
 					 LineTes::Halfedge_handle&,
 					 Point2&,Point2&);
-std::vector<Point2>      ccb_remove_shared_edge(LineTes::Halfedge_handle&);
-void                     ccb_remove_link_edge(LineTes::Halfedge_handle&,
-					      std::vector<Point2>&,
-					      std::vector<Point2>&);
 std::vector<Point2>      ccb_remove_edge(LineTes::Halfedge_handle&);
 bool                     is_on_same_ccb(LineTes::Halfedge_handle&,
 					LineTes::Halfedge_handle&);
