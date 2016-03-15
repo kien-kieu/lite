@@ -1018,6 +1018,7 @@ std::vector<Point2>      ccb_remove_shared_edge(LineTes::Halfedge_handle&);
 void                     ccb_remove_link_edge(LineTes::Halfedge_handle&,
 					      std::vector<Point2>&,
 					      std::vector<Point2>&);
+std::vector<Point2>      ccb_remove_edge(LineTes::Halfedge_handle&);
 bool                     is_on_same_ccb(LineTes::Halfedge_handle&,
 					LineTes::Halfedge_handle&);
 std::vector<bool>        is_on_same_ccb(LineTes::Halfedge_handle&,

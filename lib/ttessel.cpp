@@ -4578,14 +4578,16 @@ Point2 ray_exit_face(Rayon &r,LineTes::Face_handle &f,
  *             starts.
  * \param p2 : the point on e2 where the splitting line segment
  *             ends.
- * \return : the connected component boundary after splitting, 
+ * \return the connected component boundary after splitting, 
  *           containing the halfedge (p1,p2). The new connected component
  *           boundary is returned as a series of points (vertices).
- * \note{When e1 and e2 belong to the same connected component boundary, 
+ * \pre p1 must lie on e1 but it must different from the start of e1. 
+ * The point p2 must be inside e2 (neither at its start nor its end).
+ * \note When e1 and e2 belong to the same connected component boundary, 
  *       the split divides their CCB into 2 CCB's. The returned one 
  *       contains the halfedge (p1,p2). In order to get the other new 
  *       connected component boundary containing the halfedge (p2,p1),
- *       call the function swapping e1 and e2, p1 and p2.}
+ *       call the function swapping e1 and e2, p1 and p2.
  */
 std::vector<Point2> ccb_insert_edge(LineTes::Halfedge_handle &e1,
 				    LineTes::Halfedge_handle &e2,
@@ -4603,7 +4605,8 @@ std::vector<Point2> ccb_insert_edge(LineTes::Halfedge_handle &e1,
   }
   // e==e2
   res.push_back(p2);
-  res.push_back(p1);
+  if (e1->target()->point()!=p1)
+    res.push_back(p1);
   e = e1->ccb();
   do {
     res.push_back(e->target()->point());
@@ -4664,6 +4667,27 @@ void ccb_remove_link_edge(LineTes::Halfedge_handle &e,
     behind.push_back(circ->target()->point());
     circ++;
   }
+}
+std::vector<Point2> ccb_remove_edge(LineTes::Halfedge_handle &e) {
+  std::vector<Point2> res;
+  LineTes::Ccb_halfedge_circulator circ(e->ccb());
+  LineTes::Halfedge_handle done_merge = e;
+  LinesTes::Halfedge_handle done_break = e->twin();
+  circ++;
+  while (circ!=done_merge && circ!=done_break) {
+    res.push_back(circ->target()->point());
+    circ++;
+  }
+  if (circ==done_break)
+    return res;
+  circ = e->twin()->ccb();
+  done_merge = circ;
+  circ++;
+  while (circ!=done_merge) {
+   res.push_back(circ->target()->point());
+    circ++;
+  }
+  return res;
 }
 /** \brief Test whether some halfedges lie on the same connected
  * component boundary as a given halfedge.
