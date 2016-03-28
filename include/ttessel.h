@@ -89,6 +89,9 @@ typedef CGAL::Aff_transformation_2<Kernel>                      Transformation;
 /** \typedef Polygon
  * \brief CGAL class representing a polygon*/
 typedef CGAL::Polygon_2<Kernel>                                 Polygon;
+/** \typedef PECirc
+ * \brief CGAL Polygon Edge circulator*/
+typedef Polygon::Edge_const_circulator                          PECirc;
 /** \typedef Polygons
  * \brief List of Polygons*/
 typedef std::vector<Polygon>                                    Polygons;
@@ -1005,7 +1008,7 @@ LineTes::Halfedge_handle find_halfedge(LineTes&,Point2,Point2);
 bool                     is_a_T_vertex(LineTes::Vertex_handle, 
 				       bool verbose=false);
 unsigned long int        number_of_internal_vertices(TTessel&);
-HPolygon                 face2poly(TTessel::Face_handle);
+HPolygon                 face2poly(TTessel::Face_handle, bool simplify=true);
 double                   angle_between_vectors(Vector v1,Vector v2);
 double                   sum_of_faces_squared_areas(TTessel*);
 double                   sum_of_min_angles(TTessel*);
@@ -1016,24 +1019,35 @@ Polygon                  simplify(Polygon);
 HPolygon                 simplify(HPolygon);
 Point2                   ray_exit_face(Rayon&,LineTes::Face_handle&,
 				       LineTes::Halfedge_handle&);
-Polygon::Edge_const_circulator 
+PECirc 
      lt2poly_edge_circulator(LineTes::Halfedge_handle&, Polygon&);
 Polygon ccb2polygon(LineTes::Ccb_halfedge_circulator);  
-Polygon                  polygon_insert_edge(Polygon::Edge_const_circulator,
-					     Polygon::Edge_const_circulator,
+Polygon                  polygon_insert_edge(PECirc,
+					     PECirc,
 					     Point2,Point2);
-Polygon                  polygon_remove_edge(Polygon::Edge_const_circulator&,
-					     Polygon::Edge_const_circulator&);
+HPolygons hpolygon_insert_edge(Polygons &hpoly, Size, Size, 
+			       PECirc, PECirc, Point2, Point2);
+Polygon                  polygon_remove_edge(PECirc&,
+					     PECirc&);
 bool                     is_on_same_ccb(LineTes::Halfedge_handle&,
 					LineTes::Halfedge_handle&);
+bool                     is_on_same_ccb(PECirc, PECirc);
 std::vector<bool>        is_on_same_ccb(LineTes::Halfedge_handle&,
 					std::vector<LineTes::Halfedge_handle>&);
+std::vector<bool>        is_on_same_ccb(PECirc, std::vector<PECirc>);
 bool                     has_holes(LineTes::Face_handle&);
+bool                     has_holes(HPolygon&);
 std::vector<bool>        filter_holes(HPolygon::Hole_const_iterator,
 				      HPolygon::Hole_const_iterator,
 				      Polygon&);
+std::vector<bool>        filter_holes(Polygons::const_iterator,
+				      Polygons::const_iterator,
+				      Polygon&);
 Size hole_index(LineTes::Halfedge_handle, LineTes::Hole_iterator,
 		LineTes::Hole_iterator) throw(std::domain_error const&);
+Size polygon_index(PECirc,Polygons::const_iterator,
+		   Polygons::const_iterator) throw(std::domain_error const&);
+Size find_edge_in_polygons(Polygons&, Segment, PECirc&) throw(std::domain_error const&);
 /** \defgroup features Features of T-tessellations
  *
  * Functions that can be used by Energy objects for defining a Gibbs model

@@ -2024,8 +2024,8 @@ ModList TTessel::Split::modified_elements() {
   HPolygon del_poly = face2poly(del_face);
   modifs.del_faces.push_back(del_poly);
 
+  
   // Added faces
-  int cas = 0;
   /* 4 possible cases
      case 1: the splitting line segment connects two points along 
              the outer boundary.
@@ -2036,163 +2036,23 @@ ModList TTessel::Split::modified_elements() {
      case 4: the splitting line segment connects two points on two
              different inner boundaries.
   */
-  // Identify case
   Halfedge_handle he1(get_e1()), he2(get_e2());
   Point2 pt1(get_p1()), pt2(get_p2());
   TTessel::Face_handle f = he1->face();
-  HPolygon fp = face2poly(f);
-  std::vector<bool> test;
-  bool e1_along_hole_boundary;
-  if (!has_holes(f)) {
-    cas = 1;
-  } else {
-    std::vector<TTessel::Halfedge_handle> es;
-    es.push_back(he2);
-    es.push_back(f->outer_ccb());
-    test = is_on_same_ccb(he1,es);
-    if (test[0]) { // e1 and e2 on same ccb
-      if (test[1]) cas = 1; // e1 and e2 on outer boundary
-      else cas = 2; // e1 and e2 on same inner boundary
-    } else { // e1 and e2 on different ccb's
-      if (test[1]) { // e1 on outer boundary and e2 on inner boundary
-	cas = 3;
-	e1_along_hole_boundary = false;
-      } else { 
-	/* e1 on inner boundary, e2 may be on another inner boundary
-	   or on the outer boundary */
-	TTessel::Halfedge_handle fob = f->outer_ccb();
-	if (is_on_same_ccb(e2,fob)) { 
-	  /* e1 on inner boundary, e2 on outer boundary */
-	  cas = 3;
-	  e1_along_hole_boundary = true;
-	} else cas = 4; // e1 and e2 on different inner boundaries
-      }
-    }
-  }
-  // Predict new face(s)
-  Polygon outer1, outer2, ccb_buf;
-  Polygons holes1, holes2;
-  HPolygon hpoly1, hpoly2;
-  std::vector<Point2> vertices;
-  std::vector<bool> inside;
-  Size i = 0;
-  Size j, k;
-  Polygon ccb1 = ccb2polygon(he1->ccb()), ccb2;
-  Polygon::Edge_const_circulator pe1 = lt2poly_edge_circulator(he1,ccb1), 
-    pe2;
-  switch(cas) {
-  case 1 : {
-    pe2 = lt2poly_edge_circulator(he2,ccb1);
-    outer1 = polygon_insert_edge(pe1,pe2,pt1,pt2);
-    outer2 = polygon_insert_edge(pe2,pe1,pt2,pt1);
-    if (!has_holes(f)) {
-      hpoly1 = HPolygon(outer1);
-      hpoly2 = HPolygon(outer2);
-    } else {
-      inside = filter_holes(fp.holes_begin(),
-			    fp.holes_end(),outer1);
-      for (HPolygon::Hole_const_iterator hi=fp.holes_begin();
-	   hi!=fp.holes_end();hi++) {
-	if (inside[i]) {
-	  holes1.push_back(*hi);
-	}
-	else
-	  holes2.push_back(*hi);
-	i++;
-      }
-      hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
-      hpoly2 = HPolygon(outer2,holes2.begin(),holes2.end());
-    }
-    modifs.add_faces.push_back(hpoly1);
-    modifs.add_faces.push_back(hpoly2);
-  } break;
-  case 2 : {
-    /* the split generates two new faces referenced as mother and
-       daughter faces. The daughter face lies along the hole (with 
-       inner boundary containing p1 and p2). The mother face is the
-       past face from which the daughter is removed. */
-    // Outer boundary of the mother face
-    outer1.insert(outer1.vertices_end(),fp.outer_boundary().vertices_begin(),
-		  fp.outer_boundary().vertices_end());
-    // Outer boundary of the daughter face
-    pe2 = lt2poly_edge_circulator(he2,ccb1);
-    // new ccb containing (p2,p1)
-    Polygon c21 = polygon_insert_edge(pe2,pe1,pt2,pt1);
-    Polygon enlarged_hole;
-    if (CGAL::bounded_side_2(c21.vertices_begin(),c21.vertices_end(),
-			     he2->target()->point())!=CGAL::ON_UNBOUNDED_SIDE) {
-      // the outer boundary of the daughter face is c12
-      outer2 = polygon_insert_edge(pe1,pe2,pt1,pt2);
-      enlarged_hole = c21;
-    } else { 
-      /* if target of e2 is outside c21, c21 is the outer boundary of
-	 the daughter face */
-      outer2 = c21;
-      enlarged_hole = polygon_insert_edge(pe1,pe2,pt1,pt2);
-    }
-    // Dispatch holes
-    j = hole_index(he1,f->holes_begin(),f->holes_end());
-    inside = filter_holes(fp.holes_begin(),fp.holes_end(),outer2);
-    for (HPolygon::Hole_const_iterator hi=fp.holes_begin();
-	 hi!=fp.holes_end();hi++) {
-      if (i==j) { // hole lying along the daughter face
-	holes1.push_back(enlarged_hole);
-      } else if (inside[i]) {
-	holes2.push_back(*hi);
-      }
-      else {
-	holes1.push_back(*hi);
-      }
-      i++;
-    }
-    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
-    hpoly2 = HPolygon(outer2,holes2.begin(),holes2.end());
-    modifs.add_faces.push_back(hpoly1);
-    modifs.add_faces.push_back(hpoly2);
-  } break;
-  case 3 : {
-    /* The existing face is modified. Its outer boundary folds 
-       inside the face and connects to a hole. */
-    Polygon ccb2 = ccb2polygon(he2->ccb()); // ccb containing e2
-    pe2 = lt2poly_edge_circulator(he2,ccb2);
-    outer1 = polygon_insert_edge(pe1,pe2,pt1,pt2);
-    if (e1_along_hole_boundary) {
-      j = hole_index(he1,f->holes_begin(),f->holes_end());
-    } else {
-      j = hole_index(he2,f->holes_begin(),f->holes_end());
-    }
-    for (HPolygon::Hole_const_iterator hi=fp.holes_begin();
-	 hi!=fp.holes_end();hi++) {
-      if (i!=j) {
-	holes1.push_back(*hi);
-      }
-      i++;
-    }
-    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
-    modifs.add_faces.push_back(hpoly1);
-  } break;
-  case 4 : {
-    /* Two holes are merged */
-    outer1 = fp.outer_boundary();
-    j = hole_index(he1,f->holes_begin(),f->holes_end());
-    k = hole_index(he2,f->holes_begin(),f->holes_end());
-    for (HPolygon::Hole_const_iterator hi=fp.holes_begin();
-	 hi!=fp.holes_end();hi++) {
-      if (i!=j && i!=k) {
-	holes1.push_back(*hi);
-      }
-      i++;
-    }
-    // merge the two holes and add the result to the list of holes
-    Polygon ccb2 = ccb2polygon(he2->ccb()); // ccb containing e2
-    pe2 = lt2poly_edge_circulator(he2,ccb2);
-    ccb_buf = polygon_insert_edge(pe1,pe2,pt1,pt2);
-    holes1.push_back(ccb_buf);
-    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
-    modifs.add_faces.push_back(hpoly1);
-  }
-  }
-  
+  HPolygon fp = face2poly(f,false);
+
+  Polygons fp_borders = boundaries(fp);
+  PECirc pe1, pe2;
+  Size i1 = fp_borders.size(), i2 = i1, j;
+  i1 = find_edge_in_polygons(fp_borders, 
+			     Segment(he1->source()->point(), 
+				     he1->target()->point()), pe1);
+  i2 = find_edge_in_polygons(fp_borders, 
+			     Segment(he2->source()->point(), 
+				     he2->target()->point()), pe2);
+  modifs.add_faces = hpolygon_insert_edge(fp_borders, i1, i2, pe1, pe2, 
+					  pt1, pt2);
+
   // Segment s1 is suppressed
   std::vector<Point2> seg = get_e1()->segment()->list_of_points();
   modifs.del_segs.push_back(seg);
@@ -2373,7 +2233,7 @@ ModList TTessel::Merge::modified_elements() {
 
   HPolygon f1_hpoly(face2poly(f1)), f2_hpoly;
   Polygon ccb1 = ccb2polygon(he->ccb()), ccb2;
-  Polygon::Edge_const_circulator pe = lt2poly_edge_circulator(he,ccb1),
+  PECirc pe = lt2poly_edge_circulator(he,ccb1),
     pe_twin;
   /* Cases 1 and 2: two faces suppressed. Cases 3 and 4: modification
      of an existing face => only 1 face suppressed. */
@@ -4309,11 +4169,12 @@ double face_sum_of_angles(HPolygon f, TTessel* t){
 
 /** \brief Returns a HPolygon object representing a face of the
  *     tessellation. 
- *
- * Only vertices joining non-aligned edges are specified during the
- * HPolygon construction.
+ * \param f : the tessellation face to be converted.
+ * \param simplify : if true, only vertices joining non-aligned edges 
+ * are specified during the HPolygon construction. Default: true.
+ * \return a holed polygon.
  **/
-HPolygon face2poly(TTessel::Face_handle f) {
+HPolygon face2poly(TTessel::Face_handle f, bool simplify) {
   std::vector<TTessel::Ccb_halfedge_circulator> ccbs;
   ccbs.push_back(f->outer_ccb());
   if (std::distance(f->holes_begin(),f->holes_end())>0) {
@@ -4324,7 +4185,7 @@ HPolygon face2poly(TTessel::Face_handle f) {
     TTessel::Ccb_halfedge_circulator e = ccbs[i];
     TTessel::Halfedge_handle e_first=e;
     do {
-      if (e->get_next_hf()==NULL_HALFEDGE_HANDLE || 
+      if (!simplify || e->get_next_hf()==NULL_HALFEDGE_HANDLE || 
 	  (e->get_next_hf()!=e->next())) 
 	poly[i].push_back(e->target()->point());
       e++;
@@ -4581,9 +4442,9 @@ Point2 ray_exit_face(Rayon &r,LineTes::Face_handle &f,
  * the same edge than e.
  * \sa ccb2polygon.  
  */
-Polygon::Edge_const_circulator 
+PECirc 
 lt2poly_edge_circulator(LineTes::Halfedge_handle &e, Polygon &poly) {
-  Polygon::Edge_const_circulator e_poly = poly.edges_circulator(), 
+  PECirc e_poly = poly.edges_circulator(), 
     done = e_poly;
   Segment seg(e->source()->point(),e->target()->point());
   do {
@@ -4609,7 +4470,7 @@ Polygon ccb2polygon(LineTes::Ccb_halfedge_circulator e) {
   } while (e!=done);
   return res;
 }
-/** \brief Compute polygon(s) generated when joining two polygon edges by a 
+/** \brief Compute a polygon generated when joining two polygon edges by a 
  *  line segment.
  *
  * \param e1 : a polygon edge circulator starting at one of the edges where 
@@ -4634,13 +4495,13 @@ Polygon ccb2polygon(LineTes::Ccb_halfedge_circulator e) {
  * and e2 merges their containing polygons. The returned polygon is the merged
  * polygon.
  */
-Polygon polygon_insert_edge(Polygon::Edge_const_circulator e1, 
-			    Polygon::Edge_const_circulator e2, 
+Polygon polygon_insert_edge(PECirc e1, 
+			    PECirc e2, 
 			    Point2 p1, Point2 p2) {
   Polygon res;
   res.push_back(p1);  
   res.push_back(p2);
-  Polygon::Edge_const_circulator e = e2;
+  PECirc e = e2;
   do {
     res.push_back(e->target());
     e++;
@@ -4658,6 +4519,173 @@ Polygon polygon_insert_edge(Polygon::Edge_const_circulator e1,
     res.push_back(e->target());
     e++;
   } while (e!=e1);
+  return res;
+}
+/** \brief Compute the holed polygon(s) generated when joining two polygon 
+ * edges by a line segment.
+ *
+ * \param hpoly : a holed polygon as a vector of polygons. The first polygon 
+ * is the counterclockwise oriented outer boundary. The following polygons are 
+ * clockwise oriented inner boundaries bounding holes. Such a representation of
+ * a holed polygon can be obtained by using the function boundaries.
+ * \param i1 : the index of the border where the inserted line segment starts. 
+ * \param i2 : the index of the border where the inserted line segment ends. 
+ * \param e1 : a polygon edge circulator starting at the edge where 
+ *             the inserted line segment starts.
+ * \param e2 : a polygon edge circulator starting at the other edge where 
+ *             the inserted line segment ends.
+ * \param p1 : the point on e1 where the inserted line segment
+ *             starts.
+ * \param p2 : the point on e2 where the inserted line segment
+ *             ends.
+ * \return the holed polygon(s) generated by the insertion of the line segment.
+ *
+ * \pre p1 must lie on e1 but it must different from the start of e1. 
+ * The point p2 must be inside e2 (neither at its start nor its end).
+ * 
+ * The insertion of the line segment can result in a 
+ * split  or in a modification of the input holed polygon. The former case 
+ * occurs when the inserted linne segment joins two points on the outer 
+ * boundary. Then, the generated holed 
+ * polygons are returned as a vector of of length 2. In the latter
+ * case, the modified holed polygon is returned as a vector of length 1.
+ * 
+ */
+HPolygons hpolygon_insert_edge(Polygons &hpoly, Size i1, Size i2, PECirc e1, 
+			       PECirc e2, Point2 p1, Point2 p2) {
+  PECirc ob_circ = hpoly[0].edges_circulator();
+  HPolygons res;
+  int cas = 0;
+  /* 4 possible cases
+     case 1: the splitting line segment connects two points along 
+             the outer boundary.
+     case 2: the splitting line segment connects two points along
+             the same inner boundary (bounding a hole).
+     case 3: the splitting line segment connects a point on the 
+             outer boundary to a point on an inner boundary.
+     case 4: the splitting line segment connects two points on two
+             different inner boundaries.
+  */
+  // Identify case
+  if (hpoly.size()==1) {
+    cas = 1;
+  } else {
+    if (i1==i2) { // e1 and e2 on same ccb
+      if (i1==0) cas = 1; // e1 and e2 on outer boundary
+      else cas = 2; // e1 and e2 on same inner boundary
+    } else { // e1 and e2 on different ccb's
+      if (i1==0) { // e1 on outer boundary and e2 on inner boundary
+	cas = 3;
+      } else { // e1 on inner boundary 
+	/* e2 may be on another inner boundary or on the outer
+	   boundary */
+	if (i2==0) { // e1 on inner boundary, e2 on outer boundary
+	  cas = 3;
+	} else cas = 4; // e1 and e2 on different inner boundaries
+      }
+    }
+  }
+  // Predict generated holed polygon(s)
+  Polygon outer1, outer2, ccb_buf;
+  Polygons holes1, holes2;
+  HPolygon hpoly1, hpoly2;
+  std::vector<bool> inside;
+  Size j;
+  switch(cas) {
+  case 1 : {
+    outer1 = polygon_insert_edge(e1,e2,p1,p2);
+    outer2 = polygon_insert_edge(e2,e1,p2,p1);
+    if (hpoly.size()==1) {
+      hpoly1 = HPolygon(outer1);
+      hpoly2 = HPolygon(outer2);
+    } else {
+      inside = filter_holes(hpoly.begin()+1,
+			    hpoly.end(),outer1);
+      for (Size ii=1;ii<hpoly.size();ii++) {
+	if (inside[ii-1]) {
+	  holes1.push_back(hpoly[ii]);
+	}
+	else
+	  holes2.push_back(hpoly[ii]);
+      }
+      hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+      hpoly2 = HPolygon(outer2,holes2.begin(),holes2.end());
+    }
+    res.push_back(hpoly1);
+    res.push_back(hpoly2);
+  } break;
+  case 2 : {
+    /* the split generates two new faces referenced as mother and
+       daughter faces. The daughter face lies along the hole (with 
+       inner boundary containing p1 and p2). The mother face is the
+       past face from which the daughter is removed. */
+    // Outer boundary of the mother face
+    outer1 = hpoly[0];
+    // Outer boundary of the daughter face
+    // new ccb containing (p2,p1)
+    Polygon c21 = polygon_insert_edge(e2,e1,p2,p1);
+    Polygon enlarged_hole;
+    if (CGAL::bounded_side_2(c21.vertices_begin(),c21.vertices_end(),
+			     e2->target())!=CGAL::ON_UNBOUNDED_SIDE) {
+      // the outer boundary of the daughter face is c12
+      outer2 = polygon_insert_edge(e1,e2,p1,p2);
+      enlarged_hole = c21;
+    } else { 
+      /* if target of e2 is outside c21, c21 is the outer boundary of
+	 the daughter face */
+      outer2 = c21;
+      enlarged_hole = polygon_insert_edge(e1,e2,p1,p2);
+    }
+    // Dispatch holes
+    inside = filter_holes(hpoly.begin()+1,hpoly.end(),outer2);
+    for (Size ii=1;ii<hpoly.size();ii++) {
+      if (ii==i1) { // hole lying along the daughter face
+	holes1.push_back(enlarged_hole);
+      } else if (inside[ii-1]) {
+	holes2.push_back(hpoly[ii]);
+      }
+      else {
+	holes1.push_back(hpoly[ii]);
+      }
+    }
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    hpoly2 = HPolygon(outer2,holes2.begin(),holes2.end());
+    res.push_back(hpoly1);
+    res.push_back(hpoly2);
+  } break;
+  case 3 : {
+    /* The existing face is modified. Its outer boundary folds 
+       inside the face and connects to a hole. */
+    // ccb containing e2
+    outer1 = polygon_insert_edge(e1,e2,p1,p2);
+    if (i1>0) {
+      j = i1;
+    } else {
+      j = i2;
+    }
+    for (Size ii=1;ii<hpoly.size();ii++) {
+      if (ii!=j) {
+	holes1.push_back(hpoly[ii]);
+      }
+    }
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    res.push_back(hpoly1);
+  } break;
+  case 4 : {
+    /* Two holes are merged */
+    outer1 = hpoly[0];
+    for (Size ii=1;ii<hpoly.size();ii++) {
+      if (ii!=i1 && ii!=i2) {
+	holes1.push_back(hpoly[ii]);
+      }
+    }
+    // merge the two holes and add the result to the list of holes
+    ccb_buf = polygon_insert_edge(e1,e2,p1,p2);
+    holes1.push_back(ccb_buf);
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    res.push_back(hpoly1);
+  }
+  }
   return res;
 }
 /** \brief Compute polygon(s) generated by the removal of a polygon edge.
@@ -4679,12 +4707,12 @@ Polygon polygon_insert_edge(Polygon::Edge_const_circulator e1,
  * generated polygon "in front of e1" is returned. In order to get the other 
  * generated polygon behind e1, call the function swapping e1 and e2.
 */
-Polygon polygon_remove_edge(Polygon::Edge_const_circulator &e1,
-			    Polygon::Edge_const_circulator &e2) {
+Polygon polygon_remove_edge(PECirc &e1,
+			    PECirc &e2) {
   Polygon res;
-  Polygon::Edge_const_circulator circ(e1);
-  Polygon::Edge_const_circulator done_merge = e1;
-  Polygon::Edge_const_circulator done_break = e2;
+  PECirc circ(e1);
+  PECirc done_merge = e1;
+  PECirc done_break = e2;
   circ++;
   while (circ!=done_merge && circ!=done_break) {
     res.push_back(circ->target());
@@ -4723,6 +4751,27 @@ std::vector<bool> is_on_same_ccb(LineTes::Halfedge_handle &e0,
   } while (e!=e0);
   return res;
 }
+/** \brief Test whether polygon edges lie on the same connected
+ * component boundary as a given edge.
+ *
+ * \param e0 : the reference edge.
+ * \param es : the edges to be tested.
+ * \return   : a vector of Boolean, true if the corresponding edge
+ *             is in the same connected component boundary as e0.
+ */
+std::vector<bool> is_on_same_ccb(PECirc e0, std::vector<PECirc> es) {
+  std::vector<bool> res(es.size(),false);
+  PECirc e = e0;
+  do {
+    for (Size i=0;i<es.size();i++) {
+      if (es[i]==e) {
+	res[i] = true;
+      }
+    }
+    e++;
+  } while (e!=e0);
+  return res;
+}
 /** \brief Test whether two halfedges lie on the same connected
  * component boundary.
  *
@@ -4740,6 +4789,22 @@ bool is_on_same_ccb(LineTes::Halfedge_handle &e0,
   } while (e!=e0);
   return false;
 }
+/** \brief Test whether edges lie on the same connected
+ * component boundary of a holed polygon.
+ *
+ * \param e0 : an edge.
+ * \param e1 : another edge.
+ */
+bool is_on_same_ccb(PECirc e0, PECirc e1) {
+  PECirc e = e0;
+  do {
+    if (e1==e) {
+      return true;
+    }
+    e++;
+  } while (e!=e0);
+  return false;
+}
 /** \brief Test whether a face has one or more holes
  * \param f : the face to be considered.
  * \return true if there is a least one hole in f, false if
@@ -4747,6 +4812,14 @@ bool is_on_same_ccb(LineTes::Halfedge_handle &e0,
  */
 bool has_holes(LineTes::Face_handle &f) {
   return std::distance(f->holes_begin(),f->holes_end())>0;
+}
+/** \brief Test whether a holed polygon has one or more holes
+ * \param p : the holed polygon to be considered.
+ * \return true if there is a least one hole in p, false if
+ * p has no no hole.
+ */
+bool has_holes(HPolygon &p) {
+  return std::distance(p.holes_begin(),p.holes_end())>0;
 }
 /** \brief Test whether the first points of holes boundaries are 
  * inside a reference polygon.
@@ -4767,6 +4840,32 @@ std::vector<bool> filter_holes(HPolygon::Hole_const_iterator begin,
   std::vector<bool> res;
   for (HPolygon::Hole_const_iterator hi=begin;hi!=end;hi++) {
     //if (poly.bounded_side((*hi)[0])==CGAL::ON_BOUNDED_SIDE)
+    if (CGAL::bounded_side_2(poly.vertices_begin(),poly.vertices_end(),(*hi)[0])
+	==CGAL::ON_BOUNDED_SIDE)
+      res.push_back(true);
+    else
+      res.push_back(false);
+  }
+  return res;
+}
+/** \brief Test whether the first points of polygons are 
+ * inside a reference polygon.
+ *
+ * \param begin : iterator to the first polygon to be tested.
+ * \param end : iterator past the last polygon to be tested.
+ * \param ref : reference polygon.
+ * \return : a vector of Boolean, true for each tested polygon
+ *           with its first point contained in the reference 
+ *           polygon.
+ * \note{Can be used a an inclusion test when the tested polygons
+ *       are assumed to be either inside or outside 
+ *       the reference polygon.}
+ */
+ std::vector<bool> filter_holes(Polygons::const_iterator begin,
+			       Polygons::const_iterator end,
+			       Polygon &poly) {
+  std::vector<bool> res;
+  for (Polygons::const_iterator hi=begin;hi!=end;hi++) {
     if (CGAL::bounded_side_2(poly.vertices_begin(),poly.vertices_end(),(*hi)[0])
 	==CGAL::ON_BOUNDED_SIDE)
       res.push_back(true);
@@ -4803,4 +4902,73 @@ Size hole_index(LineTes::Halfedge_handle e,LineTes::Hole_iterator begin,
   }
   Size j = std::distance(test_holes.begin(),hole_pos);
   return j;
+}
+/** \brief Find among polygons the polygon that contains a given edge
+ * \param e : edge.
+ * \param begin : first polygon to be searched.
+ * \param end : last polygon to be searched.
+ * \return : the position of the polygon whose boundary contains e. For
+ * instance, if 0, the first polygon was found to countain e in its boundary.
+ * \exception std::domain_error if e was not found in any polygon.
+ */
+Size polygon_index(PECirc e,Polygons::const_iterator begin,
+		Polygons::const_iterator end) throw(std::domain_error const&)
+{
+  std::vector<PECirc> vec_edges;
+  for (Polygons::const_iterator p=begin;p!=end;p++) {
+    vec_edges.push_back(p->edges_circulator());
+  }
+  std::vector<bool> test_polys = is_on_same_ccb(e,vec_edges);
+  std::vector<bool>::iterator poly_pos = std::find(test_polys.begin(),
+						   test_polys.end(),
+						   true);
+  if (poly_pos==test_polys.end()) {
+    std::ostringstream msg;
+    msg << "poly_index failed to find edge "
+	<< "(" << e->source().x() << ","
+	<< e->source().y() << ")-("
+	<< e->target().x() << "," << e->target().y()
+	<< ") in any of the provided holes.";
+    throw std::domain_error(msg.str());
+  }
+  Size j = std::distance(test_polys.begin(),poly_pos);
+  return j;
+}
+/** \brief Search a segment among the edges of a series of polygons
+ * \param polys : the series of polygons to be searched.
+ * \param seg : the segment to be found.
+ * \param e : on exit, an edge circulator starting at the edge equal to
+ *            the given segment.
+ * \return the index of the polygon where the segment was found.
+ * \note if s is part of the boundaries of several polygons, the search 
+ * stops at the first match.
+ */
+Size find_edge_in_polygons(Polygons &polys, Segment seg, PECirc &e) 
+  throw (std::domain_error const&) {
+  bool found = false;
+  Size index;
+  for (Size i=0;i<polys.size();i++) {
+    e = polys[i].edges_circulator();
+    PECirc done = e;
+    do {
+      if (e->source()==seg.source() && e->target()==seg.target()) {
+	found = true;
+	index = i; 
+	break;
+      } else {
+	e++;
+      }
+    } while (e!=done);
+    if (found) break;
+  }
+  if (!found) {
+    std::ostringstream msg;
+    msg << "find_edge_in_polygons: the segment ("
+	<< seg.source().x() << "," << seg.source().y() << ")-("
+	<< seg.target().x() << "," << seg.target().y() << ") is "
+	<< "not an edge of the given polygons";
+    throw std::domain_error(msg.str());
+  } else {
+    return index;
+  }
 }
