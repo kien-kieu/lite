@@ -1027,8 +1027,11 @@ Polygon                  polygon_insert_edge(PECirc,
 					     Point2,Point2);
 HPolygons hpolygon_insert_edge(Polygons &hpoly, Size, Size, 
 			       PECirc, PECirc, Point2, Point2);
+HPolygons hpolygon_remove_edge(Polygons&, Polygons&, Size, Size, 
+			       PECirc, PECirc,bool);
 Polygon                  polygon_remove_edge(PECirc&,
 					     PECirc&);
+
 bool                     is_on_same_ccb(LineTes::Halfedge_handle&,
 					LineTes::Halfedge_handle&);
 bool                     is_on_same_ccb(PECirc, PECirc);

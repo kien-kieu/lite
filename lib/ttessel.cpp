@@ -2185,154 +2185,30 @@ ModList TTessel::Merge::modified_elements() {
 				     e1()->target()->point()));
 
   // Face modifications
-
-  int cas = 0;
-  /* 4 possible cases
-     case 1: the removed edge is separating two tessellation faces. 
-     case 2: the removed edge is joining two vertices on the same inner
-             boundary of a tessellation face.
-     case 3: the removed edge is an isthmus where the outer boundary of a
-             tessellation face folds in the face interior and connects to
-	     a "hole".
-     case 4: the removed edge is an isthmus connecting two "holes". */
-  // Identify case
-  std::vector<bool> test;
-  Halfedge_handle he(get_e()), he_twin(he->twin());
-  Face_handle f1(he->face()), f2(he->twin()->face());
-  bool e_on_mother_inner_boundary;
-  if (f1!=f2 && !has_holes(f1) && !has_holes(f2)) { 
-    cas = 1;
+  HPolygon f = face2poly(e->face(),false), f_twin;
+  bool single_face = e->face()==e->twin()->face();
+  Polygons f_borders = boundaries(f), f_twin_borders;
+  PECirc pe, pe_twin;
+  Size i = find_edge_in_polygons(f_borders, 
+				 Segment (e->source()->point(),
+					  e->target()->point()),pe), i_twin;
+  modifs.del_faces.push_back(f);
+  if (single_face) {
+    i_twin = find_edge_in_polygons(f_borders, 
+				      Segment (e->target()->point(),
+					       e->source()->point()),pe_twin);
+    modifs.add_faces = hpolygon_remove_edge(f_borders,f_borders,i,i_twin,
+					  pe,pe_twin,single_face);    
   } else {
-    std::vector<TTessel::Halfedge_handle> es;
-    es.push_back(he_twin);
-    es.push_back(f1->outer_ccb());
-    test = is_on_same_ccb(he,es);
-    if (test[0]) {
-      if (test[1]) {
-	cas = 3;
-      } else {
-	cas = 4;
-      }
-    } else {
-      if (!test[1]) {
-	cas = 2;
-	e_on_mother_inner_boundary = true;
-      } else {
-	TTessel::Halfedge_handle f2_outer_ccb = f2->outer_ccb();
-	if (is_on_same_ccb(he_twin,f2_outer_ccb)) {
-	  cas = 1;
-	} else {
-	  cas = 2;
-	  e_on_mother_inner_boundary = false;
-	}
-      }
-    }
+    f_twin = face2poly(e->twin()->face(),false);
+    f_twin_borders = boundaries(f_twin);
+    i_twin = find_edge_in_polygons(f_twin_borders, 
+				      Segment (e->target()->point(),
+					       e->source()->point()),pe_twin);
+    modifs.del_faces.push_back(f_twin);
+    modifs.add_faces = hpolygon_remove_edge(f_borders,f_twin_borders,i,i_twin,
+					    pe,pe_twin,single_face);
   }
-
-  // Suppressed faces
-
-  HPolygon f1_hpoly(face2poly(f1)), f2_hpoly;
-  Polygon ccb1 = ccb2polygon(he->ccb()), ccb2;
-  PECirc pe = lt2poly_edge_circulator(he,ccb1),
-    pe_twin;
-  /* Cases 1 and 2: two faces suppressed. Cases 3 and 4: modification
-     of an existing face => only 1 face suppressed. */
-  modifs.del_faces.push_back(f1_hpoly);
-  if (cas<=2) {
-    f2_hpoly = HPolygon(face2poly(f2));
-    modifs.del_faces.push_back(f2_hpoly);
-  } 
-
-  // Added faces
-  Polygon outer1, outer2, buf_poly;
-  Polygons holes1, holes2;
-  HPolygon hpoly1, daughter, mother;
-  TTessel::Face_handle mother_face;
-  Size i = 0, j;
-  TTessel::Halfedge_handle buf_e;
-  switch(cas) {
-  case 1:
-    ccb2 = ccb2polygon(he_twin->ccb());
-    pe_twin = lt2poly_edge_circulator(he_twin,ccb2);
-    outer1 = polygon_remove_edge(pe,pe_twin);
-    holes1 = Polygons(f1_hpoly.holes_begin(),f1_hpoly.holes_end());
-    holes1.insert(holes1.end(),f2_hpoly.holes_begin(),f2_hpoly.holes_end());
-    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
-    modifs.add_faces.push_back(hpoly1);
-    break;
-  case 2:
-    if (e_on_mother_inner_boundary) { // f1 is the mother face
-      mother = f1_hpoly;
-      mother_face = f1;
-      daughter = f2_hpoly;
-    } else { // f1 is the daughter face
-      mother = f2_hpoly;
-      mother_face = f2;
-      daughter = f1_hpoly;
-    }
-    outer1 = mother.outer_boundary();
-    if (e_on_mother_inner_boundary) {
-      j = hole_index(he,mother_face->holes_begin(),mother_face->holes_end());
-    } else {
-      j = hole_index(he_twin,mother_face->holes_begin(),
-		     mother_face->holes_end());
-    }
-    // push the daughter holes to the list of holes 
-    holes1 = Polygons(daughter.holes_begin(),daughter.holes_end());
-    // now add the mother holes
-    ccb2 = ccb2polygon(he_twin->ccb());
-    pe_twin = lt2poly_edge_circulator(he_twin,ccb2);
-    for (HPolygon::Hole_const_iterator hi=mother.holes_begin();
-	 hi!=mother.holes_end();hi++) {
-      if (i!=j) {
-	holes1.push_back(*hi);
-      } else { // mother hole reduced by merging
-	if (e_on_mother_inner_boundary) {
-	  buf_poly = polygon_remove_edge(pe,pe_twin);
-	} else {
-	  buf_poly = polygon_remove_edge(pe_twin,pe);
-	}
-	holes1.push_back(buf_poly);
-      }
-      i++;
-    }
-    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
-    modifs.add_faces.push_back(hpoly1);
-    break;
-  case 3:
-    pe_twin = lt2poly_edge_circulator(he_twin,ccb1);
-    outer1 = polygon_remove_edge(pe,pe_twin);
-    outer2 = polygon_remove_edge(pe_twin,pe);
-    if (outer1.area()<=0) {
-      buf_poly = outer1;
-      outer1 = outer2;
-      outer2 = buf_poly;
-    }
-    holes1 = Polygons(f1_hpoly.holes_begin(),f1_hpoly.holes_end());
-    holes1.push_back(outer2);
-    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
-    modifs.add_faces.push_back(hpoly1);
-    break;
-  case 4:
-    outer1 = f1_hpoly.outer_boundary();
-    // Holes : all those of the containing face except the one bounded
-    // by e
-    holes1 = Polygons(f1_hpoly.holes_begin(),f1_hpoly.holes_end());
-    j = hole_index(he,f1->holes_begin(),f1->holes_end());
-    holes1.erase(holes1.begin()+j);
-    // Merge -> the hole bounded by e divides into two holes
-    pe_twin = lt2poly_edge_circulator(he_twin,ccb1);
-    buf_poly = polygon_remove_edge(pe,pe_twin);
-    holes1.push_back(buf_poly);
-    buf_poly = polygon_remove_edge(pe_twin,pe);
-    holes1.push_back(buf_poly);
-    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
-    modifs.add_faces.push_back(hpoly1);
-  }
-
-  // Suppressed and added segments
-
-  // Seg 1 
    
   std::vector<Point2> seg = e1()->segment()->list_of_points();
   Halfedge_handle e;
@@ -4687,6 +4563,124 @@ HPolygons hpolygon_insert_edge(Polygons &hpoly, Size i1, Size i2, PECirc e1,
   }
   }
   return res;
+}
+HPolygons hpolygon_remove_edge(Polygons &hpoly, Polygons &hpoly_twin, Size i, 
+			       Size i_twin, PECirc e, PECirc e_twin, 
+			       bool single_polygon) {
+  int cas = 0;
+  /* 4 possible cases
+     case 1: the removed edge is separating two tessellation faces. 
+     case 2: the removed edge is joining two vertices on the same inner
+             boundary of a tessellation face.
+     case 3: the removed edge is an isthmus where the outer boundary of a
+             tessellation face folds in the face interior and connects to
+	     a "hole".
+     case 4: the removed edge is an isthmus connecting two "holes". */
+  // Identify case
+  bool hpoly_equals_hpoly_twin = single_polygon;
+  if (!hpoly_equals_hpoly_twin && hpoly.size()==1 && 
+      hpoly_twin.size()==1) { 
+    cas = 1;
+  } else {
+    if (hpoly_equals_hpoly_twin && i==i_twin) {
+      if (i==0) {
+	cas = 3;
+      } else {
+	cas = 4;
+      }
+    } else { 
+      // hpoly!=hpoly_twin or i!=i_twin i.e. e and its twin on different ccb's
+      if (i>0) { // e along an inner boundary
+	cas = 2; // only possible case: hpoly!=hpoly_twin i>0 and i_twin==0
+      } else { // hpoly!=hpoly_twin or i!=i_twin and i==0
+	if (i_twin==0) { // hpoly must be different from hpoly_twin
+	  cas = 1;
+	} else { // i==0 and i_twin>0, hpoly must be different from hpoly_twin
+	  cas = 2;
+	}
+      }
+    }
+  }
+  // Added faces
+  Polygon outer1, outer2, buf_poly;
+  Polygons holes1, holes2, daughter, mother;
+  HPolygon hpoly1;
+  Size j;
+  HPolygons added_faces;
+  switch(cas) {
+  case 1:
+    outer1 = polygon_remove_edge(e,e_twin);
+    if (hpoly.size()>1) 
+      holes1 = Polygons(hpoly.begin()+1,hpoly.end());
+    if (hpoly_twin.size()>1)
+      holes1.insert(holes1.end(),hpoly_twin.begin()+1,hpoly_twin.end());
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    added_faces.push_back(hpoly1);
+    break;
+  case 2:
+    if (i>0) { // hpoly is the mother face
+      mother = hpoly;
+      daughter = hpoly_twin;
+    } else { // hpoly is the daughter face
+      mother = hpoly_twin;
+      daughter = hpoly;
+    }
+    outer1 = mother[0];
+    if (i>0) {
+      j = i;
+    } else {
+      j = i_twin;
+    }
+    // push the daughter holes to the list of holes
+    if (daughter.size()>1) 
+      holes1 = Polygons(daughter.begin()+1,daughter.end());
+    // now add the mother holes
+    for (Size ii=1;ii<mother.size();ii++) {
+      if (ii!=j) {
+	holes1.push_back(mother[ii]);
+      } else { // mother hole reduced by merging
+	if (i>0) {
+	  buf_poly = polygon_remove_edge(e,e_twin);
+	} else {
+	  buf_poly = polygon_remove_edge(e_twin,e);
+	}
+	holes1.push_back(buf_poly);
+      }
+    }
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    added_faces.push_back(hpoly1);
+    break;
+  case 3:
+    outer1 = polygon_remove_edge(e,e_twin);
+    outer2 = polygon_remove_edge(e_twin,e);
+    if (outer1.area()<=0) {
+      buf_poly = outer1;
+      outer1 = outer2;
+      outer2 = buf_poly;
+    }
+    if (hpoly.size()>1)
+      holes1 = Polygons(hpoly.begin()+1,hpoly.end());
+    holes1.push_back(outer2);
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    added_faces.push_back(hpoly1);
+    break;
+  case 4:
+    outer1 = hpoly[0];
+    // Holes : all those of the containing face except the one bounded
+    // by e
+    if (hpoly.size()>1)
+      holes1 = Polygons(hpoly.begin()+1,hpoly.end());
+    j = i;
+    holes1.erase(holes1.begin()+j-1);
+    // Merge -> the hole bounded by e divides into two holes
+    buf_poly = polygon_remove_edge(e,e_twin);
+    holes1.push_back(buf_poly);
+    buf_poly = polygon_remove_edge(e_twin,e);
+    holes1.push_back(buf_poly);
+    hpoly1 = HPolygon(outer1,holes1.begin(),holes1.end());
+    added_faces.push_back(hpoly1);
+  }
+  return added_faces;
 }
 /** \brief Compute polygon(s) generated by the removal of a polygon edge.
  * \param e1 : a polygon edge circulator starting at the edge to be removed.
