@@ -560,7 +560,7 @@ public:
     inline Halfedge_handle get_e1(){return e1;}
     /** \brief Return a handle to the split edge*/
     inline Halfedge_handle get_e2(){return e2;}
-    /** \brief Return a handle to the new vertex*/
+    /** \brief Return the location of the new vertex*/
     inline Point2          get_p2(){return p2;}
   private:
     Halfedge_handle        e1; // Suppressed edge
@@ -1051,6 +1051,7 @@ Size hole_index(LineTes::Halfedge_handle, LineTes::Hole_iterator,
 Size polygon_index(PECirc,Polygons::const_iterator,
 		   Polygons::const_iterator) throw(std::domain_error const&);
 Size find_edge_in_polygons(Polygons&, Segment, PECirc&) throw(std::domain_error const&);
+Size find_edge_in_hpolygon(HPolygon&, Segment, PECirc&);
 /** \defgroup features Features of T-tessellations
  *
  * Functions that can be used by Energy objects for defining a Gibbs model

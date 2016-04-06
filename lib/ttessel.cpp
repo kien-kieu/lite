@@ -2380,66 +2380,122 @@ ModList TTessel::Flip::modified_elements() {
     modifs.add_edges.push_back(Segment(s2_split[0],s2_merge[1]));
   }
   
-  // 2 suppressed faces
+  // // 2 suppressed faces
 
-  Polygon poly;
-  TTessel::Ccb_halfedge_circulator e_circ = get_e1()->ccb();
-  do {
-    poly.push_back(e_circ->target()->point());
-  } while (++e_circ!=get_e1());
-  HPolygon del_hpoly_1(poly);
-  modifs.del_faces.push_back(del_hpoly_1);
-  poly.erase(poly.vertices_begin(),poly.vertices_end());
-  e_circ=get_e1()->twin()->ccb();
-  do {
-    poly.push_back(e_circ->target()->point());
-  } while (++e_circ!=get_e1()->twin());
-  HPolygon del_hpoly_2(poly);
-  modifs.del_faces.push_back(del_hpoly_2);
+  // Polygon poly;
+  // TTessel::Ccb_halfedge_circulator e_circ = get_e1()->ccb();
+  // do {
+  //   poly.push_back(e_circ->target()->point());
+  // } while (++e_circ!=get_e1());
+  // HPolygon del_hpoly_1(poly);
+  // modifs.del_faces.push_back(del_hpoly_1);
+  // poly.erase(poly.vertices_begin(),poly.vertices_end());
+  // e_circ=get_e1()->twin()->ccb();
+  // do {
+  //   poly.push_back(e_circ->target()->point());
+  // } while (++e_circ!=get_e1()->twin());
+  // HPolygon del_hpoly_2(poly);
+  // modifs.del_faces.push_back(del_hpoly_2);
 
-  // 2 added faces
+  // // 2 added faces
 
-  // Extended face
+  // // Extended face
    
-  poly.erase(poly.vertices_begin(),poly.vertices_end());
-  e_circ = get_e1()->ccb();
+  // poly.erase(poly.vertices_begin(),poly.vertices_end());
+  // e_circ = get_e1()->ccb();
   
-  do { 
-  	poly.push_back(e_circ->target()->point());
-    e_circ++;
-  } while (e_circ!=get_e2() && e_circ!=get_e1());
-  poly.erase(poly.vertices_begin());
+  // do { 
+  // 	poly.push_back(e_circ->target()->point());
+  //   e_circ++;
+  // } while (e_circ!=get_e2() && e_circ!=get_e1());
+  // poly.erase(poly.vertices_begin());
   
-  bool flag = e_circ==get_e2();
-  poly.push_back(get_p2());
-  if (flag)
-    e_circ = get_e1()->twin()->ccb();
-  else
-    e_circ = get_e2()->ccb();
+  // bool flag = e_circ==get_e2();
+  // poly.push_back(get_p2());
+  // if (flag)
+  //   e_circ = get_e1()->twin()->ccb();
+  // else
+  //   e_circ = get_e2()->ccb();
     
-  while (e_circ->target()->point()!=get_e1()->target()->point()) {
-    poly.push_back(e_circ->target()->point());
-    e_circ++;
+  // while (e_circ->target()->point()!=get_e1()->target()->point()) {
+  //   poly.push_back(e_circ->target()->point());
+  //   e_circ++;
+  // }
+  // HPolygon extended_hpoly(poly);
+  // modifs.add_faces.push_back(extended_hpoly);
+  
+  // // Shortened face
+  
+  
+  // poly.erase(poly.vertices_begin(),poly.vertices_end());
+  // poly.push_back(get_p2());
+  // if (flag)
+  //   e_circ = get_e2()->ccb();
+  // else
+  //   e_circ = get_e1()->twin()->ccb();
+  // do {
+  //   poly.push_back(e_circ->target()->point());
+  //   e_circ++;
+  // } while (e_circ!=get_e1() && e_circ!=get_e2()); 
+  // HPolygon shortened_hpoly(poly);
+  // modifs.add_faces.push_back(shortened_hpoly);
+
+  // Faces
+
+  HPolygon f2 = face2poly(get_e2()->face(),false);
+  Polygons f2_borders = boundaries(f2);
+  PECirc pe1_prev, pe2;
+  Size i1 = find_edge_in_polygons(f2_borders, 
+				  Segment(get_e1()->prev()->source()->point(),
+					  get_e1()->prev()->target()->point()),
+				  pe1_prev);
+  Size i2 = find_edge_in_polygons(f2_borders, 
+				  Segment(get_e2()->source()->point(),
+					  get_e2()->target()->point()),
+				  pe2);
+  HPolygons del_faces_1;
+  del_faces_1.push_back(f2);
+  HPolygons add_faces_1 = hpolygon_insert_edge(f2_borders,i1,i2,pe1_prev,pe2,
+					       get_e1()->source()->point(),
+					       get_p2());
+  std::vector<bool> add_faces_1_del(add_faces_1.size(),false);
+  Segment p1p2(get_e1()->source()->point(),get_p2());
+  HPolygon poly, poly_twin; /* poly face bounded by e, poly_twin face
+			       bounded by its twin */
+  bool found = false;
+  for (Size i=0;i<add_faces_1.size();i++) {
+    try {
+      HPolygon face = add_faces_1[i];
+      PECirc pe_buf;
+      Size i = find_edge_in_hpolygon(face, p1p2,pe_buf);
+      poly = face;
+      add_faces_1_del[i] = true;
+      found = true;
+      break;
+    } catch (std::domain_error const& exception) {
+      continue;
+    }
   }
-  HPolygon extended_hpoly(poly);
-  modifs.add_faces.push_back(extended_hpoly);
-  
-  // Shortened face
-  
-  
-  poly.erase(poly.vertices_begin(),poly.vertices_end());
-  poly.push_back(get_p2());
-  if (flag)
-    e_circ = get_e2()->ccb();
-  else
-    e_circ = get_e1()->twin()->ccb();
-  do {
-    poly.push_back(e_circ->target()->point());
-    e_circ++;
-  } while (e_circ!=get_e1() && e_circ!=get_e2()); 
-  HPolygon shortened_hpoly(poly);
-  modifs.add_faces.push_back(shortened_hpoly);
-  
+  if (!found) {
+    poly = f2;
+  }
+  found = false;
+  for (Size i=0;i<add_faces_1.size();i++) {
+    try {
+      HPolygon face = add_faces_1[i];
+      PECirc pe_buf;
+      Size i = find_edge_in_hpolygon(face, p1p2.opposite(),pe_buf);
+      poly_twin = face;
+      found = true;
+      break;
+    } catch(std::domain_error const& exception) {
+      continue;
+    }
+  }
+  // if (!found) {
+  //   if (get_e1()->face()==get_e1()->twin()->face()) {
+  //     poly_twin = 
+
   // Segments
 
   std::vector<Point2> seg;
@@ -4246,7 +4302,7 @@ HPolygon simplify(HPolygon p) {
  * \param e : on exit, the edge (on the face boundary) where the ray
  *            exits the face for the first time.
  * \return : the location where the ray exits the face.
- * \pre : the ray source must be inside the face.
+ * \pre : the ray source must be inside the face or on its boundary.
  */ 
 Point2 ray_exit_face(Rayon &r,LineTes::Face_handle &f,
 		     LineTes::Halfedge_handle &e) {
@@ -4965,4 +5021,17 @@ Size find_edge_in_polygons(Polygons &polys, Segment seg, PECirc &e)
   } else {
     return index;
   }
+}
+/** \brief Search a segment among the edges of holed polygon
+ * \param poly : the holed polygon to be searched.
+ * \param seg : the segment to be found.
+ * \param e : on exit, an edge circulator starting at the edge equal to
+ *            the given segment.
+ * \return the index of the border where the segment was found. Zero if the
+ * segment is on the outer boundary. A positive value if the segment is on
+ * an inner boundary.
+ */
+Size find_edge_in_hpolygon(HPolygon &poly, Segment seg, PECirc &e) {
+  Polygons borders = boundaries(poly);
+  return find_edge_in_polygons(borders, seg, e);
 }
