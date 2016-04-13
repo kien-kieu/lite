@@ -263,7 +263,7 @@ class LineTes : public Arrangement {
   Halfedge_handle               split_from_vertex(Vertex_handle, Halfedge_handle,
 					          Point2);
   Face_handle                   suppress_edge(Halfedge_handle);
-  void                          clear();
+  void                          clear(bool remove_window=true);
   /** \brief Return an iterator pointing to the beginning of the list of
    * tessellation segments
    */
@@ -595,7 +595,7 @@ public:
   Halfedge_handle      update(Split);
   Face_handle          update(Merge);
   Halfedge_handle      update(Flip);
-  void                 clear();
+  void                 clear(bool remove_window=true);
   bool                 is_valid(bool verbose=false);
   Split                propose_split();
   Merge                propose_merge();
@@ -1027,8 +1027,8 @@ Polygon                  polygon_insert_edge(PECirc,
 					     Point2,Point2);
 HPolygons hpolygon_insert_edge(Polygons &hpoly, Size, Size, 
 			       PECirc, PECirc, Point2, Point2);
-HPolygons hpolygon_remove_edge(Polygons&, Polygons&, Size, Size, 
-			       PECirc, PECirc,bool);
+HPolygon hpolygon_remove_edge(Polygons&, Polygons&, Size, Size, 
+			      PECirc, PECirc,bool);
 Polygon                  polygon_remove_edge(PECirc&,
 					     PECirc&);
 
