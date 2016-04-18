@@ -1015,7 +1015,8 @@ double                   sum_of_min_angles(TTessel*);
 double                   sum_of_angles_obt(TTessel*);
 double                   sum_of_segment_squared_sizes(TTessel* t);
 Polygons                 boundaries(HPolygon);
-Polygon                  simplify(Polygon);
+Polygon                  simplify(Polygon) 
+     throw(std::domain_error const&);;
 HPolygon                 simplify(HPolygon);
 Point2                   ray_exit_face(Rayon&,LineTes::Face_handle&,
 				       LineTes::Halfedge_handle&);
