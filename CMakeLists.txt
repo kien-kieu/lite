@@ -15,7 +15,7 @@ if ( CGAL_FOUND )
   include( ${CGAL_USE_FILE} )
   include_directories(BEFORE include)
   # Compilation of libraries, binaries and R package
-  subdirs(include lib demos applications wrap/R)
+  subdirs(include lib tests demos applications wrap/R)
   # Generation and installation of the CMake file template for 
   # compiling LiTe-based software
   configure_file(CMakeLists_standalone_sample.txt 

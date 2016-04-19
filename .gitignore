@@ -1,2 +1,6 @@
 *~
+*.workspace
+*.project
+.codelite
+lite.tags
 build
