@@ -36,22 +36,6 @@ HPolygons get_faces(TTessel &tes) {
   }
   return faces;
 }
-ModList get_predictions(TTessel::Modification &x) {
-  ModList predict = x.modified_elements();
-  std::clog << "get_predictions, after calling modified_elements" << std::endl;//debug
-  for (HPolygons::iterator hpi=predict.del_faces.begin();
-       hpi!=predict.del_faces.end();hpi++) {
-    *hpi = simplify(*hpi);
-  }
-  std::clog << "get_predictions, after simplifying deleted faces" << std::endl;//debug
-  for (HPolygons::iterator hpi=predict.add_faces.begin();
-       hpi!=predict.add_faces.end();hpi++) {
-    std::clog << "get_predictions, simplification of added faces, holed polygon with " << hpi->outer_boundary().size() << " vertices on its boundary" << std::endl;//debug
-    *hpi = simplify(*hpi);
-  }
-  std::clog << "get_predictions, after simplifying added faces" << std::endl;//debug
-  return predict;
-}
 HPolygons set_diff(HPolygons &a,HPolygons &b) {
   HPolygons res;
   for (HPolygons::const_iterator p=a.begin();p!=a.end();p++) {
@@ -368,7 +352,7 @@ bool prediction_is_right(TTessel &tes,
   ModList predict;
   HPolygons past_polygons = get_faces(tes);
   try {
-    predict = get_predictions(modif);
+    predict = modif.modified_elements();
   } catch(std::domain_error const& exception) {
     is_right =  false;
     info << "Error occured when getting predictions."
@@ -377,9 +361,7 @@ bool prediction_is_right(TTessel &tes,
   }
   deleted_faces_unrealized = predict.del_faces;
   added_faces_unrealized = predict.add_faces;
-  std::clog << "prediction_is_right, before tessellation update" << std::endl;//debug
   tes.update(modif);
-  std::clog << "prediction_is_right, after tessellation update" << std::endl;//debug
   HPolygons new_polygons = get_faces(tes);
   HPolygons removed_polygons = set_diff(past_polygons,new_polygons);
   HPolygons added_polygons = set_diff(new_polygons,past_polygons);
@@ -423,7 +405,7 @@ void process_wrong_predictions(HPolygons deleted_faces_unpredicted,
 			       const char new_face_unrealized_path[],
 			       std::ostringstream &info) {
       if (deleted_faces_unpredicted.size()>0) {
-	info << ", " << deleted_faces_unpredicted.size() 
+	info << deleted_faces_unpredicted.size() 
 		<< " unpredicted removed face(s)";
 	std::ofstream output_file;
 	output_file.open(old_face_unpredicted_path,std::ios::out);
@@ -433,7 +415,7 @@ void process_wrong_predictions(HPolygons deleted_faces_unpredicted,
 
       }
       if (deleted_faces_unrealized.size()>0) {
-	info << ", " << deleted_faces_unrealized.size() 
+	info << deleted_faces_unrealized.size() 
 		<< " face(s) predicted as being removed was/were not";
 	std::ofstream output_file;
 	output_file.open(old_face_unrealized_path,std::ios::out);
@@ -442,7 +424,7 @@ void process_wrong_predictions(HPolygons deleted_faces_unpredicted,
     	output_file.close();
       }
       if (added_faces_unpredicted.size()>0) {
-	info << ", " << added_faces_unpredicted.size() 
+	info << added_faces_unpredicted.size() 
 		<< " unpredicted added face(s)";
 	std::ofstream output_file;
 	output_file.open(new_face_unpredicted_path,std::ios::out);
@@ -451,7 +433,7 @@ void process_wrong_predictions(HPolygons deleted_faces_unpredicted,
     	output_file.close();
       }
       if (added_faces_unrealized.size()>0) {
-	info << ", " << added_faces_unrealized.size() 
+	info << added_faces_unrealized.size() 
 		<< " face(s) predicted as being added was/were not";
 	std::ofstream output_file;
 	output_file.open(new_face_unrealized_path,std::ios::out);
@@ -475,16 +457,27 @@ void check_predictions_4_random_smf(unsigned seed,unsigned n,unsigned m,
     tessel_file.close();
     TTessel::Split s;
     TTessel::Merge m;
+    TTessel::Flip f;
     if (i<n) { // only splits
       modif_type = SMFChain::SPLIT;
       s = tesl.propose_split();
     } else { // splits or merges
-      if (i%2) {
-	modif_type = SMFChain::MERGE;
-	m = tesl.propose_merge();
-      } else {
+      switch(i%3) {
+      case 0:
 	modif_type = SMFChain::SPLIT;
 	s = tesl.propose_split();
+	break;
+      case 1:
+	if (tesl.number_of_non_blocking_segments()==0)
+	  continue;
+	modif_type = SMFChain::MERGE;
+	m = tesl.propose_merge();
+	break;
+      default:
+	if (tesl.number_of_blocking_segments()==0)
+	  continue;
+	modif_type = SMFChain::FLIP;
+	f = tesl.propose_flip();
       }
     }
     std::ostringstream details(std::ostringstream::out);
@@ -514,6 +507,18 @@ void check_predictions_4_random_smf(unsigned seed,unsigned n,unsigned m,
 					       added_faces_unrealized,
 					       details);
       break;
+    case SMFChain::FLIP :
+      details << "flip. Removed edge: "
+	      << "(" << f.get_e1()->source()->point() << ")-("
+	      << f.get_e1()->target()->point() << "). Inserted edge: ("
+	      << f.get_e1()->source()->point() << ")-("
+	      << f.get_p2() << ")";
+      ok = prediction_is_right<TTessel::Flip>(tesl,f,
+					       deleted_faces_unpredicted, 
+					       deleted_faces_unrealized, 
+					       added_faces_unpredicted, 
+					       added_faces_unrealized,
+					       details);
     }
     if (!ok) {
       process_wrong_predictions(deleted_faces_unpredicted, 
@@ -530,336 +535,336 @@ void check_predictions_4_random_smf(unsigned seed,unsigned n,unsigned m,
   delete rnd;
 }
 
-// BOOST_AUTO_TEST_CASE(clip_segment_by_holed_polygon) {
-//   HPolygon dom = holed_polygons()[0];
-//   Segment seg(Point2(-1,8),Point2(3,12));
-//   Segment cseg = clip_segment_by_polygon(seg,dom);
-//   Segment expected_cseg(Point2(0,9),Point2(2,11));
-//   BOOST_CHECK_MESSAGE(cseg==expected_cseg || cseg==expected_cseg.opposite(),
-// 		      "The clipped segment is not correct. It is ("
-// 		      << cseg.source() << ")-( " << cseg.target() << ")"
-// 		      << " instead of ("
-// 		      << expected_cseg.source() << ")-(" 
-// 		      << expected_cseg.target() << ")");
-//   // test case where the segment is outside the holed polygon
-//   seg = Segment(Point2(-1,-1),Point2(-2,-2));
-//   BOOST_CHECK_THROW(cseg = clip_segment_by_polygon(seg,dom),
-// 		    std::domain_error);
-// }
+BOOST_AUTO_TEST_CASE(clip_segment_by_holed_polygon) {
+  HPolygon dom = holed_polygons()[0];
+  Segment seg(Point2(-1,8),Point2(3,12));
+  Segment cseg = clip_segment_by_polygon(seg,dom);
+  Segment expected_cseg(Point2(0,9),Point2(2,11));
+  BOOST_CHECK_MESSAGE(cseg==expected_cseg || cseg==expected_cseg.opposite(),
+		      "The clipped segment is not correct. It is ("
+		      << cseg.source() << ")-( " << cseg.target() << ")"
+		      << " instead of ("
+		      << expected_cseg.source() << ")-(" 
+		      << expected_cseg.target() << ")");
+  // test case where the segment is outside the holed polygon
+  seg = Segment(Point2(-1,-1),Point2(-2,-2));
+  BOOST_CHECK_THROW(cseg = clip_segment_by_polygon(seg,dom),
+		    std::domain_error);
+}
 
-// BOOST_AUTO_TEST_CASE(clip_segment_by_holed_polygons) {
-//   HPolygons dom = holed_polygons();
-//   Segment seg(Point2(19/2,9/2),Point2(39/2,9/2));
-//   Segment cseg = clip_segment_by_polygon(seg,dom);
-//   Segment expected_cseg(Point2(14,9/2),Point2(19,9/2));
-//   BOOST_CHECK_MESSAGE(cseg==expected_cseg || cseg==expected_cseg.opposite(),
-// 		      "The clipped segment is not correct. It is ("
-// 		      << cseg.source() << ")-( " << cseg.target() << ")"
-// 		      << " instead of ("
-// 		      << expected_cseg.source() << ")-(" 
-// 		      << expected_cseg.target() << ")");
-//   // test case where the segment is outside both holed polygons
-//   seg = Segment(Point2(-1,-1),Point2(-2,-2));
-//   BOOST_CHECK_THROW(cseg = clip_segment_by_polygon(seg,dom),
-// 		    std::domain_error);
-//   // test case where the segment hits only one holed polygon
-//   seg = Segment(Point2(19/2,9/2),Point2(13,9/2));
-//   BOOST_CHECK_NO_THROW(cseg = clip_segment_by_polygon(seg,dom));
-// }
+BOOST_AUTO_TEST_CASE(clip_segment_by_holed_polygons) {
+  HPolygons dom = holed_polygons();
+  Segment seg(Point2(19/2,9/2),Point2(39/2,9/2));
+  Segment cseg = clip_segment_by_polygon(seg,dom);
+  Segment expected_cseg(Point2(14,9/2),Point2(19,9/2));
+  BOOST_CHECK_MESSAGE(cseg==expected_cseg || cseg==expected_cseg.opposite(),
+		      "The clipped segment is not correct. It is ("
+		      << cseg.source() << ")-( " << cseg.target() << ")"
+		      << " instead of ("
+		      << expected_cseg.source() << ")-(" 
+		      << expected_cseg.target() << ")");
+  // test case where the segment is outside both holed polygons
+  seg = Segment(Point2(-1,-1),Point2(-2,-2));
+  BOOST_CHECK_THROW(cseg = clip_segment_by_polygon(seg,dom),
+		    std::domain_error);
+  // test case where the segment hits only one holed polygon
+  seg = Segment(Point2(19/2,9/2),Point2(13,9/2));
+  BOOST_CHECK_NO_THROW(cseg = clip_segment_by_polygon(seg,dom));
+}
 
-// BOOST_AUTO_TEST_CASE(insert_segment) {
-//   HPolygons dom = holed_polygons();
-//   rnd = new CGAL::Random(0);
-//   TTessel tesl;
-//   tesl.insert_window(dom);
-//   /* The line segment to be inserted extends beyond the domain outer
-//      boundary at one end and inside a hole at the other end. Should be
-//      clipped at both ends. */
-//   Point2 seg_p1(3,12), seg_p2(3,16);
-//   Segment seg(seg_p1,seg_p2);
-//   Segment seg_test(seg);
-//   seg_test = seg;
-//   // Segment seg(Point2(3,12),Point2(3,16));
-//   tesl.insert_segment(seg);
-//   TTessel::Halfedge_handle e = find_halfedge(tesl,Point2(3,13),Point2(3,15));
-//   BOOST_CHECK_MESSAGE(e!=NULL_HALFEDGE_HANDLE,
-// 		      "Segment should have been clipped to edge "
-// 		      << "(" << Point2(3,13) << ")-(" << Point2(3,15)
-// 		      << "). But that edge was not found");
-//   TTessel::Halfedge_handle e_next = e->get_next_hf();
-//   BOOST_CHECK_MESSAGE(e_next==NULL_HALFEDGE_HANDLE,
-// 		      "the upper part of the inserted segment extends to the "
-// 		      << "unbounded side of the domain outer boundary");
-//   TTessel::Halfedge_handle e_prev = e->get_prev_hf();
-//   BOOST_CHECK_MESSAGE(e_prev==NULL_HALFEDGE_HANDLE,
-// 		      "the lower part of the insert segment extends into "
-// 		      << "a domain hole");
-//   /* The segment to be inserted has one end inside the domain and the
-//      other end beyond the domain outer boundary. Should be clipped on
-//      one side. */
-//   seg = Segment(Point2(1,2),Point2(5,2));
-//   tesl.insert_segment(seg);
-//   e = find_halfedge(tesl,Point2(1,2),Point2(4,2));
-//   BOOST_CHECK_MESSAGE(e!=NULL_HALFEDGE_HANDLE,
-// 		      "Segment should have been clipped to edge "
-// 		      << "(" << Point2(1,2) << ")-(" << Point2(4,2)
-// 		      << "). But that edge was not found");
-//   e_next = e->get_next_hf();
-//   BOOST_CHECK_MESSAGE(e_next==NULL_HALFEDGE_HANDLE,
-// 		      "the inserted segment extends too much towards right");
-//   e_prev = e->get_prev_hf();
-//   BOOST_CHECK_MESSAGE(e_prev==NULL_HALFEDGE_HANDLE,
-// 		      "the inserted segment extends too much towards left");
-// }
+BOOST_AUTO_TEST_CASE(insert_segment) {
+  HPolygons dom = holed_polygons();
+  rnd = new CGAL::Random(0);
+  TTessel tesl;
+  tesl.insert_window(dom);
+  /* The line segment to be inserted extends beyond the domain outer
+     boundary at one end and inside a hole at the other end. Should be
+     clipped at both ends. */
+  Point2 seg_p1(3,12), seg_p2(3,16);
+  Segment seg(seg_p1,seg_p2);
+  Segment seg_test(seg);
+  seg_test = seg;
+  // Segment seg(Point2(3,12),Point2(3,16));
+  tesl.insert_segment(seg);
+  TTessel::Halfedge_handle e = find_halfedge(tesl,Point2(3,13),Point2(3,15));
+  BOOST_CHECK_MESSAGE(e!=NULL_HALFEDGE_HANDLE,
+		      "Segment should have been clipped to edge "
+		      << "(" << Point2(3,13) << ")-(" << Point2(3,15)
+		      << "). But that edge was not found");
+  TTessel::Halfedge_handle e_next = e->get_next_hf();
+  BOOST_CHECK_MESSAGE(e_next==NULL_HALFEDGE_HANDLE,
+		      "the upper part of the inserted segment extends to the "
+		      << "unbounded side of the domain outer boundary");
+  TTessel::Halfedge_handle e_prev = e->get_prev_hf();
+  BOOST_CHECK_MESSAGE(e_prev==NULL_HALFEDGE_HANDLE,
+		      "the lower part of the insert segment extends into "
+		      << "a domain hole");
+  /* The segment to be inserted has one end inside the domain and the
+     other end beyond the domain outer boundary. Should be clipped on
+     one side. */
+  seg = Segment(Point2(1,2),Point2(5,2));
+  tesl.insert_segment(seg);
+  e = find_halfedge(tesl,Point2(1,2),Point2(4,2));
+  BOOST_CHECK_MESSAGE(e!=NULL_HALFEDGE_HANDLE,
+		      "Segment should have been clipped to edge "
+		      << "(" << Point2(1,2) << ")-(" << Point2(4,2)
+		      << "). But that edge was not found");
+  e_next = e->get_next_hf();
+  BOOST_CHECK_MESSAGE(e_next==NULL_HALFEDGE_HANDLE,
+		      "the inserted segment extends too much towards right");
+  e_prev = e->get_prev_hf();
+  BOOST_CHECK_MESSAGE(e_prev==NULL_HALFEDGE_HANDLE,
+		      "the inserted segment extends too much towards left");
+}
   
-// BOOST_AUTO_TEST_CASE(remove_ivertices) {
-//   HPolygons dom = holed_polygons();
-//   rnd = new CGAL::Random(0);
-//   TTessel tesl;
-//   tesl.insert_window(dom);
-//   /* Insert a segment with both free ends, not too far from the domain
-//      boundary. Both ends are I-vertices. They should be removed by
-//      extending the segment to the domain boundary on both sides. */
-//   Segment seg(Point2(5,3),Point2(5,9));
-//   tesl.insert_segment(seg);
-//   tesl.remove_ivertices();
-//   TTessel::Halfedge_handle e = find_halfedge(tesl,Point2(5,2.5),Point2(5,9.5));
-//   BOOST_CHECK_MESSAGE(e!=NULL_HALFEDGE_HANDLE,
-// 		      "Segment should have been extended to edge "
-// 		      << "(" << Point2(2,2.5) << ")-(" << Point2(5,9.5)
-// 		      << "). But that edge was not found");
-//   TTessel::Halfedge_handle e_next = e->get_next_hf();
-//   BOOST_CHECK_MESSAGE(e_next==NULL_HALFEDGE_HANDLE,
-// 		      "the segment extends too much upside");
-//   TTessel::Halfedge_handle e_prev = e->get_prev_hf();
-//   BOOST_CHECK_MESSAGE(e_prev==NULL_HALFEDGE_HANDLE,
-// 		      "the segments extends too much downside");
-//   /* Case where a segment must be shortened at one end */
-//   tesl.clear();
-//   tesl.insert_window(dom);
-//   e = find_halfedge(tesl,Point2(0,15),Point2(0,0));
-//   TTessel::Split split(e,0.5,CGAL_PI/2);
-//   tesl.update(split);
-//   seg = Segment(Point2(8.5,15),Point2(8.5,7));
-//   tesl.insert_segment(seg);
-//   e = find_halfedge(tesl,Point2(8.5,7),Point2(8.5,7.5));
-//   if (e==NULL_HALFEDGE_HANDLE) {
-//     std::cerr << "Insertion of segment (" << seg.source() << ")-("
-// 	      << seg.target() << ") should have generated ";
-//     std::cerr << "halfedge ("
-// 	      << Point2(8.5,7) << ")-(" << Point2(8.5,7.5) << "). "
-// 	      << "But that halfege was not found." << std::endl;
-//   }
-//   tesl.remove_ivertices();
-//   e = find_halfedge(tesl,Point2(8.5,7.5),Point2(8.5,7));
-//   BOOST_CHECK_MESSAGE(e==NULL_HALFEDGE_HANDLE,
-// 		      "Halfedge (" <<  Point2(8.5,7.5) << ")-(" 
-// 		      << Point2(8.5,7) << ") has not been removed");
-// }
+BOOST_AUTO_TEST_CASE(remove_ivertices) {
+  HPolygons dom = holed_polygons();
+  rnd = new CGAL::Random(0);
+  TTessel tesl;
+  tesl.insert_window(dom);
+  /* Insert a segment with both free ends, not too far from the domain
+     boundary. Both ends are I-vertices. They should be removed by
+     extending the segment to the domain boundary on both sides. */
+  Segment seg(Point2(5,3),Point2(5,9));
+  tesl.insert_segment(seg);
+  tesl.remove_ivertices();
+  TTessel::Halfedge_handle e = find_halfedge(tesl,Point2(5,2.5),Point2(5,9.5));
+  BOOST_CHECK_MESSAGE(e!=NULL_HALFEDGE_HANDLE,
+		      "Segment should have been extended to edge "
+		      << "(" << Point2(2,2.5) << ")-(" << Point2(5,9.5)
+		      << "). But that edge was not found");
+  TTessel::Halfedge_handle e_next = e->get_next_hf();
+  BOOST_CHECK_MESSAGE(e_next==NULL_HALFEDGE_HANDLE,
+		      "the segment extends too much upside");
+  TTessel::Halfedge_handle e_prev = e->get_prev_hf();
+  BOOST_CHECK_MESSAGE(e_prev==NULL_HALFEDGE_HANDLE,
+		      "the segments extends too much downside");
+  /* Case where a segment must be shortened at one end */
+  tesl.clear();
+  tesl.insert_window(dom);
+  e = find_halfedge(tesl,Point2(0,15),Point2(0,0));
+  TTessel::Split split(e,0.5,CGAL_PI/2);
+  tesl.update(split);
+  seg = Segment(Point2(8.5,15),Point2(8.5,7));
+  tesl.insert_segment(seg);
+  e = find_halfedge(tesl,Point2(8.5,7),Point2(8.5,7.5));
+  if (e==NULL_HALFEDGE_HANDLE) {
+    std::cerr << "Insertion of segment (" << seg.source() << ")-("
+	      << seg.target() << ") should have generated ";
+    std::cerr << "halfedge ("
+	      << Point2(8.5,7) << ")-(" << Point2(8.5,7.5) << "). "
+	      << "But that halfege was not found." << std::endl;
+  }
+  tesl.remove_ivertices();
+  e = find_halfedge(tesl,Point2(8.5,7.5),Point2(8.5,7));
+  BOOST_CHECK_MESSAGE(e==NULL_HALFEDGE_HANDLE,
+		      "Halfedge (" <<  Point2(8.5,7.5) << ")-(" 
+		      << Point2(8.5,7) << ") has not been removed");
+}
 
-// BOOST_AUTO_TEST_CASE(split) {
-//   HPolygons dom = holed_polygons();
-//   rnd = new CGAL::Random(0);
-//   TTessel tesl;
-//   tesl.insert_window(dom);
-//   // First test: the split segment joins two points on the outer boundary
-//   // find halfedge (0,15)-(0,0)
-//   TTessel::Halfedge_handle e1 = find_halfedge(tesl,Point2(0,15),Point2(0,0));
-//   // split starting from (0,1) horizontally
-//   TTessel::Split s1(e1,14.0/15,CGAL_PI/2);
-//   BOOST_CHECK_MESSAGE(s1.get_p1()==Point2(0,1),
-// 		      "split segment joining two points on the outer boundary:"
-// 		      << "it starts from (" << s1.get_p1() << ")  instead of " 
-// 		      << "(" << Point2(0,1) << ")");
-//   // find halfedge (0,0)-(6,3)
-//   TTessel::Halfedge_handle e2 = find_halfedge(tesl,Point2(0,0),Point2(6,3));
-//   BOOST_CHECK_MESSAGE(s1.get_e2()==e2,
-// 		      "split segment joining two points on the outer boundary:"
-// 		      << " it ends on edge (" << s1.get_e2()->source()->point()
-// 		      << ")-(" << s1.get_e2()->target()->point() << ") "
-// 		      << "instead of edge (" << e2->source()->point()
-// 		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(s1.get_p2()==Point2(2,1),
-// 		      "split segment joining two points on the outer boundary:"
-// 		      << "it ends at (" << s1.get_p2() << ")  instead of " 
-// 		      << "(" << Point2(2,1) << ")");
-//   // Second test: the split segment joins two points on the same inner boundary
-//   e1 = find_halfedge(tesl,Point2(6,13),Point2(4,11));
-//   TTessel::Split s2(e1,1.0/2,CGAL_PI/4);
-//   BOOST_CHECK_MESSAGE(check_point_closeness(s2.get_p1(),Point2(5,12)),
-// 		      "split segment joining points on the same inner boundary:"
-// 		      << "it starts from (" << s2.get_p1() << ")  instead of " 
-// 		      << "(" << Point2(5,12) << ")");
-//   e2 = find_halfedge(tesl,Point2(4,11),Point2(7,10));
-//   BOOST_CHECK_MESSAGE(s2.get_e2()==e2,
-// 		      "split segment joining two points on the same inner"
-// 		      << " boundary: it ends on edge ("
-// 		      << s2.get_e2()->source()->point()
-// 		      << ")-(" << s2.get_e2()->target()->point() << ") "
-// 		      << "instead of edge (" << e2->source()->point()
-// 		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(check_point_closeness(s2.get_p2(),Point2(5,11-1.0/3)),
-// 		      "split segment joining two points on the same inner "
-// 		      << "boundary: it ends at (" << s2.get_p2() 
-// 		      << ")  instead of " << "(" << Point2(5,11-1.0/3) << ")");
-//   //Third test: the split segment joins the outer boundary to an inner one
-//   e1 = find_halfedge(tesl,Point2(12,15),Point2(0,15));
-//   TTessel::Split s3(e1,8.0/12,CGAL_PI/2);
-//   BOOST_CHECK_MESSAGE(check_point_closeness(s3.get_p1(),Point2(4,15)),
-// 		      "split segment joining the outer boundary to an inner "
-// 		      << "boundary:"
-// 		      << "it starts from (" << s3.get_p1() << ")  instead of " 
-// 		      << "(" << Point2(4,15) << ")");
-//   e2 = find_halfedge(tesl,Point2(2,13),Point2(6,13));
-//   BOOST_CHECK_MESSAGE(s3.get_e2()==e2,
-// 		      "split segment joining the outer boundary to an inner "
-// 		      << " boundary: it ends on edge ("
-// 		      << s3.get_e2()->source()->point()
-// 		      << ")-(" << s3.get_e2()->target()->point() << ") "
-// 		      << "instead of edge (" << e2->source()->point()
-// 		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(check_point_closeness(s3.get_p2(),Point2(4,13)),
-// 		      "split segment joining the outer boundary to an inner "
-// 		      << "boundary: it ends at (" << s3.get_p2() 
-// 		      << ")  instead of " << "(" << Point2(4,13) << ")");
-//   // Fourth and last test: the split segment joins two different inner 
-//   // boundaries
-//   e1 = find_halfedge(tesl,Point2(4,7),Point2(3,4));
-//   TTessel::Split s4(e1,1.0/3,CGAL_PI/2+atan(1.0/3));
-//   BOOST_CHECK_MESSAGE(check_point_closeness(s4.get_p1(),Point2(3+2.0/3,6)),
-// 	      "split segment joining two different inner boundaries:"
-// 		      << " it starts from (" << s4.get_p1() << ")  instead of " 
-// 		      << "(" << Point2(3+2.0/3,6) << ")");
-//   e2 = find_halfedge(tesl,Point2(7,5),Point2(8,7));
-//   BOOST_CHECK_MESSAGE(s4.get_e2()==e2,
-// 		      "split segment joining two different inner boundaries: "
-// 		      << "it ends on edge ("
-// 		      << s4.get_e2()->source()->point()
-// 		      << ")-(" << s4.get_e2()->target()->point() << ") "
-// 		      << "instead of edge (" << e2->source()->point()
-// 		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(check_point_closeness(s4.get_p2(),Point2(7.5,6)),
-// 		      "split segment joining two different inner boundaries: "
-// 		      << "it ends at (" << s4.get_p2() 
-// 		      << ")  instead of " << "(" << Point2(7.5,6) << ")");
-// }
+BOOST_AUTO_TEST_CASE(split_constructor) {
+  HPolygons dom = holed_polygons();
+  rnd = new CGAL::Random(0);
+  TTessel tesl;
+  tesl.insert_window(dom);
+  // First test: the split segment joins two points on the outer boundary
+  // find halfedge (0,15)-(0,0)
+  TTessel::Halfedge_handle e1 = find_halfedge(tesl,Point2(0,15),Point2(0,0));
+  // split starting from (0,1) horizontally
+  TTessel::Split s1(e1,14.0/15,CGAL_PI/2);
+  BOOST_CHECK_MESSAGE(s1.get_p1()==Point2(0,1),
+		      "split segment joining two points on the outer boundary:"
+		      << "it starts from (" << s1.get_p1() << ")  instead of " 
+		      << "(" << Point2(0,1) << ")");
+  // find halfedge (0,0)-(6,3)
+  TTessel::Halfedge_handle e2 = find_halfedge(tesl,Point2(0,0),Point2(6,3));
+  BOOST_CHECK_MESSAGE(s1.get_e2()==e2,
+		      "split segment joining two points on the outer boundary:"
+		      << " it ends on edge (" << s1.get_e2()->source()->point()
+		      << ")-(" << s1.get_e2()->target()->point() << ") "
+		      << "instead of edge (" << e2->source()->point()
+		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(s1.get_p2()==Point2(2,1),
+		      "split segment joining two points on the outer boundary:"
+		      << "it ends at (" << s1.get_p2() << ")  instead of " 
+		      << "(" << Point2(2,1) << ")");
+  // Second test: the split segment joins two points on the same inner boundary
+  e1 = find_halfedge(tesl,Point2(6,13),Point2(4,11));
+  TTessel::Split s2(e1,1.0/2,CGAL_PI/4);
+  BOOST_CHECK_MESSAGE(check_point_closeness(s2.get_p1(),Point2(5,12)),
+		      "split segment joining points on the same inner boundary:"
+		      << "it starts from (" << s2.get_p1() << ")  instead of " 
+		      << "(" << Point2(5,12) << ")");
+  e2 = find_halfedge(tesl,Point2(4,11),Point2(7,10));
+  BOOST_CHECK_MESSAGE(s2.get_e2()==e2,
+		      "split segment joining two points on the same inner"
+		      << " boundary: it ends on edge ("
+		      << s2.get_e2()->source()->point()
+		      << ")-(" << s2.get_e2()->target()->point() << ") "
+		      << "instead of edge (" << e2->source()->point()
+		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(check_point_closeness(s2.get_p2(),Point2(5,11-1.0/3)),
+		      "split segment joining two points on the same inner "
+		      << "boundary: it ends at (" << s2.get_p2() 
+		      << ")  instead of " << "(" << Point2(5,11-1.0/3) << ")");
+  //Third test: the split segment joins the outer boundary to an inner one
+  e1 = find_halfedge(tesl,Point2(12,15),Point2(0,15));
+  TTessel::Split s3(e1,8.0/12,CGAL_PI/2);
+  BOOST_CHECK_MESSAGE(check_point_closeness(s3.get_p1(),Point2(4,15)),
+		      "split segment joining the outer boundary to an inner "
+		      << "boundary:"
+		      << "it starts from (" << s3.get_p1() << ")  instead of " 
+		      << "(" << Point2(4,15) << ")");
+  e2 = find_halfedge(tesl,Point2(2,13),Point2(6,13));
+  BOOST_CHECK_MESSAGE(s3.get_e2()==e2,
+		      "split segment joining the outer boundary to an inner "
+		      << " boundary: it ends on edge ("
+		      << s3.get_e2()->source()->point()
+		      << ")-(" << s3.get_e2()->target()->point() << ") "
+		      << "instead of edge (" << e2->source()->point()
+		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(check_point_closeness(s3.get_p2(),Point2(4,13)),
+		      "split segment joining the outer boundary to an inner "
+		      << "boundary: it ends at (" << s3.get_p2() 
+		      << ")  instead of " << "(" << Point2(4,13) << ")");
+  // Fourth and last test: the split segment joins two different inner 
+  // boundaries
+  e1 = find_halfedge(tesl,Point2(4,7),Point2(3,4));
+  TTessel::Split s4(e1,1.0/3,CGAL_PI/2+atan(1.0/3));
+  BOOST_CHECK_MESSAGE(check_point_closeness(s4.get_p1(),Point2(3+2.0/3,6)),
+	      "split segment joining two different inner boundaries:"
+		      << " it starts from (" << s4.get_p1() << ")  instead of " 
+		      << "(" << Point2(3+2.0/3,6) << ")");
+  e2 = find_halfedge(tesl,Point2(7,5),Point2(8,7));
+  BOOST_CHECK_MESSAGE(s4.get_e2()==e2,
+		      "split segment joining two different inner boundaries: "
+		      << "it ends on edge ("
+		      << s4.get_e2()->source()->point()
+		      << ")-(" << s4.get_e2()->target()->point() << ") "
+		      << "instead of edge (" << e2->source()->point()
+		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(check_point_closeness(s4.get_p2(),Point2(7.5,6)),
+		      "split segment joining two different inner boundaries: "
+		      << "it ends at (" << s4.get_p2() 
+		      << ")  instead of " << "(" << Point2(7.5,6) << ")");
+}
 
-// BOOST_AUTO_TEST_CASE(flip_constructor) {
-//   HPolygons dom = holed_polygons_for_flips();
-//   rnd = new CGAL::Random(0);
-//   TTessel tesl;
-//   tesl.insert_window(dom);
-//   // FIRST TEST
-//   TTessel::Halfedge_handle s1_e1 = find_halfedge(tesl,Point2(0,11),
-// 						 Point2(0,0));
-//   TTessel::Split s1(s1_e1,10./11,CGAL_PI/2);
-//   tesl.update(s1);
-//   TTessel::Halfedge_handle s2_e1 = find_halfedge(tesl,Point2(0,0),
-// 						 Point2(14,0));
-//   TTessel::Split s2(s2_e1,11./14,CGAL_PI/2);
-//   tesl.update(s2);
-//   TTessel::Halfedge_handle e = find_halfedge(tesl,Point2(11,1),Point2(14,1));
-//   TTessel::Flip f(e);
-//   TTessel::Halfedge_handle e2 = find_halfedge(tesl,Point2(14,11),Point2(0,11));
-//   BOOST_CHECK_MESSAGE(f.get_e2()==e2,
-// 		      "flip test 1,"
-// 		      << " the split edge is (" << f.get_e2()->source()->point()
-// 		      << ")-(" << f.get_e2()->target()->point() << ") "
-// 		      << "instead of edge (" << e2->source()->point()
-// 		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(check_point_closeness(f.get_p2(),Point2(11,11)),
-// 		      "flip test 1, new vertex is "
-// 		      << " (" << f.get_p2() 
-// 		      << ")  instead of " << "(" << Point2(11,11) << ")");
-//   // TEST 2
-//   tesl.clear(false);
-//   s1_e1 = find_halfedge(tesl,Point2(14,0), Point2(14,11));
-//   TTessel::Split s1a(s1_e1,6./11,CGAL_PI/2);
-//   tesl.update(s1a);
-//   s2_e1 = find_halfedge(tesl,Point2(0,0), Point2(14,0));
-//   TTessel::Split s2a(s2_e1,11./14,CGAL_PI/2);
-//   tesl.update(s2a);
-//   e = find_halfedge(tesl,Point2(11,6),Point2(9,6));
-//   TTessel::Flip fa(e);
-//   e2 = find_halfedge(tesl,Point2(14,11),Point2(0,11));
-//   BOOST_CHECK_MESSAGE(fa.get_e2()==e2,
-// 		      "flip test 2,"
-// 		      << " the split edge is (" 
-// 		      << fa.get_e2()->source()->point()
-// 		      << ")-(" << fa.get_e2()->target()->point() << ") "
-// 		      << "instead of edge (" << e2->source()->point()
-// 		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(check_point_closeness(fa.get_p2(),Point2(11,11)),
-// 		      "flip test 2, new vertex is "
-// 		      << " (" << fa.get_p2() 
-// 		      << ")  instead of " << "(" << Point2(11,11) << ")");
-//   // TEST 3
-//   tesl.clear(false);
-//   s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
-//   TTessel::Split s1b(s1_e1,1./2,CGAL_PI/2);
-//   tesl.update(s1b);
-//   s2_e1 = find_halfedge(tesl,Point2(14,0), Point2(14,11));
-//   TTessel::Split s2b(s2_e1,4./11,CGAL_PI/2);
-//   tesl.update(s2b);
-//   e = find_halfedge(tesl,Point2(5,4),Point2(5,8));
-//   TTessel::Flip fb(e);
-//   e2 = find_halfedge(tesl,Point2(3,8),Point2(3,3));
-//   BOOST_CHECK_MESSAGE(fb.get_e2()==e2,
-// 		      "flip test 3,"
-// 		      << " the split edge is (" 
-// 		      << fb.get_e2()->source()->point()
-// 		      << ")-(" << fb.get_e2()->target()->point() << ") "
-// 		      << "instead of edge (" << e2->source()->point()
-// 		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(check_point_closeness(fb.get_p2(),Point2(3,4)),
-// 		      "flip test 3, new vertex is "
-// 		      << " (" << fb.get_p2() 
-// 		      << ")  instead of " << "(" << Point2(3,4) << ")");
-//   // TEST 4
-//   tesl.clear(false);
-//   s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
-//   TTessel::Split s1c(s1_e1,1./2,CGAL_PI/2);
-//   tesl.update(s1c);
-//   s2_e1 = find_halfedge(tesl,Point2(7,5), Point2(7,7));
-//   TTessel::Split s2c(s2_e1,1.0/2,CGAL_PI/2);
-//   tesl.update(s2c);
-//   e = find_halfedge(tesl,Point2(5,6),Point2(5,8));
-//   TTessel::Flip fc(e);
-//   e2 = find_halfedge(tesl,Point2(3,8),Point2(3,3));
-//   BOOST_CHECK_MESSAGE(fc.get_e2()==e2,
-// 		      "flip test 4,"
-// 		      << " the split edge is (" 
-// 		      << fc.get_e2()->source()->point()
-// 		      << ")-(" << fc.get_e2()->target()->point() << ") "
-// 		      << "instead of edge (" << e2->source()->point()
-// 		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(check_point_closeness(fc.get_p2(),Point2(3,6)),
-// 		      "flip test 4, new vertex is "
-// 		      << " (" << fc.get_p2() 
-// 		      << ")  instead of " << "(" << Point2(3,6) << ")");
-//   // TEST 5
-//   tesl.clear(false);
-//   s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
-//   TTessel::Split s1d(s1_e1,1./4,CGAL_PI/2);
-//   tesl.update(s1d);
-//   s2_e1 = find_halfedge(tesl,Point2(3,8), Point2(3,3));
-//   TTessel::Split s2d(s2_e1,2.0/5,3*CGAL_PI/4);
-//   tesl.update(s2d);
-//   e = find_halfedge(tesl,Point2(4,7),Point2(4,8));
-//   TTessel::Flip fd(e);
-//   e2 = find_halfedge(tesl,Point2(7,8),Point2(4,8));
-//   BOOST_CHECK_MESSAGE(fd.get_e2()==e2,
-//   		      "flip test 5,"
-//   		      << " the split edge is (" 
-//   		      << fd.get_e2()->source()->point()
-//   		      << ")-(" << fd.get_e2()->target()->point() << ") "
-//   		      << "instead of edge (" << e2->source()->point()
-//   		      << ")-( " << e2->target()->point() << ") ");
-//   BOOST_CHECK_MESSAGE(check_point_closeness(fd.get_p2(),Point2(5,8)),
-//   		      "flip test 5, new vertex is "
-//   		      << " (" << fd.get_p2() 
-//   		      << ")  instead of " << "(" << Point2(5,8) << ")");
-// }
+BOOST_AUTO_TEST_CASE(flip_constructor) {
+  HPolygons dom = holed_polygons_for_flips();
+  rnd = new CGAL::Random(0);
+  TTessel tesl;
+  tesl.insert_window(dom);
+  // FIRST TEST
+  TTessel::Halfedge_handle s1_e1 = find_halfedge(tesl,Point2(0,11),
+						 Point2(0,0));
+  TTessel::Split s1(s1_e1,10./11,CGAL_PI/2);
+  tesl.update(s1);
+  TTessel::Halfedge_handle s2_e1 = find_halfedge(tesl,Point2(0,0),
+						 Point2(14,0));
+  TTessel::Split s2(s2_e1,11./14,CGAL_PI/2);
+  tesl.update(s2);
+  TTessel::Halfedge_handle e = find_halfedge(tesl,Point2(11,1),Point2(14,1));
+  TTessel::Flip f(e);
+  TTessel::Halfedge_handle e2 = find_halfedge(tesl,Point2(14,11),Point2(0,11));
+  BOOST_CHECK_MESSAGE(f.get_e2()==e2,
+		      "flip test 1,"
+		      << " the split edge is (" << f.get_e2()->source()->point()
+		      << ")-(" << f.get_e2()->target()->point() << ") "
+		      << "instead of edge (" << e2->source()->point()
+		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(check_point_closeness(f.get_p2(),Point2(11,11)),
+		      "flip test 1, new vertex is "
+		      << " (" << f.get_p2() 
+		      << ")  instead of " << "(" << Point2(11,11) << ")");
+  // TEST 2
+  tesl.clear(false);
+  s1_e1 = find_halfedge(tesl,Point2(14,0), Point2(14,11));
+  TTessel::Split s1a(s1_e1,6./11,CGAL_PI/2);
+  tesl.update(s1a);
+  s2_e1 = find_halfedge(tesl,Point2(0,0), Point2(14,0));
+  TTessel::Split s2a(s2_e1,11./14,CGAL_PI/2);
+  tesl.update(s2a);
+  e = find_halfedge(tesl,Point2(11,6),Point2(9,6));
+  TTessel::Flip fa(e);
+  e2 = find_halfedge(tesl,Point2(14,11),Point2(0,11));
+  BOOST_CHECK_MESSAGE(fa.get_e2()==e2,
+		      "flip test 2,"
+		      << " the split edge is (" 
+		      << fa.get_e2()->source()->point()
+		      << ")-(" << fa.get_e2()->target()->point() << ") "
+		      << "instead of edge (" << e2->source()->point()
+		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(check_point_closeness(fa.get_p2(),Point2(11,11)),
+		      "flip test 2, new vertex is "
+		      << " (" << fa.get_p2() 
+		      << ")  instead of " << "(" << Point2(11,11) << ")");
+  // TEST 3
+  tesl.clear(false);
+  s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
+  TTessel::Split s1b(s1_e1,1./2,CGAL_PI/2);
+  tesl.update(s1b);
+  s2_e1 = find_halfedge(tesl,Point2(14,0), Point2(14,11));
+  TTessel::Split s2b(s2_e1,4./11,CGAL_PI/2);
+  tesl.update(s2b);
+  e = find_halfedge(tesl,Point2(5,4),Point2(5,8));
+  TTessel::Flip fb(e);
+  e2 = find_halfedge(tesl,Point2(3,8),Point2(3,3));
+  BOOST_CHECK_MESSAGE(fb.get_e2()==e2,
+		      "flip test 3,"
+		      << " the split edge is (" 
+		      << fb.get_e2()->source()->point()
+		      << ")-(" << fb.get_e2()->target()->point() << ") "
+		      << "instead of edge (" << e2->source()->point()
+		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(check_point_closeness(fb.get_p2(),Point2(3,4)),
+		      "flip test 3, new vertex is "
+		      << " (" << fb.get_p2() 
+		      << ")  instead of " << "(" << Point2(3,4) << ")");
+  // TEST 4
+  tesl.clear(false);
+  s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
+  TTessel::Split s1c(s1_e1,1./2,CGAL_PI/2);
+  tesl.update(s1c);
+  s2_e1 = find_halfedge(tesl,Point2(7,5), Point2(7,7));
+  TTessel::Split s2c(s2_e1,1.0/2,CGAL_PI/2);
+  tesl.update(s2c);
+  e = find_halfedge(tesl,Point2(5,6),Point2(5,8));
+  TTessel::Flip fc(e);
+  e2 = find_halfedge(tesl,Point2(3,8),Point2(3,3));
+  BOOST_CHECK_MESSAGE(fc.get_e2()==e2,
+		      "flip test 4,"
+		      << " the split edge is (" 
+		      << fc.get_e2()->source()->point()
+		      << ")-(" << fc.get_e2()->target()->point() << ") "
+		      << "instead of edge (" << e2->source()->point()
+		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(check_point_closeness(fc.get_p2(),Point2(3,6)),
+		      "flip test 4, new vertex is "
+		      << " (" << fc.get_p2() 
+		      << ")  instead of " << "(" << Point2(3,6) << ")");
+  // TEST 5
+  tesl.clear(false);
+  s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
+  TTessel::Split s1d(s1_e1,1./4,CGAL_PI/2);
+  tesl.update(s1d);
+  s2_e1 = find_halfedge(tesl,Point2(3,8), Point2(3,3));
+  TTessel::Split s2d(s2_e1,2.0/5,3*CGAL_PI/4);
+  tesl.update(s2d);
+  e = find_halfedge(tesl,Point2(4,7),Point2(4,8));
+  TTessel::Flip fd(e);
+  e2 = find_halfedge(tesl,Point2(7,8),Point2(4,8));
+  BOOST_CHECK_MESSAGE(fd.get_e2()==e2,
+  		      "flip test 5,"
+  		      << " the split edge is (" 
+  		      << fd.get_e2()->source()->point()
+  		      << ")-(" << fd.get_e2()->target()->point() << ") "
+  		      << "instead of edge (" << e2->source()->point()
+  		      << ")-( " << e2->target()->point() << ") ");
+  BOOST_CHECK_MESSAGE(check_point_closeness(fd.get_p2(),Point2(5,8)),
+  		      "flip test 5, new vertex is "
+  		      << " (" << fd.get_p2() 
+  		      << ")  instead of " << "(" << Point2(5,8) << ")");
+}
 
 BOOST_AUTO_TEST_CASE(flip_modified_elements) {
   HPolygons dom = holed_polygons_for_flips();
@@ -880,17 +885,13 @@ BOOST_AUTO_TEST_CASE(flip_modified_elements) {
   HPolygons deleted_faces_unpredicted, deleted_faces_unrealized, 
     added_faces_unpredicted, added_faces_unrealized;
   std::ostringstream details(std::ostringstream::out);
-  std::clog << "still alive before calling predictionis_right" << std::endl;//debug
-  // the error occurs when calling prediction_is_right. One of the predicted added faces is empty. This causes the function simplify to fail. A secondary problem is the way exceptions are processed. The actual error should stop the program without any delay.
   bool ok = prediction_is_right<TTessel::Flip>(tesl,f,			
 					       deleted_faces_unpredicted, 
 					       deleted_faces_unrealized, 
 					       added_faces_unpredicted, 
 					       added_faces_unrealized,
 					       details);
-  std::clog << "Test flip_modified_elements, still alive after calling prediction is_right" << std::endl;//debug
   if (!ok) {
-    std::clog << "Test flip_modified_elements, prediction_is right returned falsed" << std::endl;
     process_wrong_predictions(deleted_faces_unpredicted, 
 			      deleted_faces_unrealized, 
 			      added_faces_unpredicted, 
@@ -900,27 +901,144 @@ BOOST_AUTO_TEST_CASE(flip_modified_elements) {
 			      "flip_new_face_unpredicted.csv",
 			      "flip_new_face_unrealized.csv",details);
     BOOST_FAIL(details);
+    
+  }
+  // TEST 2
+  tesl.clear(false);
+  s1_e1 = find_halfedge(tesl,Point2(14,0), Point2(14,11));
+  TTessel::Split s1a(s1_e1,6./11,CGAL_PI/2);
+  tesl.update(s1a);
+  s2_e1 = find_halfedge(tesl,Point2(0,0), Point2(14,0));
+  TTessel::Split s2a(s2_e1,11./14,CGAL_PI/2);
+  tesl.update(s2a);
+  e = find_halfedge(tesl,Point2(11,6),Point2(9,6));
+  TTessel::Flip fa(e);
+  details.str("");
+  details.clear();
+  ok = prediction_is_right<TTessel::Flip>(tesl,fa,			
+					  deleted_faces_unpredicted, 
+					  deleted_faces_unrealized, 
+					  added_faces_unpredicted, 
+					  added_faces_unrealized,
+					  details);
+  if (!ok) {
+    process_wrong_predictions(deleted_faces_unpredicted, 
+			      deleted_faces_unrealized, 
+			      added_faces_unpredicted, 
+			      added_faces_unrealized,
+			      "flip_old_face_unpredicted.csv",
+			      "flip_old_face_unrealized.csv",
+			      "flip_new_face_unpredicted.csv",
+			      "flip_new_face_unrealized.csv",details);
+    BOOST_FAIL(details.str());
+  }
+  // TEST 3
+  tesl.clear(false);
+  s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
+  TTessel::Split s1b(s1_e1,1./2,CGAL_PI/2);
+  tesl.update(s1b);
+  s2_e1 = find_halfedge(tesl,Point2(14,0), Point2(14,11));
+  TTessel::Split s2b(s2_e1,4./11,CGAL_PI/2);
+  tesl.update(s2b);
+  e = find_halfedge(tesl,Point2(5,4),Point2(5,8));
+  TTessel::Flip fb(e);
+  details.str("");
+  details.clear();
+  ok = prediction_is_right<TTessel::Flip>(tesl,fb,			
+					  deleted_faces_unpredicted, 
+					  deleted_faces_unrealized, 
+					  added_faces_unpredicted, 
+					  added_faces_unrealized,
+					  details);
+  if (!ok) {
+    process_wrong_predictions(deleted_faces_unpredicted, 
+			      deleted_faces_unrealized, 
+			      added_faces_unpredicted, 
+			      added_faces_unrealized,
+			      "flip_old_face_unpredicted.csv",
+			      "flip_old_face_unrealized.csv",
+			      "flip_new_face_unpredicted.csv",
+			      "flip_new_face_unrealized.csv",details);
+    BOOST_FAIL(details.str());
+  }
+  // TEST 4
+  tesl.clear(false);
+  s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
+  TTessel::Split s1c(s1_e1,1./2,CGAL_PI/2);
+  tesl.update(s1c);
+  s2_e1 = find_halfedge(tesl,Point2(7,5), Point2(7,7));
+  TTessel::Split s2c(s2_e1,1.0/2,CGAL_PI/2);
+  tesl.update(s2c);
+  e = find_halfedge(tesl,Point2(5,6),Point2(5,8));
+  TTessel::Flip fc(e);
+  details.str("");
+  details.clear();
+  ok = prediction_is_right<TTessel::Flip>(tesl,fc,			
+					  deleted_faces_unpredicted, 
+					  deleted_faces_unrealized, 
+					  added_faces_unpredicted, 
+					  added_faces_unrealized,
+					  details);
+  if (!ok) {
+    process_wrong_predictions(deleted_faces_unpredicted, 
+			      deleted_faces_unrealized, 
+			      added_faces_unpredicted, 
+			      added_faces_unrealized,
+			      "flip_old_face_unpredicted.csv",
+			      "flip_old_face_unrealized.csv",
+			      "flip_new_face_unpredicted.csv",
+			      "flip_new_face_unrealized.csv",details);
+    BOOST_FAIL(details.str());
+  }
+  // TEST 5
+  tesl.clear(false);
+  s1_e1 = find_halfedge(tesl,Point2(3,3), Point2(7,3));
+  TTessel::Split s1d(s1_e1,1./4,CGAL_PI/2);
+  tesl.update(s1d);
+  s2_e1 = find_halfedge(tesl,Point2(3,8), Point2(3,3));
+  TTessel::Split s2d(s2_e1,2.0/5,3*CGAL_PI/4);
+  tesl.update(s2d);
+  e = find_halfedge(tesl,Point2(4,7),Point2(4,8));
+  TTessel::Flip fd(e);
+  details.str("");
+  details.clear();
+  ok = prediction_is_right<TTessel::Flip>(tesl,fd,			
+					  deleted_faces_unpredicted, 
+					  deleted_faces_unrealized, 
+					  added_faces_unpredicted, 
+					  added_faces_unrealized,
+					  details);
+  if (!ok) {
+    process_wrong_predictions(deleted_faces_unpredicted, 
+			      deleted_faces_unrealized, 
+			      added_faces_unpredicted, 
+			      added_faces_unrealized,
+			      "flip_old_face_unpredicted.csv",
+			      "flip_old_face_unrealized.csv",
+			      "flip_new_face_unpredicted.csv",
+			      "flip_new_face_unrealized.csv",details);
+    BOOST_FAIL(details.str());
   }
   delete rnd;
 }
 
-// BOOST_AUTO_TEST_CASE(squared_domain) {
-//   Polygon square;
-//   square.push_back(Point2(0,0));
-//   square.push_back(Point2(1,0));
-//   square.push_back(Point2(1,1));
-//   square.push_back(Point2(0,1));
-//   HPolygons dom;
-//   dom.push_back(HPolygon(square));
-//   check_predictions_4_random_smf(5,100,50,dom);
-// }
+BOOST_AUTO_TEST_CASE(squared_domain) {
+  Polygon square;
+  square.push_back(Point2(0,0));
+  square.push_back(Point2(1,0));
+  square.push_back(Point2(1,1));
+  square.push_back(Point2(0,1));
+  HPolygons dom;
+  dom.push_back(HPolygon(square));
+  check_predictions_4_random_smf(5,100,50,dom);
+}
 
-// BOOST_AUTO_TEST_CASE(non_convex_holed_domain) {
-//   HPolygons dom = holed_polygons();
-//   /* It is important to keep the number of internal segments
-//      low. Otherwise there are too few faces with holes. With the
-//      parameters below, each case is observed at least about 40
-//      times. */
-//   check_predictions_4_random_smf(5,5,3000,dom);
-// }
+BOOST_AUTO_TEST_CASE(non_convex_holed_domain) {
+  HPolygons dom = holed_polygons();
+  /* It is important to keep the number of internal segments
+     low. Otherwise there are too few faces with holes. With the
+     parameters below, each case is observed at least about 40
+     times. */
+  check_predictions_4_random_smf(5,5,3000,dom);
+}
 

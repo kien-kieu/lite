@@ -8,7 +8,6 @@ Point2 upper_left_vertex(const Polygon&);
 bool llt(const Polygon&,const Polygon&);
 bool operator==(const HPolygon&,const HPolygon&);
 HPolygons get_faces(TTessel&);
-ModList get_predictions(TTessel::Modification&);
 HPolygons set_diff(HPolygons&, HPolygons&);
 std::ostream& operator<<(std::ostream&,const HPolygon&);
 std::ostream& operator<<(std::ostream&,const HPolygons&);
