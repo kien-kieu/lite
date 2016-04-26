@@ -2031,7 +2031,6 @@ ModList TTessel::Split::modified_elements() {
   // Suppressed face
   TTessel::Face_handle del_face = get_e1()->face();
   HPolygon del_poly = face2poly(del_face);
-  del_poly = simplify(del_poly);
   modifs.del_faces.push_back(del_poly);
 
   // Added faces
@@ -2202,13 +2201,15 @@ ModList TTessel::Merge::modified_elements() {
   PECirc pe, pe_twin;
   Size i = find_edge_in_polygons(f_borders, 
 				 Segment (e->source()->point(),
-					  e->target()->point()),pe), i_twin;
+					  e->target()->point()),pe);
+  Size i_twin;
   hpoly_buf = simplify(f);
   modifs.del_faces.push_back(hpoly_buf);
   if (single_face) {
     i_twin = find_edge_in_polygons(f_borders, 
 				      Segment (e->target()->point(),
-					       e->source()->point()),pe_twin);
+					       e->source()->point()),
+				   pe_twin);
     hpoly_buf = hpolygon_remove_edge(f_borders,f_borders,
 				     i,i_twin,
 				     pe,pe_twin,
@@ -2220,7 +2221,8 @@ ModList TTessel::Merge::modified_elements() {
     f_twin_borders = boundaries(f_twin);
     i_twin = find_edge_in_polygons(f_twin_borders, 
 				      Segment (e->target()->point(),
-					       e->source()->point()),pe_twin);
+					       e->source()->point()),
+				   pe_twin);
     hpoly_buf = simplify(f_twin);
     modifs.del_faces.push_back(hpoly_buf);
     hpoly_buf = hpolygon_remove_edge(f_borders,f_twin_borders,
@@ -2375,14 +2377,15 @@ ModList TTessel::Flip::modified_elements() {
   // Faces
   HPolygon f2 = face2poly(get_e2()->face(),false);
   Polygons f2_borders = boundaries(f2);
+  Point2 pt1 = get_e1()->source()->point();
   PECirc pe_p1, pe2; // pe_p1 edge of f2 containaing p1
   Segment seg_buf(get_e2()->source()->point(),get_e2()->target()->point());
   Size i2 = find_edge_in_polygons(f2_borders,seg_buf,pe2);
   if (to_right()) {
     seg_buf = Segment(get_e1()->twin()->source()->point(),
-		      get_e1()->twin()->target()->point());
+		      pt1);
   } else {
-    seg_buf = Segment(get_e1()->source()->point(),
+    seg_buf = Segment(pt1,
 		      get_e1()->target()->point());
   }
   Size i1;
@@ -2391,7 +2394,7 @@ ModList TTessel::Flip::modified_elements() {
   del_faces.push_back(f2);
   HPolygons add_faces_insert = hpolygon_insert_edge(f2_borders,i1,i2,
 						    pe_p1,pe2,
-						    get_e1()->source()->point(),
+						    pt1,
 						    get_p2());
   /* add_faces_insert_match[k] is true if add_faces_insert[k] is a
      face bounded by e1 or its twin in the tessellation where (p1,p2) has
@@ -2410,7 +2413,7 @@ ModList TTessel::Flip::modified_elements() {
   bool found = false;
   PECirc pe1;
   // seg_buf: e1 as a line segment. Used for searching e1 in faces
-  seg_buf = Segment(get_e1()->source()->point(),get_e1()->target()->point());
+  seg_buf = Segment(pt1,get_e1()->target()->point());
   if (add_faces_insert.size()==2) {
     poly = boundaries(add_faces_insert[1]);
     i1 = find_edge_in_polygons(poly,seg_buf,pe1);
@@ -2434,7 +2437,8 @@ ModList TTessel::Flip::modified_elements() {
       found = true;
       del_face_f1 = true;
     } else {
-      throw std::logic_error("Flip::modified_elements, unexpected case: e1 not found in any face");
+      throw std::logic_error("Flip::modified_elements, unexpected case: "
+			     "e1 not found in any face");
     }
   }
   Polygons poly_twin; /* face bounded by the twin of e1 in the virtual
@@ -2446,7 +2450,7 @@ ModList TTessel::Flip::modified_elements() {
   HPolygon add_face_remove;
   bool poly_twin_is_poly = false;
   found = false;
-  if (add_faces_insert_match[0]) {
+  if (add_faces_insert_match[0]) { // poly is add_faces_insert[0]
     i1_twin = find_edge_in_polygons(poly,seg_buf,pe1_twin);
     if (i1_twin<poly.size()) {
       found = true;
@@ -2461,7 +2465,7 @@ ModList TTessel::Flip::modified_elements() {
     }
   }
   if (!found && add_faces_insert.size()==2) {
-    if (add_faces_insert_match[1]) {
+    if (add_faces_insert_match[1]) { // poly is add_faces_insert[1]
       i1_twin = find_edge_in_polygons(poly,seg_buf,pe1_twin);
       if (i1_twin<poly.size()) {
 	found = true;
@@ -2483,16 +2487,19 @@ ModList TTessel::Flip::modified_elements() {
       found = true;
       del_face_f1_twin = true;
       if (del_face_f1) {
-	throw std::logic_error("Flip::modified_elements, unexpected case: both e1 and its twin bound faces not modified by the insertion of (p1,p2)");
+	throw std::logic_error("Flip::modified_elements, unexpected case: "
+			       "both e1 and its twin bound faces not "
+			       "modified by the insertion of (p1,p2)");
       }
     } else {
-      throw std::logic_error("Flip::modified_elements, twin of e1 not found anywhere");
+      throw std::logic_error("Flip::modified_elements, twin of e1 not "
+			     "found anywhere");
     }
   }
   // Ready for computing what happens when removing e1
   if (poly_twin_is_poly) {
-    add_face_remove = hpolygon_remove_edge(poly,poly,i1,i1_twin,pe1,pe1_twin,
-					   true);
+    add_face_remove = hpolygon_remove_edge(poly,poly,i1,i1_twin,
+					   pe1,pe1_twin,true);
   } else {
     add_face_remove = hpolygon_remove_edge(poly,poly_twin,i1,i1_twin,pe1,
 					   pe1_twin,false);
