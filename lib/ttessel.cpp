@@ -4390,42 +4390,6 @@ Point2 ray_exit_face(Rayon &r,LineTes::Face_handle &f,
   }
   return res;
 }
-/** Convert a connected component boundary circulator into a polygon edge
- * circulator.
- * \param e : a CCB halfedge circulator to be converted.
- * \param poly : the CCB as a polygon.
- * \return The alter ego of e as a polygon edge circulator. It starts at
- * the same edge than e.
- * \sa ccb2polygon.  
- */
-PECirc 
-lt2poly_edge_circulator(LineTes::Halfedge_handle &e, Polygon &poly) {
-  PECirc e_poly = poly.edges_circulator(), 
-    done = e_poly;
-  Segment seg(e->source()->point(),e->target()->point());
-  do {
-    if (*e_poly==seg) {
-      return e_poly;
-    } else {
-      e_poly++;
-    }
-  } while (e_poly!=done);
-  throw std::domain_error("function lt2poly_edge_circulator failed to find"
-			  " the given edge in the given polygon");
-}
-/** \brief Convert a connected component boundary into a polygon
- * \param e : a circulator for the CCB to converted.
- * \return the polygon defined by the CCB.
- */
-Polygon ccb2polygon(LineTes::Ccb_halfedge_circulator e) {
-  Polygon res;
-  LineTes::Ccb_halfedge_circulator done = e;
-  do {
-    res.push_back(e->source()->point());
-    e++;
-  } while (e!=done);
-  return res;
-}
 /** \brief Compute a polygon generated when joining two polygon edges by a 
  *  line segment.
  *
@@ -4816,82 +4780,6 @@ Polygon polygon_remove_edge(PECirc &e1,
   }
   return res;
 }
-/** \brief Test whether some halfedges lie on the same connected
- * component boundary as a given halfedge.
- *
- * \param e0 : the reference halfedge.
- * \param es : the halfedges to be tested.
- * \return   : a vector of Boolean, true if the corresponding halfedge
- *             is in the same connected component boundary as e0.
- */
-std::vector<bool> is_on_same_ccb(LineTes::Halfedge_handle &e0,
-				 std::vector<LineTes::Halfedge_handle> &es) {
-  std::vector<bool> res(es.size(),false);
-  LineTes::Ccb_halfedge_circulator e = e0->ccb();
-  do {
-    for (Size i=0;i<es.size();i++) {
-      if (es[i]==e) {
-	res[i] = true;
-      }
-    }
-    e++;
-  } while (e!=e0);
-  return res;
-}
-/** \brief Test whether polygon edges lie on the same connected
- * component boundary as a given edge.
- *
- * \param e0 : the reference edge.
- * \param es : the edges to be tested.
- * \return   : a vector of Boolean, true if the corresponding edge
- *             is in the same connected component boundary as e0.
- */
-std::vector<bool> is_on_same_ccb(PECirc e0, std::vector<PECirc> es) {
-  std::vector<bool> res(es.size(),false);
-  PECirc e = e0;
-  do {
-    for (Size i=0;i<es.size();i++) {
-      if (es[i]==e) {
-	res[i] = true;
-      }
-    }
-    e++;
-  } while (e!=e0);
-  return res;
-}
-/** \brief Test whether two halfedges lie on the same connected
- * component boundary.
- *
- * \param e0 : a halfedge.
- * \param e1 : another halfedge.
- */
-bool is_on_same_ccb(LineTes::Halfedge_handle &e0,
-		    LineTes::Halfedge_handle &e1) {
-  LineTes::Ccb_halfedge_circulator e = e0->ccb();
-  do {
-    if (e1==e) {
-      return true;
-    }
-    e++;
-  } while (e!=e0);
-  return false;
-}
-/** \brief Test whether edges lie on the same connected
- * component boundary of a holed polygon.
- *
- * \param e0 : an edge.
- * \param e1 : another edge.
- */
-bool is_on_same_ccb(PECirc e0, PECirc e1) {
-  PECirc e = e0;
-  do {
-    if (e1==e) {
-      return true;
-    }
-    e++;
-  } while (e!=e0);
-  return false;
-}
 /** \brief Test whether a face has one or more holes
  * \param f : the face to be considered.
  * \return true if there is a least one hole in f, false if
@@ -4960,66 +4848,6 @@ std::vector<bool> filter_holes(HPolygon::Hole_const_iterator begin,
       res.push_back(false);
   }
   return res;
-}
-/** \brief Compute the index of the hole containing a given halfedge in
- * its boundary
- * \param e : halfedge.
- * \param begin : first hole boundary to be searched.
- * \param end : last hole boundary to be searched.
- * \return : the position of the hole whose boundary contains e. For
- * instance, if 0, the first hole was found to countain e in its boundary.
- * \exception std::domain_error if e was not found in any hole.
- */
-Size hole_index(LineTes::Halfedge_handle e,LineTes::Hole_iterator begin,
-		LineTes::Hole_iterator end) throw(std::domain_error const&)
-{
-  std::vector<TTessel::Halfedge_handle> vec_holes(begin,end);
-  std::vector<bool> test_holes = is_on_same_ccb(e,vec_holes);
-  std::vector<bool>::iterator hole_pos = std::find(test_holes.begin(),
-						   test_holes.end(),
-						   true);
-  if (hole_pos==test_holes.end()) {
-    std::ostringstream msg;
-    msg << "hole_index failed to find halfedge "
-	<< "(" << e->source()->point().x() << ","
-	<< e->source()->point().y() << ")-("
-	<< e->target()->point().x() << "," << e->target()->point().y()
-	<< ") in any of the provided holes.";
-    throw std::domain_error(msg.str());
-  }
-  Size j = std::distance(test_holes.begin(),hole_pos);
-  return j;
-}
-/** \brief Find among polygons the polygon that contains a given edge
- * \param e : edge.
- * \param begin : first polygon to be searched.
- * \param end : last polygon to be searched.
- * \return : the position of the polygon whose boundary contains e. For
- * instance, if 0, the first polygon was found to countain e in its boundary.
- * \exception std::domain_error if e was not found in any polygon.
- */
-Size polygon_index(PECirc e,Polygons::const_iterator begin,
-		Polygons::const_iterator end) throw(std::domain_error const&)
-{
-  std::vector<PECirc> vec_edges;
-  for (Polygons::const_iterator p=begin;p!=end;p++) {
-    vec_edges.push_back(p->edges_circulator());
-  }
-  std::vector<bool> test_polys = is_on_same_ccb(e,vec_edges);
-  std::vector<bool>::iterator poly_pos = std::find(test_polys.begin(),
-						   test_polys.end(),
-						   true);
-  if (poly_pos==test_polys.end()) {
-    std::ostringstream msg;
-    msg << "poly_index failed to find edge "
-	<< "(" << e->source().x() << ","
-	<< e->source().y() << ")-("
-	<< e->target().x() << "," << e->target().y()
-	<< ") in any of the provided holes.";
-    throw std::domain_error(msg.str());
-  }
-  Size j = std::distance(test_polys.begin(),poly_pos);
-  return j;
 }
 /** \brief Search a segment among the edges of a series of polygons
  * \param polys : the series of polygons to be searched.

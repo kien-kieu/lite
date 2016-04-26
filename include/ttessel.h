@@ -1023,9 +1023,6 @@ Polygon                  simplify(Polygon)
 HPolygon                 simplify(HPolygon);
 Point2                   ray_exit_face(Rayon&,LineTes::Face_handle&,
 				       LineTes::Halfedge_handle&);
-PECirc 
-     lt2poly_edge_circulator(LineTes::Halfedge_handle&, Polygon&);
-Polygon ccb2polygon(LineTes::Ccb_halfedge_circulator);  
 Polygon                  polygon_insert_edge(PECirc,
 					     PECirc,
 					     Point2,Point2);
@@ -1036,12 +1033,6 @@ HPolygon hpolygon_remove_edge(Polygons&, Polygons&, Size, Size,
 Polygon                  polygon_remove_edge(PECirc&,
 					     PECirc&);
 
-bool                     is_on_same_ccb(LineTes::Halfedge_handle&,
-					LineTes::Halfedge_handle&);
-bool                     is_on_same_ccb(PECirc, PECirc);
-std::vector<bool>        is_on_same_ccb(LineTes::Halfedge_handle&,
-					std::vector<LineTes::Halfedge_handle>&);
-std::vector<bool>        is_on_same_ccb(PECirc, std::vector<PECirc>);
 bool                     has_holes(LineTes::Face_handle&);
 bool                     has_holes(HPolygon&);
 std::vector<bool>        filter_holes(HPolygon::Hole_const_iterator,
@@ -1050,10 +1041,6 @@ std::vector<bool>        filter_holes(HPolygon::Hole_const_iterator,
 std::vector<bool>        filter_holes(Polygons::const_iterator,
 				      Polygons::const_iterator,
 				      Polygon&);
-Size hole_index(LineTes::Halfedge_handle, LineTes::Hole_iterator,
-		LineTes::Hole_iterator) throw(std::domain_error const&);
-Size polygon_index(PECirc,Polygons::const_iterator,
-		   Polygons::const_iterator) throw(std::domain_error const&);
 Size find_edge_in_polygons(Polygons&, Segment, PECirc&);
 Size find_edge_in_hpolygon(HPolygon&, Segment, PECirc&);
 /** \defgroup features Features of T-tessellations
