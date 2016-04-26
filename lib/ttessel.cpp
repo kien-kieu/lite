@@ -2300,11 +2300,15 @@ TTessel::Flip::Flip(Halfedge_handle he) : e1(he) {
   Rayon r(e3->target()->point(),
 	  Vector(e3->source()->point(),e3->target()->point()));
   // Find the face where the new edge is to be inserted
+  Line le1(e1->source()->point(),e1->target()->point());
   Face_handle f;
-  if (e1->face()==e1->get_prev_hf()->face()) {
-    f = e1->face();
-  } else {
+  if (le1.oriented_side(e3->source()->point())==CGAL::ON_POSITIVE_SIDE) {
+    // e3 is at the left of e1
     f = e1->twin()->face();
+    right = true;
+  } else {
+    f = e1->face();
+    right = false;
   }
   // Set up private members e2 (split edge) and p2 (new vertex on e2)
   p2 = ray_exit_face(r,f,e2);
@@ -2372,60 +2376,65 @@ ModList TTessel::Flip::modified_elements() {
   HPolygon f2 = face2poly(get_e2()->face(),false);
   Polygons f2_borders = boundaries(f2);
   PECirc pe_p1, pe2; // pe_p1 edge of f2 containaing p1
-  bool f1_equals_f1_minus = get_e1()->face()==get_e1()->get_prev_hf()->face();
   Segment seg_buf(get_e2()->source()->point(),get_e2()->target()->point());
   Size i2 = find_edge_in_polygons(f2_borders,seg_buf,pe2);
-  if (f1_equals_f1_minus) {
-    seg_buf = Segment(get_e1()->source()->point(),
-		      get_e1()->target()->point());
-  } else {
+  if (to_right()) {
     seg_buf = Segment(get_e1()->twin()->source()->point(),
 		      get_e1()->twin()->target()->point());
+  } else {
+    seg_buf = Segment(get_e1()->source()->point(),
+		      get_e1()->target()->point());
   }
-  Size i1 = find_edge_in_polygons(f2_borders,seg_buf,pe_p1);
+  Size i1;
+  i1 = find_edge_in_polygons(f2_borders,seg_buf,pe_p1);
   HPolygons del_faces;
   del_faces.push_back(f2);
   HPolygons add_faces_insert = hpolygon_insert_edge(f2_borders,i1,i2,
 						    pe_p1,pe2,
 						    get_e1()->source()->point(),
 						    get_p2());
+  /* add_faces_insert_match[k] is true if add_faces_insert[k] is a
+     face bounded by e1 or its twin in the tessellation where (p1,p2) has
+     been inserted */
   std::vector<bool> add_faces_insert_match(add_faces_insert.size(),false);
-  bool add_face_f1 = false, add_face_f1_twin = false;
+  /* del_face_f1: true if the face bounded by e1 in the initial
+     tessellation is not modified by the insertion of (p1,p2). If
+     true, that face must be passed to function
+     hpolygon_remove_edge. Also it must be added to the list of faces
+     deleted by the flip. del_face_f1_twin: idem where e1 is replaced
+     by its twin. */ 
+  bool del_face_f1 = false, del_face_f1_twin = false;
   Polygons poly; /* poly face bounded by e1 in the (virtual)
 		    tessellation where the line segment p1p2 has been
 		    inserted */
-  poly = boundaries(add_faces_insert[0]);
+  bool found = false;
   PECirc pe1;
+  // seg_buf: e1 as a line segment. Used for searching e1 in faces
   seg_buf = Segment(get_e1()->source()->point(),get_e1()->target()->point());
-  try {
+  if (add_faces_insert.size()==2) {
+    poly = boundaries(add_faces_insert[1]);
     i1 = find_edge_in_polygons(poly,seg_buf,pe1);
-    add_faces_insert_match[0] = true;
-  } catch (std::domain_error const& ex0) {
-    if (add_faces_insert.size()>1) {
-      poly = boundaries(add_faces_insert[1]);
-      try {
-	i1 = find_edge_in_polygons(poly,seg_buf,pe1);
-	add_faces_insert_match[1] = true;
-      } catch (std::domain_error const &ex1) {
-	// e1 not in add_faces_insert[0] neither in add_faces_insert[1]
-	poly = boundaries(face2poly(get_e1()->face(),false));
-	add_face_f1 = true;
-	try {
-	  i1 = find_edge_in_polygons(poly,seg_buf,pe1);
-	} catch (std::domain_error const &ex2) {
-	  throw std::domain_error("Flip::modified_elements, edge e1 was not "
-				  "found anywhere");
-	}
-      }
-    } else { // only one polygon in add_faces_insert
-      poly = boundaries(face2poly(get_e1()->face(),false));
-      add_face_f1 = true;
-      try {
-	i1 = find_edge_in_polygons(poly,seg_buf,pe1);
-      } catch (std::domain_error const &ex2) {
-	throw std::domain_error("Flip::modified_elements, edge e1 was not "
-				"found anywhere");
-      }
+    if (i1<poly.size()) {
+      found = true;
+      add_faces_insert_match[1] = true;
+    }
+  }
+  if (!found) {
+    poly = boundaries(add_faces_insert[0]);
+    i1 = find_edge_in_polygons(poly,seg_buf,pe1);
+    if (i1<poly.size()) {
+      found = true;
+      add_faces_insert_match[0] = true;
+    }
+  }
+  if (!found) {
+    poly = boundaries(face2poly(get_e1()->face(),false));
+    i1 = find_edge_in_polygons(poly,seg_buf,pe1);
+    if (i1<poly.size()) {
+      found = true;
+      del_face_f1 = true;
+    } else {
+      throw std::logic_error("Flip::modified_elements, unexpected case: e1 not found in any face");
     }
   }
   Polygons poly_twin; /* face bounded by the twin of e1 in the virtual
@@ -2435,45 +2444,64 @@ ModList TTessel::Flip::modified_elements() {
   Size i1_twin;
   PECirc pe1_twin;
   HPolygon add_face_remove;
-  try {
+  bool poly_twin_is_poly = false;
+  found = false;
+  if (add_faces_insert_match[0]) {
     i1_twin = find_edge_in_polygons(poly,seg_buf,pe1_twin);
-    add_face_remove = hpolygon_remove_edge(poly,poly,i1,i1,pe1,pe1_twin,true);
-  } catch (std::domain_error const& ex0) {
-    /* twin of e1 not in poly */
-    if (!add_face_f1) {
-      poly_twin = boundaries(face2poly(get_e1()->twin()->face()));
-      i1_twin = find_edge_in_polygons(poly_twin,seg_buf,pe1_twin);
-      add_face_f1_twin = true;
+    if (i1_twin<poly.size()) {
+      found = true;
+      poly_twin_is_poly = true;
+    }
+  } else {
+    poly_twin = boundaries(add_faces_insert[0]);
+    i1_twin = find_edge_in_polygons(poly_twin,seg_buf,pe1_twin);
+    if (i1_twin<poly_twin.size()) {
+      found = true;
+      add_faces_insert_match[0] = true;
+    }
+  }
+  if (!found && add_faces_insert.size()==2) {
+    if (add_faces_insert_match[1]) {
+      i1_twin = find_edge_in_polygons(poly,seg_buf,pe1_twin);
+      if (i1_twin<poly.size()) {
+	found = true;
+	poly_twin_is_poly = true;
+      }
     } else {
-      /* poly_twin in add_faces_insert */
-      try {
-	poly_twin = boundaries(add_faces_insert[0]);
-	i1_twin = find_edge_in_polygons(poly_twin,seg_buf,pe1_twin);
-	add_faces_insert_match[0] = true;
-      } catch (std::domain_error const& ex1) {
-	if (add_faces_insert.size()==1)
-	  throw std::domain_error("Flip::modified_elements, twin of e1 not in "
-				  "poly neither in add_faces_insert which is "
-				  "of length 1");
-	poly_twin = boundaries(add_faces_insert[1]);
+      poly_twin = boundaries(add_faces_insert[1]);
+      i1_twin = find_edge_in_polygons(poly_twin,seg_buf,pe1_twin);
+      if (i1_twin<poly_twin.size()) {
+	found = true;
 	add_faces_insert_match[1] = true;
-	try {
-	  i1_twin = find_edge_in_polygons(poly_twin,seg_buf,pe1_twin);
-	} catch (std::domain_error const& ex2) {
-	  throw std::domain_error("Flip::modified_elements, poly is the "
-				  "face bounded by e1 but twin of e1 not "
-				  "found in add_faces_insert");
-	}
       }
     }
-    add_face_remove = hpolygon_remove_edge(poly,poly_twin,i1,i1_twin,
-					   pe1,pe1_twin,false);
+  } 
+  if (!found) {
+    poly_twin = boundaries(face2poly(get_e1()->twin()->face(),false));
+    i1_twin = find_edge_in_polygons(poly_twin,seg_buf,pe1_twin);
+    if (i1_twin<poly_twin.size()) {
+      found = true;
+      del_face_f1_twin = true;
+      if (del_face_f1) {
+	throw std::logic_error("Flip::modified_elements, unexpected case: both e1 and its twin bound faces not modified by the insertion of (p1,p2)");
+      }
+    } else {
+      throw std::logic_error("Flip::modified_elements, twin of e1 not found anywhere");
+    }
+  }
+  // Ready for computing what happens when removing e1
+  if (poly_twin_is_poly) {
+    add_face_remove = hpolygon_remove_edge(poly,poly,i1,i1_twin,pe1,pe1_twin,
+					   true);
+  } else {
+    add_face_remove = hpolygon_remove_edge(poly,poly_twin,i1,i1_twin,pe1,
+					   pe1_twin,false);
   }
   modifs.del_faces.push_back(simplify(f2));
-  if (add_face_f1)
+  if (del_face_f1)
     modifs.del_faces.push_back(simplify(HPolygon(poly[0],poly.begin()+1,
 						 poly.end())));
-  if (add_face_f1_twin) // poly_twin != poly and poly!=e1->face()
+  if (del_face_f1_twin) // poly_twin != poly and poly!=e1->face()
     modifs.del_faces.push_back(simplify(HPolygon(poly_twin[0],
 						 poly_twin.begin()+1,
 						 poly_twin.end())));
@@ -4991,14 +5019,14 @@ Size polygon_index(PECirc e,Polygons::const_iterator begin,
  * \param seg : the segment to be found.
  * \param e : on exit, an edge circulator starting at the edge equal to
  *            the given segment.
- * \return the index of the polygon where the segment was found.
+ * \return the index of the polygon where the segment was found. If 
+ * the segment was not found, the number of searched polygons.
  * \note if s is part of the boundaries of several polygons, the search 
  * stops at the first match.
  */
-Size find_edge_in_polygons(Polygons &polys, Segment seg, PECirc &e) 
-  throw (std::domain_error const&) {
+Size find_edge_in_polygons(Polygons &polys, Segment seg, PECirc &e) {
   bool found = false;
-  Size index;
+  Size index = polys.size();
   for (Size i=0;i<polys.size();i++) {
     e = polys[i].edges_circulator();
     PECirc done = e;
@@ -5013,16 +5041,7 @@ Size find_edge_in_polygons(Polygons &polys, Segment seg, PECirc &e)
     } while (e!=done);
     if (found) break;
   }
-  if (!found) {
-    std::ostringstream msg;
-    msg << "find_edge_in_polygons: the segment ("
-	<< seg.source().x() << "," << seg.source().y() << ")-("
-	<< seg.target().x() << "," << seg.target().y() << ") is "
-	<< "not an edge of the given polygons";
-    throw std::domain_error(msg.str());
-  } else {
-    return index;
-  }
+  return index;
 }
 /** \brief Search a segment among the edges of holed polygon
  * \param poly : the holed polygon to be searched.
@@ -5031,7 +5050,8 @@ Size find_edge_in_polygons(Polygons &polys, Segment seg, PECirc &e)
  *            the given segment.
  * \return the index of the border where the segment was found. Zero if the
  * segment is on the outer boundary. A positive value if the segment is on
- * an inner boundary.
+ * an inner boundary. The number of searched boundaries if the segment was 
+ * not found.
  */
 Size find_edge_in_hpolygon(HPolygon &poly, Segment seg, PECirc &e) {
   Polygons borders = boundaries(poly);

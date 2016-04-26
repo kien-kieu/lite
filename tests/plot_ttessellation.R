@@ -1,0 +1,5 @@
+require(RLiTe)
+ltes <- new(LineTes)
+ltes$read("ttessellation.txt")
+plot(ltes,asp=1,axes=TRUE)
+#ttes <- new(TTessel,ltes)

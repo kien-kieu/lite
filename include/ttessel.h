@@ -562,10 +562,13 @@ public:
     inline Halfedge_handle get_e2(){return e2;}
     /** \brief Return the location of the new vertex*/
     inline Point2          get_p2(){return p2;}
+    /** \brief Return true when the edge flips towards the righthand-side*/
+    inline bool to_right(){return right;}
   private:
     Halfedge_handle        e1; // Suppressed edge
     Halfedge_handle        e2; // Split edge
     Point2                 p2; // New vertex
+    bool                   right; // True if flip to right
   };
 
   /** \typedef Split_list
@@ -1051,7 +1054,7 @@ Size hole_index(LineTes::Halfedge_handle, LineTes::Hole_iterator,
 		LineTes::Hole_iterator) throw(std::domain_error const&);
 Size polygon_index(PECirc,Polygons::const_iterator,
 		   Polygons::const_iterator) throw(std::domain_error const&);
-Size find_edge_in_polygons(Polygons&, Segment, PECirc&) throw(std::domain_error const&);
+Size find_edge_in_polygons(Polygons&, Segment, PECirc&);
 Size find_edge_in_hpolygon(HPolygon&, Segment, PECirc&);
 /** \defgroup features Features of T-tessellations
  *

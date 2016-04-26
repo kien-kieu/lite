@@ -353,9 +353,9 @@ bool prediction_is_right(TTessel &tes,
   HPolygons past_polygons = get_faces(tes);
   try {
     predict = modif.modified_elements();
-  } catch(std::domain_error const& exception) {
+  } catch(std::logic_error const& exception) {
     is_right =  false;
-    info << "Error occured when getting predictions."
+    info << "Error occured when getting predictions. "
 	 << exception.what();
     return false;
   }
@@ -458,37 +458,47 @@ void check_predictions_4_random_smf(unsigned seed,unsigned n,unsigned m,
     TTessel::Split s;
     TTessel::Merge m;
     TTessel::Flip f;
+    std::ostringstream details(std::ostringstream::out);
+    details << "iteration " << i << ", ";
     if (i<n) { // only splits
       modif_type = SMFChain::SPLIT;
       s = tesl.propose_split();
+      details <<  "split. Splitting segment: "
+      	      << "(" << s.get_p1() << ")-(" << s.get_p2() << ")";
     } else { // splits or merges
       switch(i%3) {
       case 0:
 	modif_type = SMFChain::SPLIT;
 	s = tesl.propose_split();
+	details <<  "split. Splitting segment: "
+		<< "(" << s.get_p1() << ")-(" << s.get_p2() << "). ";
 	break;
       case 1:
 	if (tesl.number_of_non_blocking_segments()==0)
 	  continue;
 	modif_type = SMFChain::MERGE;
 	m = tesl.propose_merge();
+	details << "merge. Removed segment: "
+		<< "(" << m.get_e()->source()->point() << ")-(" 
+		<< m.get_e()->target()->point() << "). ";
 	break;
       default:
 	if (tesl.number_of_blocking_segments()==0)
 	  continue;
 	modif_type = SMFChain::FLIP;
 	f = tesl.propose_flip();
+	details << "flip. Removed edge: "
+		<< "(" << f.get_e1()->source()->point() << ")-("
+		<< f.get_e1()->target()->point() << "). Inserted edge: ("
+		<< f.get_e1()->source()->point() << ")-("
+		<< f.get_p2() << "). ";
       }
     }
-    std::ostringstream details(std::ostringstream::out);
-    details << "iteration " << i << ", ";
     HPolygons deleted_faces_unpredicted, deleted_faces_unrealized, 
       added_faces_unpredicted, added_faces_unrealized;
     bool ok;
     switch(modif_type) {
     case SMFChain::SPLIT : 
-      details <<  "split. Splitting segment: "
-      	      << "(" << s.get_p1() << ")-(" << s.get_p2() << ")";
       ok = prediction_is_right<TTessel::Split>(tesl, s, 
 					       deleted_faces_unpredicted, 
 					       deleted_faces_unrealized, 
@@ -497,9 +507,6 @@ void check_predictions_4_random_smf(unsigned seed,unsigned n,unsigned m,
 					       details);
       break;
     case SMFChain::MERGE : 
-      details << "merge. Removed segment: "
-      	      << "(" << m.get_e()->source()->point() << ")-(" 
-      	      << m.get_e()->target()->point() << ")";
       ok = prediction_is_right<TTessel::Merge>(tesl, m, 
 					       deleted_faces_unpredicted, 
 					       deleted_faces_unrealized, 
@@ -508,11 +515,6 @@ void check_predictions_4_random_smf(unsigned seed,unsigned n,unsigned m,
 					       details);
       break;
     case SMFChain::FLIP :
-      details << "flip. Removed edge: "
-	      << "(" << f.get_e1()->source()->point() << ")-("
-	      << f.get_e1()->target()->point() << "). Inserted edge: ("
-	      << f.get_e1()->source()->point() << ")-("
-	      << f.get_p2() << ")";
       ok = prediction_is_right<TTessel::Flip>(tesl,f,
 					       deleted_faces_unpredicted, 
 					       deleted_faces_unrealized, 
@@ -529,7 +531,11 @@ void check_predictions_4_random_smf(unsigned seed,unsigned n,unsigned m,
 				"smf_old_face_unrealized.csv",
 				"smf_new_face_unpredicted.csv",
 				"smf_new_face_unrealized.csv",details);
-      BOOST_FAIL(details);
+      BOOST_FAIL(details.str());
+    }
+    if (!tesl.is_a_T_tessellation(true)) {
+      details << "Test halted because the tessellation is not a T-tessellation";
+      BOOST_FAIL(details.str());
     }
   }
   delete rnd;
@@ -1039,6 +1045,6 @@ BOOST_AUTO_TEST_CASE(non_convex_holed_domain) {
      low. Otherwise there are too few faces with holes. With the
      parameters below, each case is observed at least about 40
      times. */
-  check_predictions_4_random_smf(5,5,3000,dom);
+  check_predictions_4_random_smf(5,5,5000,dom);
 }
 
