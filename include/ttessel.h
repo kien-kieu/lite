@@ -937,21 +937,20 @@ struct ModifCounts {
 /*                   DEFINITION OF CLASS SMFChain                             */
 /******************************************************************************/
 
-/** \brief Markovian T-tessellation
+/** \brief Simulation of a Gibbsian T-tessellation
  *
- * Updates are splits, merges and flips. Transitions ruled according a Metropolis-Hastings-Green construction.
+ * Updates are splits, merges and flips. Transition rules according a
+ * Metropolis-Hastings-Green construction.
+ *
+ * The probability distribution to be simulated must be instanciated
+ * as an Energy object. It is associated to the %SMFChain object
+ * through method SMFChain::set_energy. The probabilities of the three
+ * types of modifications are set up through method
+ * SMFChain::set_smf_prob. The Markov chain advances by invoking its
+ * SMFChain::step method.
  */
 class SMFChain {
 public:
-  SMFChain() {};
-  SMFChain(Energy *,double, double);
-  /** \brief Set the energy function of the model to be simulated
-   */
-  inline void    set_energy(Energy *e) {engy = e;};
-  /** \brief Get the energy function of the model to be simulated
-   */
-  inline Energy* get_energy() {return engy;};
-  void           set_smf_prob(double,double);
   /** \enum ModType
    * \brief Types of modifications applicable to a T-tessellation*/
   enum ModType {
@@ -959,11 +958,40 @@ public:
     MERGE ,///< merge (of two faces separated by a non-blocking segment)
     FLIP ///< a segment is shortened, another one is lengthened
   };
+
+  /** \name Initialization */
+  /** \{ */
+  /** \brief Default constructor
+   *
+   * Does nothing special. */
+  SMFChain() {};
+  SMFChain(Energy *,double, double);
+  /** \brief Set the energy function of the model to be simulated
+   */
+  inline void    set_energy(Energy *e) {engy = e;};
+  void           set_smf_prob(double,double);
+  /** \} */
+
+  /** \name Access */
+  /** \{ */
+  /** \brief Get the energy function of the model to be simulated
+   */
+  inline Energy* get_energy() {return engy;};
+  /** \} */
+
+  /** \name Computation */
+  /** \{ */
   ModType        propose_modif_type();
   double         Hasting_ratio(TTessel::Split&,double*);
   double         Hasting_ratio(TTessel::Merge&,double*);
   double         Hasting_ratio(TTessel::Flip&,double*);
+  /** \} */
+
+  /** \name Modification */
+  /** \{ */
   ModifCounts    step(unsigned long int=1);
+  /** \} */
+
 private:
   Energy  *engy;
   double  p_split;
