@@ -149,13 +149,23 @@ class HPolygons : public std::vector<HPolygon> {};
 /*                  DÉFINITION DE LA CLASSE LineTes                           */
 /******************************************************************************/
 
-/** \brief Polygonal tessellation of a bounded polygonal domain
+/** \brief Line tessellation of a bounded polygonal domain
  *
- * This class inherits from the Arrangement_2 class provided by
- * CGAL. Its main feature concerns the so-called segments. A segment
- * is defined as a maximal subset of edges that are aligned and
- * connected. The %LineTes class is of interest for tessellations with
- * segments that consist of more than one edge.
+ * A line tessellation is defined as a planar tessellation whose
+ * network of edges is a subset of a union of lines. The lines are
+ * supposed to be in general position. For instance, line
+ * configurations with more than two lines crossing at the same point
+ * are excluded. 
+ *
+ * Line tessellations can be considered as patterns of line
+ * segments. A segment is defined as a maximal subset of edges that
+ * are aligned and connected.  In a line tessellation, two distinct
+ * segments cannot be supported by the same line.  The %LineTes class
+ * inherits from the Arrangement_2 class provided by CGAL.  Compared
+ * to its parent class, the %LineTes class is of interest for
+ * tessellations with segments that consist of more than one
+ * edge. Segments of a line tessellation are represented as Seg
+ * objects.
 */
 
 class LineTes : public Arrangement {
@@ -171,19 +181,31 @@ class LineTes : public Arrangement {
    */
   class Seg {
   public:
+    /** \name Initialization */
+    /** \{ */
     Seg();
     Seg(Halfedge_handle);
+    /** \} */
+    /** \name Access */
+    /** \{ */
     Halfedge_handle         halfedges_start();
     Halfedge_handle         halfedges_end();
-    Size                    number_of_edges();
-    bool                    number_of_edges_is_greater_than(unsigned int);
     Point2                  pointSource();
     Point2                  pointTarget();
     Points                  list_of_points();
     /** \brief Return the halfedge handle identifying the segment*/
     inline Halfedge_handle  get_halfedge_handle(){return e;}
     void                    set_halfedge_handle(Halfedge_handle);
+    /** \} */
+    /** \name Features */
+    /** \{ */
+    Size                    number_of_edges();
+    bool                    number_of_edges_is_greater_than(unsigned int);
+    /** \} */
+    /** \name Input/output */
+    /** \{ */
     void                    print(bool endsOnly=false);
+    /** \} */
   private:
     Halfedge_handle e;
     Size            or_idx;
@@ -252,18 +274,30 @@ class LineTes : public Arrangement {
  /** \typedef Seg_sublist_iterator
   * \brief Iterator for accessing segments in a sublist of segments*/
  typedef Seg_sublist::iterator   Seg_sublist_iterator;
-   
+
+ /**\name Initialization  */ 
+ /**\{*/
   LineTes();
-  
   virtual void                  insert_window(Rectangle);
   virtual void                  insert_window(Polygon&);
   virtual void                  insert_window(HPolygons&);
+  /**\}*/
+  /**\name Modification */
+  /**\{ */
   Halfedge_handle               split_from_edge(Halfedge_handle, Point2, 
 					             Halfedge_handle, Point2);
   Halfedge_handle               split_from_vertex(Vertex_handle, Halfedge_handle,
 					          Point2);
   Face_handle                   suppress_edge(Halfedge_handle);
   void                          clear(bool remove_window=true);
+  Seg_handle                    insert_segment(Segment);
+  void                          remove_ivertices(Size imax=0,
+						 bool verbose=false);
+  void                          remove_lvertices(Size imax=0,
+						 bool verbose=false);
+  /**\}*/
+  /** \name Access */
+  /** \{ */
   /** \brief Return an iterator pointing to the beginning of the list of
    * tessellation segments
    */
@@ -272,12 +306,35 @@ class LineTes : public Arrangement {
    * tessellation segments
    */
   inline Seg_list_iterator      segments_end(){return all_segments.end();}
+  /** \brief Return the domain that is tessellated 
+   */
+  inline HPolygons              get_window(){return window;} 
+  /** \} */
+  /** \name Features */
+  /** \{ */
   /** \brief Return the total number of segments
    *
    * Boundary and internal segments are included
    */
   inline Size                   number_of_segments(){return all_segments.size();}
   Size                          number_of_internal_segments();
+  Size                          number_of_window_edges();
+  double                        get_window_perimeter();
+  /** \} */
+  /** \name Input/output */
+  /** \{ */
+  void                          print_all_segments(bool endsOnly=false);
+  void                          write(std::ostream&);
+  void                          read(std::istream&);
+  /** \} */
+  /** \name Checking and testing */
+  /** \{*/
+  int                           is_on_boundary(Halfedge_handle);
+  /** \brief Test whether a segment lies on the domain boundary
+   *
+   * \param s : a handle to the segment to be tested
+   */
+  inline bool                   is_on_boundary(Seg_handle s){return is_on_boundary(s->get_halfedge_handle())>0;}
   bool                          is_valid(bool verbose=false);
   bool                          check_all_segments(bool verbose=false);
   bool                          check_segment(Seg_handle s, bool verbose=false);
@@ -295,28 +352,9 @@ class LineTes : public Arrangement {
 						       bool verbose=false);
   bool                          check_halfedge_dir(LineTes::Halfedge_handle e,
 						       bool verbose=false);
-  void                          print_all_segments(bool endsOnly=false);
-  /** \brief Return the domain that is tessellated 
-   */
-  inline HPolygons              get_window(){return window;} 
-  Size                          number_of_window_edges();
-  double                        get_window_perimeter();
-  int                           is_on_boundary(Halfedge_handle);
-  /** \brief Test whether a segment lies on the domain boundary
-   *
-   * \param s : a handle to the segment to be tested
-   */
-  inline bool                   is_on_boundary(Seg_handle s){return is_on_boundary(s->get_halfedge_handle())>0;}
-  Seg_handle                    insert_segment(Segment);
-  void                          remove_ivertices(Size imax=0,
-						 bool verbose=false);
-  void                          remove_lvertices(Size imax=0,
-						 bool verbose=false);
   bool                          is_a_T_tessellation(bool verbose=false,
 						    std::ostream& out=std::clog);
-  void                          write(std::ostream&);
-  void                          read(std::istream&);
-
+  /** \}*/
 private:
   HPolygons                     window;
   Seg_list                      all_segments;
@@ -590,16 +628,20 @@ public:
    * \brief Iterator for accessing flips in a list*/
   typedef Flip_list::iterator  Flip_list_iterator;
 
+  /** \name Initialization */
+  /** \{ */
   TTessel();
   TTessel(LineTes&);
   virtual void         insert_window(Rectangle);
   virtual void         insert_window(Polygon&);
   virtual void         insert_window(HPolygons&);
+  /** \} */
+  /** \name Modification */
+  /** \{ */
   Halfedge_handle      update(Split);
   Face_handle          update(Merge);
   Halfedge_handle      update(Flip);
   void                 clear(bool remove_window=true);
-  bool                 is_valid(bool verbose=false);
   Split                propose_split();
   Merge                propose_merge();
   Flip                 propose_flip();
@@ -607,21 +649,35 @@ public:
   Split_list           poisson_splits(double);
   Merge_list           all_merges();
   Flip_list            all_flips();
-  Size                 number_of_blocking_segments();
-  Size                 number_of_non_blocking_segments();
+  /** \} */
+  /** \name Access */
+  /** \{ */
   Seg_sublist_iterator blocking_segments_begin();
   Seg_sublist_iterator blocking_segments_end();
+  HPolygons            all_faces();
   Seg_sublist_iterator non_blocking_segments_begin();
   Seg_sublist_iterator non_blocking_segments_end();
+  /** \} */
+  /** \name Features */
+  /** \{ */
+  Size                 number_of_blocking_segments();
+  Size                 number_of_non_blocking_segments();
   /** \brief Sum of all halfedge lengths
    *
    * The sum of halfedge lengths is equal to the sum of cell perimeters.
    */
   inline double        get_total_internal_length(){return int_length;}
-  HPolygons            all_faces();
+  /** \} */
+  /** \name Checking and testing*/
+  /** \{ */
+  bool                 is_valid(bool verbose=false);
+  /** \} */
+  /** \name Input/output */
+  /** \{ */
   void                 print_blocking_segments();
   void                 print_non_blocking_segments();
   void                 printRCALI(std::ostream&);
+  /** \} */
 private:
   Seg_sublist          blocking_segments;
   Seg_sublist          non_blocking_segments;
@@ -797,12 +853,35 @@ struct Features {
  * \f]
  * where the sum runs over all vertices, or all edges, or all faces, or all 
  * segments of the T-tessellation.
+ *
+ * Methods for defining the form of the energy and the values of the
+ * \f$\theta_i\f$'s are provided. In order to compute the energy of a
+ * given T-tessellation, the latter must be attached to the %Energy
+ * object through the Energy::set_ttessel method. If the T-tessellation is
+ * modified using splits, merges or flips, the energy value may be
+ * updated using the Energy::variation and Energy::add_value methods.
  */
 class Energy{
 
 public:
+  /** \name Initialization */
+  /** \{ */
+  Energy();
+  void                     add_features_vertices(double (*)(Point2,TTessel*));
+  void                     add_features_edges(double (*)(Segment,TTessel*));
+  void                     add_features_faces(double (*)(HPolygon,TTessel*));
+  void                     add_features_segs(double (*)(std::vector<Point2>,TTessel*) );
+  void                     add_theta_vertices(double);
+  void                     add_theta_edges(double);
+  void                     add_theta_faces(double);
+  void                     add_theta_segs(double);
+  /** \brief Set the theta parameter */
+  inline void              set_theta(CatVector par){theta = par;}
+  void                     set_ttessel(TTessel*);
+  /** \} */
 
-  Energy();  
+  /** \name Access */
+  /** \{ */
   /** \brief Return the pointer to the associated TTessel object */
   inline TTessel*          get_ttessel(){return ttes;}
   /** \brief Return the current value of the energy for the associated
@@ -810,31 +889,27 @@ public:
   inline double            get_value(){return value;}
   /** \brief Return the theta parameter */
   inline CatVector         get_theta(){return theta;}
-  /** \brief Set the theta parameter */
-  inline void              set_theta(CatVector par){theta = par;}
+  /** \} */
+
+  /** \name Modification */
+  /** \{ */
   /** \brief Increment the current value of the energy */
   inline void              add_value(double delta){value +=delta;}
-  /** Associate the model with a T-tessellation */
-  void                     set_ttessel(TTessel*);
-  double                   variation(TTessel::Modification&);
-  CatVector                statistic_variation(TTessel::Modification&);
-  void                     add_theta_vertices(double);
-  void                     add_theta_edges(double);
-  void                     add_theta_faces(double);
-  void                     add_theta_segs(double);
   void                     del_theta_vertices();
   void                     del_theta_edges();
   void                     del_theta_faces();
   void                     del_theta_segs();
-  void                     add_features_vertices(double (*)(Point2,TTessel*));
-  void                     add_features_edges(double (*)(Segment,TTessel*));
-  void                     add_features_faces(double (*)(HPolygon,TTessel*));
-  void                     add_features_segs(double (*)(std::vector<Point2>,TTessel*) );
   void                     del_features_vertices();
   void                     del_features_edges();
   void                     del_features_faces();
   void                     del_features_segs();
+  /** \} */
 
+  /** \name Computation */
+  /** \{ */
+  double                   variation(TTessel::Modification&);
+  CatVector                statistic_variation(TTessel::Modification&);
+  /** \} */
 private:
   TTessel*                 ttes;
   CatVector                theta;

@@ -2713,6 +2713,9 @@ CatMatrix outer(const CatVector &v1, const CatVector &v2) {
 /*                     METHODS FOR THE CLASS Energy                           */
 /******************************************************************************/
 
+/** \brief Default constructor
+ *
+ * The value data member is set to zero. */
 Energy::Energy(): value(0) {}
 
 /** \brief Define the T-tessellation whose energy is to be monitored
