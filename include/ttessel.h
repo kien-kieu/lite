@@ -1005,36 +1005,141 @@ private:
 /******************************************************************************/
 /** \brief Discrete approximation of the log-pseudolikelihood of a Gibbsian T-tessellation
  *
- * The Gibbs model to be considered is stored in a private data member as an
- * Energy object. The pseudolikelihood involves an integral over the space
- * of splits that can be applied to the observed T-tessellation. The discrete
- * approximation consists in replacing the integral by a discrete sum computed
- * on a sample of dummy splits. Dummy splits are drawn independently and
- * uniformly.
+ * PseudoLikDiscrete is a technical class that can be used when implementing
+ * inference algorithms. An example of user-end class based on 
+ * %PseudoLikDiscrete is PLInferenceNOIS.
+ *
+ * A pseudolikelihood method for Gibbsian T-tessellation was
+ * introduced in Research Report "Pseudolikelihood inference for
+ * Gibbsian T-tessellations... and point processes" available on
+ * [HAL](http://hal.archives-ouvertes.fr/hal-01234119) and
+ * [arXiv](http: //arxiv.org/abs/1512.08407). Consider a parametric
+ * family of energy functions \f$E_\theta\f$. For each \f$\theta\f$,
+ * each T-tessellation \f$T\f$ and each local modification (a split,
+ * a merge or a flip) \f$o\f$ of
+ * \f$T\f$ , let
+ * \f[
+ * \Delta E_\theta(o,T) = E_\theta(oT)-E_\theta(T).
+ * \f]
+ * Note that energy variations may be predicted based on the 
+ * Energy::variation method.
+ * The discrete approximation 
+ * of log-pseudolikelihood
+ * is the sum of two terms. The first term is associated to merges and
+ * splits:
+ * \f[
+ * -\sum_{m\in\mathbf{M}_T} \Delta E_\theta(m,T) -
+ * \frac{u(T)}{\pi|S|}
+ * \sum_{s\in S} \exp(-\Delta E_\theta(s,T)) ds
+ * \f]
+ * where \f$\mathbf{M}_T\f$ is the set of merges that can be applied to 
+ * the tessellation \f$T\f$ and \f$S\f$ is a sample of splits
+ * that can be applied to \f$T\f$, \f$u(T)\f$ is the perimeter sum 
+ * of faces of \f$T\f$ and \f$|S|\f$ is the size of \f$T\f$. Splits in 
+ * \f$S\f$ are called dummy splits.   
+ *
+ * The second term is associated to flips:
+ * \f[
+ * -\sum_{f\in\mathbf{F}_T} \Delta E_\theta(f,T) -
+ * \sum_{\mathbf{F}_T} \exp(-\Delta E_\theta(f,T))
+ * \f]
+ * where \f$\mathbf{F}_T\f$ is the set of flips that can be applied to 
+ * the tessellation \f$T\f$.
+ *
+ * A PseudoLikDiscrete object must be made aware of the parametric family
+ * of energy functions. This can be done using one of the constructors or
+ * PseudoLikDiscrete::SetEnergy method. The value of \f$\theta\f$ assigned
+ * in the Energy object does not matter. The observed T-tessellation 
+ * \f$T\f$ is the tessellation associated with the Energy object.
+ *
+ * The second ingredient of the discrete approximation of 
+ * log-pseudolikelihood is the sample \f$S\f$ of dummy splits. At start, it
+ * is empty. Splits drawn independently
+ * according to the uniform distribution can be added to the current
+ * sample of dummy splits.
+ *
+ * The value of the approximation can be obtained by 
+ * PseudoLikDiscrete::GetValue method. Other methods useful for
+ * optimization are PseudoLikDiscrete::GetGradient and 
+ * PseudoLikDiscrete::GetHessian.
+ *
+ * If the energy function is written as
+ * \f[
+ * E_\theta(T) = \sum_i\theta_i\phi_i(T),
+ * \f]
+ * then
+ * \f[
+ * \sum_{m\in\mathbf{M}_T}\Delta E_\theta(m,T) =
+ * \sum_i \theta_i \sum_{m\in\mathbf{M}_T} (\phi_i(mT)-\phi_(T)).
+ * \f]
+ * Therefore when assessing the value above for various \f$\theta\f$'s, it
+ * saves computation effort to precompute the vector of
+ * \f[
+ * \sum_{m\in\mathbf{M}_T} (\phi_i(mT)-\phi_(T)).
+ * \f]
+ * This computation is performed when invoking the constructor with an Energy
+ * object as input argument. And the result is stored as a private member
+ * of the %PseudoLikDiscrete object. Concerning the term depending on splits
+ * \f[
+ * \sum_{s\in S}\exp(-\Delta E_\theta(s,T)),
+ * \f]
+ * one needs to precompute and store a larger vector containing the
+ * \f[
+ * \phi_i(sT)-\phi_i(T)
+ * \f]
+ * for all \f$s\in S\f$ and all \f$i\f$'s. Moreover this vector is not computed
+ * a build time but each time the vector of dummy splits is incremented.
+ * Similarly, the vector of 
+ * \f[
+ * \phi_i(fT)-\phi_i(T)
+ * \f]
+ * for all flips \f$f\in\mathbf{F}_T\f$ and all \f$i\f$'s and its sum over 
+ * the flips are computed and stored at build time.
  */
 class PseudoLikDiscrete {
  public:
+  /** \name Initialization */
+  /** \{ */
+  /** \brief Default constructor */
   PseudoLikDiscrete() {};
   PseudoLikDiscrete(Energy*);
-  /** \brief Get the Energy data member
-   */
-  inline Energy* GetEnergy() {return engy;};
+  /** \} */
+
+  /** \name Modification */
+  /** \{ */
   /** \brief Set the Energy data member
    */
   inline void SetEnergy(Energy *e) {engy = e;};
   void AddSplits(Size);
   void AddGivenSplit(TTessel::Split); // only for debugging?
+  void ClearSplits();
+  /** \} */
+
+  /** \name Access */
+  /** \{ */
+  /** \brief Get the Energy data member
+   */
+  inline Energy* GetEnergy() {return engy;};
   /** \brief Return the split term of the discrete approximation of
    * the log-pseudolikelihood*/
   inline std::vector<CatVector> GetSplitStatistics() {return stat_splits;};
   /** \brief Return the flip term of the discrete approximation of
    * the log-pseudolikelihood*/
   inline std::vector<CatVector> GetFlipStatistics() {return stat_flips;};
-  void ClearSplits();
+  /** \} */
+
+  /** \name Computations */
+  /** \{ */
   double GetValue(CatVector);
   CatVector GetGradient(CatVector);
   CatMatrix GetHessian(CatVector);
+  /** \} */
+
+  /** \name Input/output */
+  /** \{ */
   friend std::ostream& operator<<(std::ostream &, const PseudoLikDiscrete &);
+  /** \} */
+
  private:
   // data members
   Energy *engy;

@@ -12,7 +12,7 @@ Introduction {#index}
 \copyright INRA
 \version development
 
-LiTe is a C++ library devoted to planar Gibbsian T-tessellations. It is a software companion of the paper "A completely random T-tessellation model and Gibbsian extensions" published in Spatial Statistics 2013, vol. 6 (preliminary version freely available on [HAL](http://hal.archives-ouvertes.fr/hal-00785980) and [arXiv](http://fr.arxiv.org/abs/1302.1809)). Note that LiTe is also available to R users, see the [RLiTe](rlite.html) page.
+LiTe is a C++ library devoted to planar Gibbsian T-tessellations. It is a software companion of the paper "A completely random T-tessellation model and Gibbsian extensions" published in Spatial Statistics 2013, vol. 6 (preliminary version freely available on [HAL](http://hal.archives-ouvertes.fr/hal-00785980) and [arXiv](http://arxiv.org/abs/1302.1809)). Note that LiTe is also available to R users, see the [RLiTe](rlite.html) page.
 
 Using LiTe, one can 
 - Perform some basic operations on T-tessellations.
