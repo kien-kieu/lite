@@ -1103,13 +1103,11 @@ class PseudoLikDiscrete {
   /** \brief Default constructor */
   PseudoLikDiscrete() {};
   PseudoLikDiscrete(Energy*);
+  void SetEnergy(Energy*);
   /** \} */
 
   /** \name Modification */
   /** \{ */
-  /** \brief Set the Energy data member
-   */
-  inline void SetEnergy(Energy *e) {engy = e;};
   void AddSplits(Size);
   void AddGivenSplit(TTessel::Split); // only for debugging?
   void ClearSplits();
@@ -1120,12 +1118,6 @@ class PseudoLikDiscrete {
   /** \brief Get the Energy data member
    */
   inline Energy* GetEnergy() {return engy;};
-  /** \brief Return the split term of the discrete approximation of
-   * the log-pseudolikelihood*/
-  inline std::vector<CatVector> GetSplitStatistics() {return stat_splits;};
-  /** \brief Return the flip term of the discrete approximation of
-   * the log-pseudolikelihood*/
-  inline std::vector<CatVector> GetFlipStatistics() {return stat_flips;};
   /** \} */
 
   /** \name Computations */
@@ -1133,11 +1125,6 @@ class PseudoLikDiscrete {
   double GetValue(CatVector);
   CatVector GetGradient(CatVector);
   CatMatrix GetHessian(CatVector);
-  /** \} */
-
-  /** \name Input/output */
-  /** \{ */
-  friend std::ostream& operator<<(std::ostream &, const PseudoLikDiscrete &);
   /** \} */
 
  private:

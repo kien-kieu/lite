@@ -3178,12 +3178,19 @@ ModifCounts SMFChain::step(unsigned long int nb_step) {
 /******************************************************************************/
 /** \brief Constructor initializing the model to be considered
  *
+*/
+PseudoLikDiscrete::PseudoLikDiscrete(Energy *e) {
+  SetEnergy(e);
+}
+/** \brief Set the Energy data member
+ *
  * Some components of the discrete approximation of the pseudolikelihood
  * related to merges and flips are
- * precomputed.*/
-PseudoLikDiscrete::PseudoLikDiscrete(Energy *e) : engy(e) {
+ * precomputed. */
+void PseudoLikDiscrete::SetEnergy(Energy *e) {
   typedef TTessel::Merge_list Merges;
   typedef TTessel::Flip_list  Flips;
+  engy = e;
   TTessel* tes = engy->get_ttessel();
   // Computation of sum_stat_merges
   sum_stat_merges = 0.0*engy->get_theta();
@@ -3296,24 +3303,6 @@ CatMatrix PseudoLikDiscrete::GetHessian(CatVector theta) {
   for (unsigned int i=0;i<stat_flips.size();i++)
     H -= exp(sum(theta*stat_flips[i]))*outer(stat_flips[i],stat_flips[i]);
   return H;
-}
-/** \brief Send T-tessellation pseudolikelihood data to an output stream
- *
- * \param os : output stream
- * \param pld : the pseudolikelihood of a T-tessellation
-*/
-std::ostream& operator<<(std::ostream &os, const PseudoLikDiscrete &pld) {
-  os << "sum of merge statistics: " << pld.sum_stat_merges << std::endl;
-  os << "split statistics" << std::endl;
-  for (unsigned int i=0; i!=pld.stat_splits.size();i++) {
-    os << pld.stat_splits[i] << std::endl;
-  }
-  os << "flip statistics" << std::endl;
-  for (unsigned int i=0; i!=pld.stat_flips.size();i++) {
-    os << pld.stat_flips[i] << std::endl;
-  }
-  os << "sum of flip statistics: " << pld.sum_stat_flips << std::endl;
-  return os;
 }
 /******************************************************************************/
 /*                    METHODS FOR PSEUDOLIKNOIS CLASS                         */
