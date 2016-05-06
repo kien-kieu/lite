@@ -1141,30 +1141,60 @@ class PseudoLikDiscrete {
 /*                   DEFINITION OF CLASS PLInferenceNOIS                      */
 /******************************************************************************/
 
-/** \brief Pseudo-likelihood inference of a Gibsian T-tessellation with alternate updates
+/** \brief Pseudolikelihood inference of a Gibsian T-tessellation with alternate updates
  *
- * Numerical maximization of the pseudo-likelihood. Each step consists of a 
+ * Numerical maximization of the log-pseudolikelihood. The acronym NOIS
+ * stands for Newton Optimization and Increasing Splitting. Each step consists
+ * of a 
  * double update. First, dummy splits are added to the discrete approximation
- * of the pseudo-likelihood (see class PseudoLikDiscrete). Second, the current
- * parameter estimate is updated according to Newton's method based on the
- * Hessian of the approximated pseudo-likelihood.
+ * of the pseudolikelihood (see class PseudoLikDiscrete) in order to improve 
+ * its accuracy. The number of added 
+ * dummy splits is equal to the number of merges that can be applied to the
+ * observed T-tessellation. Second, the current
+ * parameter estimate is updated according to Newton's method:
+ * \f[
+ * \theta \leftarrow \theta+\lambda H^{-1}G,
+ * \f]
+ * where \f$G\f$ and \f$H\f$ are the gradient and the Hessian of the
+ * approximated log-pseudolikelihood. The parameter \f$\lambda\f$
+ * referred to as the stepsize parameter is a tuning parameter of 
+ * Newton's method. Iterations of the maximization algorithm
+ * are performed using the PLInferenceNOIS::Step method.
+ *
+ * The stopping criterion implemented in %PLInferenceNOIS is as follows: stop
+ * if the number of steps exceeds a predefined maximal number of if the
+ * approximated log-pseudolikelihood (say lp) has been reduced by a factor less
+ * than tol*(abs(lp)+tol) during the last step. The algorithm can be run until 
+ * the stopping criterion is met using PLInferenceNOIS::Run method.
  */
 class PLInferenceNOIS : public PseudoLikDiscrete{
  public:
+  /** \name Initialization */
+  /** \{ */
   PLInferenceNOIS(Energy*,bool=false,double=1.0);
-  /** \brief Return step size used in Newton's method */
-  inline double GetStepSize() {return stepsize;};
   /** \brief Set step size used in Newton's method */
   inline void SetStepSize(double lambda) { stepsize = lambda;};
-  void Step(unsigned int=1);
+  /** \} */
+
+  /** \name Access */
+  /** \{ */
+  /** \brief Return step size used in Newton's method */
+  inline double GetStepSize() {return stepsize;};
   CatVector GetEstimate();
-  unsigned int Run(double=0.05, unsigned int=100);
   /** \brief Return all intermediate parameter estimates
    */
   inline std::vector<CatVector> GetEstimates() {return estimates;};
   /** \brief Return all intermediate log-pseudolikelihood values
    */
   inline std::vector<double>    GetValues() {return values;};
+  /** \} */
+
+  /** \name Computations */
+  /** \{ */
+  void Step(unsigned int=1);
+  unsigned int Run(double=0.05, unsigned int=100);
+  /** \} */
+
  private:
   double                 stepsize; /** Stepsize to be used for Newton's method.*/
   CatVector              previous_theta; /** Estimate at previous step. Data
