@@ -1936,11 +1936,6 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
     b*CGAL::to_double(e1->source()->point()[1]);
   v = a*CGAL::to_double(e1->target()->point()[0])+
     b*CGAL::to_double(e1->target()->point()[1]);
-  /*if (u>v) { // exchange u and v
-    w = u;
-    u = v;
-    v = w;
-    }*/
   w = u+x*(v-u);
   NT a2(a), b2(b), c2(-w); 
   Line l(a2,b2,c2);
@@ -1957,9 +1952,6 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
 
   // Computation of e2 and p2
 
-  // TTessel::Halfedge_handle ee = e1->next();
-  // Point2 pp;
-  // NT minDist = -1;
   Line l_dir;
   if (l.has_on_negative_side(e1->target()->point())) {
     l_dir = l;
@@ -1971,29 +1963,6 @@ TTessel::Split::Split(Halfedge_handle e, double x, double angle) :
   Face_handle f = e1->face();
   p2 = ray_exit_face(r,f,exit_edge);
   e2 = exit_edge;
-
-  // bool p2_found(false);
-  // while (ee!=e1) {
-  //   inter = CGAL::intersection(Segment(ee->source()->point(),
-  // 				       ee->target()->point()),r);
-  //   std::cout << "Split constructor: computing intersection of ray with edge" << std::endl;//debug 
-  //   if (CGAL::assign(pp,inter)) {
-  //     std::cout << "Split constructor: ray hits the current edge" << std::endl;//debug
-  //     NT distp1p2 = CGAL::squared_distance(p1,pp);
-  //     if (minDist>distp1p2 || minDist==-1) {
-  //     	minDist = distp1p2;
-  //     	e2 = ee;
-  //     	p2 = pp;
-  // 	if (!p2_found) p2_found = true;
-  //     }
-  //   }
-  //   ee = ee->next(); 
-  //   std::cout << "Split constructor: advancing along e1 ccb" << std::endl;//debug
-  // }
-  // std::cout << "Split constructor: exit from loop along e1 ccb" << std::endl;//debug 
-  // if (!p2_found)
-  //   std::cerr << "Split constructor : intersection of l with e2 not found"
-  // 	      << std::endl;
 }
 /** \brief Compute elements of a T-tessellation that are modified by a split
  */ 
