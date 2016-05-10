@@ -601,7 +601,7 @@ public:
   /** \brief A merge that can be applied to a T-tessellation
    *
    * A merge is the removal of a non-blocking segment. When the
-   * segment separates two distinct faces, they are marged.
+   * segment separates two distinct faces, they are merged.
    * \image html merge_square_domain.svg "A standard merge"
    * In the example above, the merge shown is the only possible
    * one since there is only one non-blocking segment.
@@ -654,22 +654,47 @@ public:
   };
   /** \brief A flip that can be applied to a T-tessellation
    *
-   * A flip is represented by the halfedge at the end of a blocking
-   * segment that is removed.
+   * A flip is a shortening of a segment combined with a lengthening of
+   * another segment. A standard flip is shown below.
+   * \image html flip_square_domain.svg "A standard flip"
+   * The shortened segment must be blocking (made of more than one edge)
+   * and the removed halfedge must be at one of its ends. 
+   *
+   * A flip is represented by its removed halfedge. That halfedge is
+   * to be provided to Flip(Halfedge_handle) constructor.
+   *
+   * Method Flip::modified_elements predicts how a flip modifies a 
+   * T-tessellation.
    */
   class Flip : public Modification {
   public:
+    /** \name Initialization */
+    /** \{ */
     Flip();
     Flip(Halfedge_handle);
-    virtual                ModList modified_elements();
+    /** \} */
+
+    /** \name Access */
+    /** \{ */
     /** \brief Return a handle to the suppressed edge*/
     inline Halfedge_handle get_e1(){return e1;}
-    /** \brief Return a handle to the split edge*/
+    /** \brief Return a handle to the split halfedge
+     *
+     * The split halfedge is the halfedge where the extending segment
+     * ends. */
     inline Halfedge_handle get_e2(){return e2;}
-    /** \brief Return the location of the new vertex*/
+    /** \brief Return the location of the new vertex
+     *
+     * The new vertex lies at the end of the extending segment.*/
     inline Point2          get_p2(){return p2;}
-    /** \brief Return true when the edge flips towards the righthand-side*/
+    /** \brief Return true when the halfedge flips towards the righthand-side*/
     inline bool to_right(){return right;}
+    /** \} */
+
+    /** \name Computations */
+    /** \{ */
+    virtual                ModList modified_elements();
+    /** \} */
   private:
     Halfedge_handle        e1; // Suppressed edge
     Halfedge_handle        e2; // Split edge

@@ -8,6 +8,6 @@
   <line x1="50" y1="20" x2="100" y2="20" stroke="black"/>
   <line x1="40" y1="60" x2="80" y2="100" stroke="black">
     <animate attributeType="CSS" attributeName="visibility" from="visible"
-	     to="hidden" dur="2s" repeatCount="20"/>
+	     to="hidden" dur="2s" repeatCount="20" fill="freeze"/>
   </line>
 </svg>

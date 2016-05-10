@@ -2259,7 +2259,9 @@ bool TTessel::Merge::is_valid() {
 TTessel::Flip::Flip(){}
 /** \brief Constructor that generates an effective Flip object
  * \param he : halfedge handle defining the edge (lying at the end of a blocking
- *             segment) that is removed by the flip.
+ *             segment) that is removed by the flip. The halfedge must be 
+ *             oriented so that its end coincides with the end of the shortened
+ *             segment.
  */
 TTessel::Flip::Flip(Halfedge_handle he) : e1(he) {
 
