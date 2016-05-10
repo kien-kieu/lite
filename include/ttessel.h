@@ -540,6 +540,7 @@ public:
    *   either modified or 
    *   split into two faces.
    * - A new non-blocking segment is created.
+   *
    * The insertion of the line segment may not result in a face splitting 
    * only when the face has at least one hole. The examples below show 
    * cases that can occur with a holed face. The standard case where the 
@@ -599,27 +600,50 @@ public:
   };
   /** \brief A merge that can be applied to a T-tessellation
    *
-   * A merge is the removal of a non-blocking segment. The two faces
-   * on both sides of the removed segment are merged.
+   * A merge is the removal of a non-blocking segment. When the
+   * segment separates two distinct faces, they are marged.
+   * \image html merge_square_domain.svg "A standard merge"
+   * In the example above, the merge shown is the only possible
+   * one since there is only one non-blocking segment.
    *
    * A merge is represented by the (half)edge to be removed.
    *
    * A merge has several effects on tessellation elements:
    * - Two vertices are removed.
    * - Two pairs of edges are merged.
-   * - Two faces are replaced by a single one.
+   * - Either two faces are replaced by a single one or a face is modified.
    * - A non-blocking segment is removed.
    * - The status (blocking or not) of segments incident to 
    *   the removed segment may change.
+   *
+   * The removal of a non-blocking segment may not result into a merging of
+   * two faces. This happens in particular when the segment is associated
+   * with two halfedges that belong to the same (non simple) boundary. 
+   * Examples can be found in the documentation of class Split.
    */
   class Merge : public Modification { 
   public:
+    /** \name Initialization */
+    /** \{ */
     Merge();
     Merge(Halfedge_handle);
-    virtual                ModList modified_elements();
+    /** \} */
+
+    /** \name Access */
+    /** \{ */
     /** \brief Return a handle to the suppressed edge*/
     inline Halfedge_handle get_e(){return e;}
+    /** \} */
+
+    /** \name Computations */
+    /** \{ */
+    virtual                ModList modified_elements();
+    /** \} */
+
+    /** \name Checking */
+    /** \{ */
     bool                   is_valid();
+    /** \} */
   private:
     Halfedge_handle e;
     inline Halfedge_handle e1(){return e->twin()->next();}

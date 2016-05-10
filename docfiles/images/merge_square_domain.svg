@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-5 -5 110 110" height="250px">
+  <rect height="100" width="100" style="stroke:black;fill-opacity:0"/>
+  <line x1="0" y1="40" x2="40" y2="0" stroke="black"/>
+  <line x1="20" y1="20" x2="20" y2="100" stroke="black"/>
+  <line x1="20" y1="70" x2="80" y2="40" stroke="black"/>
+  <line x1="50" y1="0" x2="50" y2="55" stroke="black"/>
+  <line x1="60" y1="20" x2="100" y2="60" stroke="black"/>
+  <line x1="50" y1="20" x2="100" y2="20" stroke="black"/>
+  <line x1="40" y1="60" x2="80" y2="100" stroke="black">
+    <animate attributeType="CSS" attributeName="visibility" from="visible"
+	     to="hidden" dur="2s" repeatCount="20"/>
+  </line>
+</svg>
