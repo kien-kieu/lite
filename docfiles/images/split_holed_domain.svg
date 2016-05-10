@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-5 -5 330 110" height="200px">
+  <rect height="100" width="100" style="stroke:black;fill-opacity:0"/>
+  <rect x="30" y="30" height="30" width="30" 
+	style="stroke:black;fill-opacity:0"/>
+  <line x1="50" y1="0" x2="40" y2="30" stroke="red"/>
+  <rect x="110" height="100" width="100" style="stroke:black;fill-opacity:0"/>
+  <rect x="130" y="20" height="20" width="20" 
+	style="stroke:black;fill-opacity:0"/>
+  <rect x="120" y="60" height="20" width="50" 
+	style="stroke:black;fill-opacity:0"/>
+  <line x1="140" y1="40" x2="130" y2="60" stroke="red"/>
+  <rect x="220" height="100" width="100" style="stroke:black;fill-opacity:0"/>
+  <polygon points="240,20 240,80 300,80 300,70 250,70 250,30 300,30 300,20"
+	   style="stroke:black;fill-opacity:0" />
+  <line x1="250" y1="50" x2="270" y2="30" stroke="red"/>
+</svg>

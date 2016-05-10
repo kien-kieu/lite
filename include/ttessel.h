@@ -511,25 +511,58 @@ public:
   };
   /** \brief A split that can be applied to a T-tessellation
    *
-   * A split is the division of a face by a line segment.
+   * A split is defined as the insertion of a line segment in
+   * a tessellation face. The inserted line segment must not
+   * intersect the existing face boundary except at its ends.
+   * When the inserted line segment connects two points on the
+   * face outer boundary, the face is divided into two new smaller
+   * faces. 
+   * \image html split_square_domain.svg "A standard split"
    *
-   * A split is represented by a halfedge bounding the face to be
-   * split, a relative position (between 0 and 1) along that halfedge
-   * and an angle greater than zero and smaller than pi. The splitting
-   * segment starts at the point lying on the halfedge at the given
-   * relative position and makes the given angle with the halfedge.
+   * A split is represented by both ends \f$(p_1,p_2)\f$ of the inserted line
+   * segment and handles \f$(e_1,e_2)\f$ to the halfedges where they lie. 
+   * These data can be accessed 
+   * through Split::get_e1, Split::get_p1, Split::get_e2 and 
+   * Split::get_p2 methods.
    *
-   * A split has several effects on tessellation elements:
+   * The Split(Halfedge_handle,double,double) constructor takes as input
+   * arguments the handle of the halfedge where the splitting line segment
+   * starts, the relative position (between 0 and 1) of the
+   * starting point along that halfedge and the angle betweeen the halfedge
+   * and the splitting line segment.
+   *
+   * The way a T-tessellation is modified by a split can be predicted using
+   * Split::modified_elements method. A split has several effects on 
+   * tessellation elements:
    * - Two edges bounding the split face are split.
    * - Two vertices along these two edges are created.
-   * - The split face is replaced by two faces.
+   * - The face where the line segment is inserted is
+   *   either modified or 
+   *   split into two faces.
    * - A new non-blocking segment is created.
+   * The insertion of the line segment may not result in a face splitting 
+   * only when the face has at least one hole. The examples below show 
+   * cases that can occur with a holed face. The standard case where the 
+   * inserted line segment joins two points of the outer boundary is not
+   * shown.
+   * \image html split_holed_domain.svg "Splits of a holed face"
+   * Above, the boundaries of the holed face are shown in black and the
+   * inserted line segment in red. Left: the face is modified by a merging
+   * of an inner boundary to the outer boundary. Middle: the face is modified
+   * by a merging of two inner boundaries. Right: the face is split in two
+   * faces, one being included into the other one.
+   * \sa TTessel::update(Split), TTessel::Modification::modified_elements
    */
   class Split : public Modification {
   public:
+    /** \name Initialization */
+    /** \{ */
     Split();
     Split(Halfedge_handle, double=.5,double=CGAL_PI/2);
-    virtual                ModList modified_elements();
+    /** \} */
+
+    /** \name Access */
+    /** \{ */
     /** \brief Return a handle to one of the split edges
      *
      * The other split edge can be accessed using Split::get_e2.*/
@@ -546,7 +579,18 @@ public:
      *
      * The new vertex lies on the new edge returned by Split::get_e2*/
     inline Point2          get_p2(){return p2;}
+    /** \} */
+
+    /** \name Computations */
+    /** \{ */
+    virtual                ModList modified_elements();
+    /** \} */
+
+    /** \name Checking */
+    /** \{ */
     bool                   is_valid();
+    /** \} */
+
   private:
     Halfedge_handle         e1; // Split edge
     Halfedge_handle         e2; // Split edge
