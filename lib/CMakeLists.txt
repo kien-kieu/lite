@@ -13,13 +13,13 @@ if ( CGAL_FOUND )
   include( CGAL_CreateSingleSourceCGALProgram )
   include_directories (BEFORE ../include)
 
-  add_library(ttesselSharedLib SHARED ttessel.cpp)
+  add_library(ttesselSharedLib SHARED ttessel.cpp polygon_importer.cpp)
   # install(TARGETS ttesselSharedLib LIBRARY DESTINATION lib)
   install(TARGETS ttesselSharedLib DESTINATION lib)
   # property INSTALL_NAME_DIR is Mac OS X specific
   set_target_properties(ttesselSharedLib PROPERTIES INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib)
   
-  add_library(ttesselStaticLib STATIC ttessel)
+  add_library(ttesselStaticLib STATIC ttessel polygon_importer)
   # set_target_properties(ttesselStaticLib PROPERTIES 
   #   CMAKE_POSITION_INDEPENDENT_CODE ON)
   install(TARGETS ttesselStaticLib ARCHIVE DESTINATION lib)
