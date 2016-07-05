@@ -521,22 +521,66 @@ struct ModList {
  */
 class PolygonImporter {
 public:
+  /** \typedef HistArrangement
+   * \brief Arrangement of segments with history */
   typedef CGAL::Arrangement_with_history_2<Traits> HistArrangement;
+  /** \typedef Arr_curve
+   * \brief Segment of the arrangement with history */
   typedef Traits::Curve_2 Arr_curve;
+  /** \typedef Curve_handle
+   * \brief Handle to a segment of the arrangement with history */
   typedef HistArrangement::Curve_handle Curve_handle;
+  /** \typedef SideCluster
+   * \brief Group of polygons sides supposed to be part of a tessellation 
+   * segment
+   *
+   * Each polygon side is represented by its projection onto the segment 
+   * and the index of the polygon it belongs to (side_polygon). The side 
+   * projection is represented by the curvilinear abscissae of its both 
+   * ends, side_start and side_end. A curvilinear abscissa of 0 
+   * (respectively 1) corresponds to the segment start (respectively end).
+   */
   struct SideCluster {
-    Segment representant;
-    std::vector<double> side_start;
-    std::vector<double> side_end;
-    std::vector<unsigned int> side_polygon;
-    Curve_handle curve_ref;
+    Segment representant; ///< tessellation segment
+    std::vector<double> side_start; ///< side start abscissa on the segment 
+    std::vector<double> side_end; ///< side end abscissa on the segment
+    std::vector<unsigned int> side_polygon; ///< polygon index of side
+    Curve_handle curve_ref; ///< handle to the segment inserted into the arrangement
   };
+  /** \typedef SideClusters
+   * \brief Set of side groups */
   typedef std::vector<SideCluster> SideClusters;
+  /** \typedef PolygonVote
+   * \brief A polygon vote
+   *
+   * A pair where the first element is a (polygon) index and the second
+   * element is a vote. */
   typedef std::pair<unsigned int,double> PolygonVote;
+  /** \typedef PolygonVotes
+   * \brief A set of polygon votes
+   *
+   *  Hash map where the polygon indices are used as hash keys. */
   typedef boost::unordered_map<unsigned int,double> PolygonVotes;
   // data members
+  /** \brief Input polygons
+   *
+   * Input polygons represent the faces of the line tessellation to be
+   * reconstructed. They may be defined approximately. */
   HPolygons input_polygons;
+  /** \brief Results of the polygon side clustering
+   *
+   * Polygon sides supposed to be parts of the same tessellation segment are
+   * grouped together by a clustering algorithm. For the time being, the 
+   * clustering algorithm is not implemented and an external tool such as R
+   * must be used. The clustering results may be read using the 
+   * read_side_clusters method.
+   */
   SideClusters side_clusters;
+  /** \brief The reconstructed tessellation as an arrangement
+   *
+   * Arrangement with history is used in order to be able to associate 
+   * halfedges to segments.
+   */
   HistArrangement arr;
   // methods
   void read_polygons(std::istream&);
