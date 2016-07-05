@@ -1,6 +1,18 @@
+
 #include "ttessel.h"
 double infinity_double = std::numeric_limits<double>::infinity();
 NT infinity_NT = std::numeric_limits<NT>::infinity();
+/** \brief Read input polygons
+ *
+ * Feed data member input_polygons from input stream. Expected format:
+ * for each polygon, a line with numbers of vertices (separated by a white
+ * space) followed by a series of xy-coordinates (one by line, separated by
+ * a white space). The first line provides the number of vertices of the
+ * polygon borders. The first border must be the outer boundaries. The
+ * subsequent borders are inner boundaries. Vertices along the outer boundary
+ * must be orderd anti-clockwise. Vertices along the inner boundaries must be
+ * ordered clockwise.
+ */
 void PolygonImporter::read_polygons(std::istream& input) {
   std::string line;
   while (std::getline(input,line)) {
@@ -29,6 +41,16 @@ void PolygonImporter::read_polygons(std::istream& input) {
   }
 }
 
+/** \brief Read clustering data for polygon sides from an input stream
+ *
+ * Data must be formatted as follows. For each side cluster:
+ * + first line, 4 Cartesian coordinates of the representative segment ends 
+ *   separated by spaces, followed by the number of sides grouped together,
+ * + one line per side with the curvilinear abscissae of the side projection
+ *   on the segment, followed by the index of the polygon the side comes from.
+ * The curvilinear abscissae are relative to the segment: 0 locates at the
+ * segment start, 1 at the segment end.
+ */
 void PolygonImporter::read_side_clusters(std::istream& input) {
   std::string line;
   while (std::getline(input,line)) {
@@ -62,6 +84,15 @@ void PolygonImporter::read_side_clusters(std::istream& input) {
   }
 }
 
+/** \brief Build an arrangement from the representative segments
+ *
+ * \param expand : optional extra length to be added to the segments before
+ * their insertion into the arrangement. Default to zero.
+ *
+ * Build an arrangement with history (attribute arr) by insertion of the
+ * segments listed in attribute side_clusters. Segments can be expanded at
+ * both ends by an extra length.  
+ */
 void PolygonImporter::insert_segments(double expand) {
   for (unsigned int i=0;i<side_clusters.size();i++) {
     Segment seg = side_clusters[i].representant;
@@ -75,6 +106,8 @@ void PolygonImporter::insert_segments(double expand) {
   }
 }
 
+/** \brief Count the number of I-vertices in the arrangement.
+ */
 Size PolygonImporter::number_of_I_vertices() {
   Size count = 0;
   for (HistArrangement::Vertex_iterator v=arr.vertices_begin();
@@ -84,6 +117,14 @@ Size PolygonImporter::number_of_I_vertices() {
   }
   return count;
 }
+/** \brief Remove I-vertices in the arrangement
+ * \param within : edges ending by an I-vertex and with length larger or equal
+ * to within will not be removed. Default to infinity (i.e. all edges ending 
+ * an I-vertex will be removed).
+ * \note Running this method does not necessarily yield an arrangement free
+ * of I-vertices. Indeed, a removed edge ends by an I-vertex and a L-vertex, the
+ * remaining vertex switch from L to I type.
+ */
 Size PolygonImporter::remove_I_vertices(double within) {
   Size count = 0;
   for (HistArrangement::Vertex_iterator v=arr.vertices_begin();
@@ -102,6 +143,11 @@ Size PolygonImporter::remove_I_vertices(double within) {
   return count;
 }
 
+/** \brief Curvilinear abscissa of the projection of a point onto a line
+ * \param p : point to be projected.
+ * \param s : segment onto the target line. The segment start is considered
+ * as the origin (abscissa 0), the segment end has abscissa 1.
+ */
 NT curvilinear_coordinate(Point2 p,Segment s) {
   if (s.source().x()!=s.target().x()) {
     return (p.x()-s.source().x())/(s.target().x()-s.source().x());
@@ -109,7 +155,12 @@ NT curvilinear_coordinate(Point2 p,Segment s) {
     return (p.y()-s.source().y())/(s.target().y()-s.source().y());
   }
 }
-
+/** \brief Length of the complement of a union of intervals within two bounds
+ * \param start : first bound.
+ * \param end : second bound.
+ * \param intervals : union of intervals as a vector of pairs. The pair 
+ * elements are the interval ends.
+ */
 double interval_free_length(double start,double end,
                             std::vector<std::pair<double,double> > intervals) {
   std::vector<std::pair<double, unsigned int> > bounds;
@@ -139,7 +190,10 @@ double interval_free_length(double start,double end,
   res += end-bi->first;
   return res;
 }
-    
+/** \brief Find the side cluster represented by an arrangement segment
+ * \param ch : the arrangement segment as a handle.
+ * \return an iterator to the corresponding side cluster.
+ */
 PolygonImporter::SideClusters::iterator 
 PolygonImporter::fetch_side_cluster(Curve_handle ch) {
   for (SideClusters::iterator sci=side_clusters.begin();
@@ -149,6 +203,22 @@ PolygonImporter::fetch_side_cluster(Curve_handle ch) {
   }
 }
 
+/** \brief Compute polygon votes at halfedge level
+ * \param e : halfedge of attribute arr. It must come from the insertion of a
+ * representative segment stored in side_clusters.
+ * \return votes of sides for polygons.
+ *
+ * Sides allowed to vote are those represented by the segment whose insertion 
+ * has generated the halfedge e. Sides opposite to e are excluded from the vote.
+ * A side votes for the polygon it comes from and its vote is weighted by the
+ * length of its projection on the line supporting the segment. Thus the total 
+ * vote for a given polygon is a sum of lengths. A null vote is also computed
+ * (vote for fictitious polygon 0): it is equal to the length of the halfedge
+ * free of side projection.
+ *
+ * The total sum of votes is at least equal to the halfedge length. It may
+ * exceed the halfedge length as soon as some side projections overlap.
+ */
 PolygonImporter::PolygonVotes 
 PolygonImporter::polygon_sides(HistArrangement::Halfedge_handle e) {
   PolygonVotes res;
@@ -202,6 +272,14 @@ PolygonImporter::polygon_sides(HistArrangement::Halfedge_handle e) {
   return res;
 }
 
+/** \brief Compute polygon votes at face level
+ * \param f : face of attribute arr.
+ * \return votes of sides for polygons.
+ *
+ * Votes are collected for each halfedge bounding the face (see
+ * polygon_sides(HistArrangement::Halfedge_handle)). Results are summed
+ * and normalized by the halfedge perimeter.
+ */
 PolygonImporter::PolygonVotes 
 PolygonImporter::polygon_sides(HistArrangement::Face_handle f) {
   double perimeter = 0.0;
@@ -237,6 +315,18 @@ PolygonImporter::polygon_sides(HistArrangement::Face_handle f) {
   return res;
 }
 
+/** \brief Compute the polygon mostly associated with a face
+ * \param f : face of arr.
+ * \return the index of the polygon mostly associated with the face together
+ * with its score.
+ *
+ * Computations are based on polygon votes as returned by
+ * polygon_sides(HistArrangement::Face_handle). Note that polygon
+ * indices start from 1 and that a vote mostly for polygon 0 means
+ * that no input polygon was found to match the face. The face may be
+ * outside the tessellated domain (unbounded external face or a domain
+ * hole).
+ */
 PolygonImporter::PolygonVote PolygonImporter::elected_polygon(HistArrangement::Face_handle f) {
   PolygonVote res;
   PolygonVotes pv = polygon_sides(f);
@@ -252,6 +342,7 @@ PolygonImporter::PolygonVote PolygonImporter::elected_polygon(HistArrangement::F
   return res;
 }
 
+/** \brief Area of a holed polygon */
 NT area(HPolygon hp) {
   Polygons p = boundaries(hp);
   NT res = 0; 
@@ -261,6 +352,12 @@ NT area(HPolygon hp) {
   }
   return res;
 }
+/** \brief Sample points along a polygonal line
+ * \param polyline : the polygonal line as a sequence of points.
+ * \param step_length: distance between consecutive sampling points on the same
+ * edge of the polyline.
+ * \return set of sampling points.
+ */
 Points digitize(Points polyline,NT step_length) {
   Points res;
   for (Points::iterator src=polyline.begin();true;src++) {
@@ -275,6 +372,8 @@ Points digitize(Points polyline,NT step_length) {
   }
   return res;
 }
+/** \brief Compute the squared Hausdorff distance between two point sets
+ */
 NT squared_Hausdorff_distance(Points& a,Points& b) {
   std::vector<NT> da(a.size()), db(b.size());
   for (Size i=0;i<a.size();i++) {
@@ -288,6 +387,14 @@ NT squared_Hausdorff_distance(Points& a,Points& b) {
   dab.insert(dab.end(),db.begin(),db.end());
   return *std::max_element(dab.begin(),dab.end());
 }
+/** \brief Compare a face to an input polygon
+ * \param f : face of arr.
+ * \param an index of an input polygon (starting from 1).
+ * \param eps : step length to be used for digitizing the face and the polygon
+ * border.
+ * \return the squared discrete Hausdorff distance between the face and the
+ * polygon borders.
+ */
 NT PolygonImporter::compare(HistArrangement::Face_handle f,unsigned int pidx,
                             NT eps) {
   Points face_sample;

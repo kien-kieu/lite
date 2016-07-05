@@ -11,6 +11,7 @@ OUTPUT_DIRECTORY       = doc
 OUTPUT_LANGUAGE        = English
 INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/include/ttessel.h \
                          @CMAKE_CURRENT_SOURCE_DIR@/lib/ttessel.cpp \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/polygon_importer.cpp \
                          @CMAKE_CURRENT_SOURCE_DIR@/docfiles
 RECURSIVE              = YES
 EXTRACT_ALL            = NO
