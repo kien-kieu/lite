@@ -460,6 +460,7 @@ RCPP_MODULE(lite){
     .method("insert_segment",&insert_segment,"insert a line segment in a tessellation")
     .method("remove_ivertices",&remove_ivertices,"remove I-vertices from a tessellation")
     .method("remove_lvertices",&remove_lvertices,"remove internal L-vertices from a tessellation")
+    .method("remove_xvertices",&LineTes::remove_xvertices,"remove internal X-vertices from a tessellation")
     .method("is_a_T_tessellation",&is_a_T_tessellation,"test whether the tessellation is of T-type")
     .method("read",&read,"read a line tessellation from file")
     .method("write",&write,"write a line tessellation to a file")

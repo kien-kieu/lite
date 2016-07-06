@@ -15,7 +15,7 @@ if(R_EXEC)
   # consists in copying the source files of LiTe in the src directory
   # of RLiTe. All files in RLiTe/src related to autoconf are removed,
   # together with the script cleanup.
-  add_custom_target(lite_files DEPENDS rlite_files COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ttessel.h ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/src/ttessel.h COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/ttessel.cpp ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/src/ttessel.cpp COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/configure.ac COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/cleanup)
+  add_custom_target(lite_files DEPENDS rlite_files COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ttessel.h ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/src/ttessel.h COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/ttessel.cpp ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/src/ttessel.cpp COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/remove_xvertices.cpp ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/src/remove_xvertices.cpp COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/configure.ac COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/RLiTe/cleanup)
   string(TIMESTAMP TODAY "%Y-%m-%d")
   if(STANDALONE_RLITE)
     add_custom_target(rlite_prepare DEPENDS lite_files)
