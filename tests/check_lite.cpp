@@ -1077,5 +1077,7 @@ BOOST_AUTO_TEST_CASE(remove_xvertices) {
   BOOST_CHECK_MESSAGE(xvertex_number==0,
 		      "" << xvertex_number 
 		      << " X-vertices left");
+  BOOST_CHECK_MESSAGE(tes.is_valid(true),"Invalid line tessellation" 
+		      " after removal of X-vertices");
 }
     

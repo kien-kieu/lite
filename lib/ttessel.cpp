@@ -3449,7 +3449,7 @@ bool is_inside(Point2 pt,HPolygons& polys) {
 }
  /** \brief Clip a segment by a convex polygon
  * \param S : segment to be clipped.
- * \param P : clipping polygon.
+ * \param P : clipping (open) polygon.
  * \return clipped segment, that is the intersection between the segment and
  * the polygon.
  * \pre The clipping polygon must be convex.
@@ -3460,7 +3460,7 @@ Segment clip_segment_by_convex_polygon(Segment S, Polygon P) {
   std::vector<Nef::Point> Pvertices, Svertices;
   for (Size i=0;i!=P.size();++i) 
     Pvertices.push_back(Nef::Point(P[i].x(),P[i].y()));
-  Nef nefP(Pvertices.begin(),Pvertices.end());
+  Nef nefP(Pvertices.begin(),Pvertices.end(),Nef::EXCLUDED);
   Svertices.push_back(Nef::Point(S[0].x(),S[0].y()));
   Svertices.push_back(Nef::Point(S[1].x(),S[1].y()));
   Nef nefS(Svertices.begin(),Svertices.end());
