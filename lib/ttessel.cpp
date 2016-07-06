@@ -3478,13 +3478,17 @@ Segment clip_segment_by_convex_polygon(Segment S, Polygon P) {
 }
 /** \brief Clip a segment by a polygon
  * \param S : segment to be clipped.
- * \param P : clipping polygon.
+ * \param P : clipping polygon. It is assumed to be open.
  * \return clipped segment, that is the longest intersection between the segment and
  * the polygon.
  * \exception std::domain_error S does not hit P.
  * 
  * When the clipping polygon is not convex, its intersection with the segment
  * may consists of several segments. In such a case, the longest clipped segment is returned. If there are several clipped segments with maximal length, an arbitrarily chosen one is returned.
+ *
+ * Since the clipping polygon is considered as an open set, its boundaries are
+ * clipping. Therefore the clipped segment intersects the polygon boundaries
+ * only at its ends.
  */
 Segment clip_segment_by_polygon(Segment S, Polygon P) 
   throw (std::domain_error const&) 
@@ -3525,7 +3529,7 @@ Segment clip_segment_by_polygon(Segment S, Polygon P)
 }
 /** \brief Clip a segment by a polygon with holes
  * \param S : segment to be clipped.
- * \param P : clipping polygon.
+ * \param P : clipping (open) polygon.
  * \return clipped segment, that is the longest intersection between the segment and
  * the polygon.
  * \exception std::domain_error S does not hit P.
@@ -3542,14 +3546,14 @@ Segment clip_segment_by_polygon(Segment S, HPolygon P)
   for (Size i=0;i<P.outer_boundary().size();++i) 
     Pvertices.push_back(Nef::Point(P.outer_boundary()[i].x(),
 				   P.outer_boundary()[i].y()));
-  Nef nefP(Pvertices.begin(),Pvertices.end());
+  Nef nefP(Pvertices.begin(),Pvertices.end(),Nef::EXCLUDED);
   Nef::Explorer ex_nefP = nefP.explorer();
   for (HPolygon::Hole_const_iterator h=P.holes_begin();
        h!=P.holes_end();h++) {
     std::vector<Nef::Point> Hvertices;
     for (Size j=0;j<(h->size());++j) 
       Hvertices.push_back(Nef::Point((*h)[j].x(),(*h)[j].y()));
-    Nef PHole(Hvertices.rbegin(),Hvertices.rend());
+    Nef PHole(Hvertices.rbegin(),Hvertices.rend(),Nef::INCLUDED);
     nefP = nefP.difference(PHole);
   }
   Svertices.push_back(Nef::Point(S[0].x(),S[0].y()));
@@ -3582,7 +3586,7 @@ Segment clip_segment_by_polygon(Segment S, HPolygon P)
 }
 /** \brief Clip a segment by a union of holed polygons
  * \param S : segment to be clipped.
- * \param P : clipping polygons.
+ * \param P : clipping (open) polygons.
  * \return clipped segment, that is the longest intersection between the 
  * segment and the polygon.
  * \exception std::domain_error S does not hit P.
