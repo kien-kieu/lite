@@ -295,6 +295,7 @@ class LineTes : public Arrangement {
 						 bool verbose=false);
   void                          remove_lvertices(Size imax=0,
 						 bool verbose=false);
+  void                          remove_xvertices(double step);
   /**\}*/
   /** \name Access */
   /** \{ */
@@ -1328,9 +1329,11 @@ void                     set_junction(LineTes::Halfedge_handle,LineTes::Halfedge
 LineTes::Halfedge_handle find_halfedge(LineTes&,Point2,Point2);
 bool                     is_a_T_vertex(LineTes::Vertex_handle, 
 				       bool verbose=false);
+bool                     is_an_X_vertex(LineTes::Vertex_handle, LineTes*);
 unsigned long int        number_of_internal_vertices(TTessel&);
 HPolygon                 face2poly(TTessel::Face_handle, bool simplify=true);
 double                   angle_between_vectors(Vector v1,Vector v2);
+double                   min_edge_length(LineTes*);
 double                   sum_of_faces_squared_areas(TTessel*);
 double                   sum_of_min_angles(TTessel*);
 double                   sum_of_angles_obt(TTessel*);

@@ -911,12 +911,14 @@ LineTes::Seg_handle LineTes::insert_segment(Segment iseg) {
       e->set_dir(true); e->twin()->set_dir(false);
       s->set_halfedge_handle(e);
       e->set_segment(s); e->twin()->set_segment(s);
+      e->face()->set_data(true); e->twin()->face()->set_data(true);
       all_segments.add(s);
       new_edges.remove(e);
       Halfedge_handle es = e->get_next_hf();
       while (es!=NULL_HALFEDGE_HANDLE) {
 	es->set_segment(s); es->twin()->set_segment(s);
 	es->set_dir(true); es->twin()->set_dir(false);
+	es->face()->set_data(true); es->twin()->face()->set_data(true);
 	new_edges.remove(es);
 	es = es->get_next_hf();
       }
@@ -924,6 +926,7 @@ LineTes::Seg_handle LineTes::insert_segment(Segment iseg) {
       while (es!=NULL_HALFEDGE_HANDLE) {
 	es->set_segment(s); es->twin()->set_segment(s);
 	es->set_dir(true); es->twin()->set_dir(false);
+	es->face()->set_data(true); es->twin()->face()->set_data(true);
 	new_edges.remove(es);
 	es = es->get_prev_hf();
       }
@@ -3491,7 +3494,7 @@ Segment clip_segment_by_polygon(Segment S, Polygon P)
   std::vector<Nef::Point> Pvertices, Svertices;
   for (Size i=0;i!=P.size();++i) 
     Pvertices.push_back(Nef::Point(P[i].x(),P[i].y()));
-  Nef nefP(Pvertices.begin(),Pvertices.end());
+  Nef nefP(Pvertices.begin(),Pvertices.end(),Nef::EXCLUDED);
   Svertices.push_back(Nef::Point(S[0].x(),S[0].y()));
   Svertices.push_back(Nef::Point(S[1].x(),S[1].y()));
   Nef nefS(Svertices.begin(),Svertices.end());

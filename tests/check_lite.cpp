@@ -1048,3 +1048,34 @@ BOOST_AUTO_TEST_CASE(non_convex_holed_domain) {
   check_predictions_4_random_smf(5,5,5000,dom);
 }
 
+BOOST_AUTO_TEST_CASE(remove_xvertices) {
+  rnd = new CGAL::Random(2);
+  LineTes tes;
+  tes.insert_window(Rectangle(Point2(0,0),Point2(4,4)));
+  Segment seg(Point2(2,0),Point2(2,4));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(0,2),Point2(4,2));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(0,1),Point2(2,1));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(1,0),Point2(1,2));
+  tes.insert_segment(seg);
+  Size xvertex_number = 0;
+  for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
+       vi++) {
+    if (is_an_X_vertex(vi,&tes)) xvertex_number++;
+  }
+  BOOST_CHECK_MESSAGE(xvertex_number==2,
+		      "Counted " << xvertex_number 
+		      << " X-vertices instead of 2");
+  tes.remove_xvertices(0.1);
+  xvertex_number = 0;
+  for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
+       vi++) {
+    if (is_an_X_vertex(vi,&tes)) xvertex_number++;
+  }
+  BOOST_CHECK_MESSAGE(xvertex_number==0,
+		      "" << xvertex_number 
+		      << " X-vertices left");
+}
+    
