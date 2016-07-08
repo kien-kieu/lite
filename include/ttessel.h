@@ -321,6 +321,7 @@ class LineTes : public Arrangement {
   Size                          number_of_internal_segments();
   Size                          number_of_window_edges();
   double                        get_window_perimeter();
+  double                        min_edge_length();
   /** \} */
   /** \name Input/output */
   /** \{ */
@@ -1333,7 +1334,6 @@ bool                     is_an_X_vertex(LineTes::Vertex_handle, LineTes*);
 unsigned long int        number_of_internal_vertices(TTessel&);
 HPolygon                 face2poly(TTessel::Face_handle, bool simplify=true);
 double                   angle_between_vectors(Vector v1,Vector v2);
-double                   min_edge_length(LineTes*);
 double                   sum_of_faces_squared_areas(TTessel*);
 double                   sum_of_min_angles(TTessel*);
 double                   sum_of_angles_obt(TTessel*);

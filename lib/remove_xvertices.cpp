@@ -39,7 +39,8 @@ Rcpp::NumericMatrix getVerticesCoords(LineTes *tes) {
 }
 */
 
-double min_edge_length(LineTes* tes){
+/** \brief Compute the length of the shortest edge */
+double LineTes::min_edge_length(){
   double mel=tes->edges_begin()->get_length();
   double r;
   for (LineTes::Edge_iterator e=tes->edges_begin();e!=tes->edges_end();e++){
@@ -50,6 +51,17 @@ double min_edge_length(LineTes* tes){
   } 
   return mel; 
 }
+
+/** \brief Test whether a vertex is of X-type and internal
+ * \param v : handle to the vertex to be tested.
+ * \param tes : pointer to the line tessellation where the vertex
+ * comes from.
+ * \return true if the vertex is an X-vertex and if it does not lie
+ * on the boundary of the domain.
+ *
+ * An X-vertex is a vertex of degree 4 with two pairs of aligned incident
+ * edges. 
+ */
 bool is_an_X_vertex(LineTes::Vertex_handle v, LineTes *tes) {
   
   bool x=false;
@@ -66,7 +78,19 @@ bool is_an_X_vertex(LineTes::Vertex_handle v, LineTes *tes) {
     
   return x;
 }
-
+/** \brief Remove all X-vertices from a line tessellation
+ * \param step : lenghth of vertex move.
+ * 
+ * See function is_an_X_vertex for a definition of an X-vertex. The removal 
+ * of an X-vertex generates two T-vertices. The procedure for a removal 
+ * is as follows:
+ * - One of the segment passing through the vertex is broken into two halves
+ *   at the vertex location.
+ * - The end of a segment half lying at the vertex location is moved along the
+ *   other incident segment a little bit.
+ * The procedure is repeated until there is no internal X-vertex left in the 
+ * tessellation. Note that this procedure can generate new I-vertices.
+ */
 void  LineTes::remove_xvertices(double step){
   // replaces each X-vertex of the line tessellation by
   // two T-vertices by moving slightly the
@@ -114,7 +138,7 @@ void  LineTes::remove_xvertices(double step){
 
   // perturbation length;
 
-  eps = 0.9*min_edge_length(this);
+  eps = 0.9*min_edge_length();
   if (step < eps){
     eps = step;
   }
