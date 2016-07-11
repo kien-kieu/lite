@@ -1063,7 +1063,7 @@ BOOST_AUTO_TEST_CASE(remove_xvertices) {
   Size xvertex_number = 0;
   for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
        vi++) {
-    if (is_an_X_vertex(vi,&tes)) xvertex_number++;
+    if (is_an_X_vertex(vi)) xvertex_number++;
   }
   BOOST_CHECK_MESSAGE(xvertex_number==2,
 		      "Counted " << xvertex_number 
@@ -1072,7 +1072,7 @@ BOOST_AUTO_TEST_CASE(remove_xvertices) {
   xvertex_number = 0;
   for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
        vi++) {
-    if (is_an_X_vertex(vi,&tes)) xvertex_number++;
+    if (is_an_X_vertex(vi)) xvertex_number++;
   }
   BOOST_CHECK_MESSAGE(xvertex_number==0,
 		      "" << xvertex_number 

@@ -332,6 +332,7 @@ class LineTes : public Arrangement {
   /** \name Checking and testing */
   /** \{*/
   int                           is_on_boundary(Halfedge_handle);
+  int                           is_on_boundary(Vertex_handle);
   /** \brief Test whether a segment lies on the domain boundary
    *
    * \param s : a handle to the segment to be tested
@@ -1330,7 +1331,11 @@ void                     set_junction(LineTes::Halfedge_handle,LineTes::Halfedge
 LineTes::Halfedge_handle find_halfedge(LineTes&,Point2,Point2);
 bool                     is_a_T_vertex(LineTes::Vertex_handle, 
 				       bool verbose=false);
-bool                     is_an_X_vertex(LineTes::Vertex_handle, LineTes*);
+bool                     is_an_X_vertex(LineTes::Vertex_handle);
+bool                     is_an_irreducible_X_vertex(LineTes::Vertex_handle);
+/// \cond
+     bool                     rxv_select(LineTes::Vertex_handle,LineTes*);
+/// \endcond
 unsigned long int        number_of_internal_vertices(TTessel&);
 HPolygon                 face2poly(TTessel::Face_handle, bool simplify=true);
 double                   angle_between_vectors(Vector v1,Vector v2);
