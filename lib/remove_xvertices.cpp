@@ -5,39 +5,7 @@
    Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
    License: GPL v3. */
 
-/* Modifs de Kasia pour retirer les sommets en X
-getVerticesCoords
-clipLineByPolygonR
-remove_xvertices
-*/
-
 #include "ttessel.h"
-
-// To be moved to rlite_module.cpp
-/* 
-Rcpp::NumericMatrix getVerticesCoords(LineTes *tes) {  
-  int n = (int) tes->number_of_vertices();
-  Rcpp::NumericMatrix coords(n,3);
-  int i=0;
-
-  for (TTessel::Vertex_iterator v=tes->vertices_begin();v!=tes->vertices_end();v++){
-    coords(i,0) = CGAL::to_double(v->point().x().exact());
-    coords(i,1) = CGAL::to_double(v->point().y().exact());
-    coords(i,2) = CGAL::to_double(v->degree());
-    i++;
-  }  
-
-   Rcpp::List cnames = Rcpp::List::create(R_NilValue,
-                                          Rcpp::CharacterVector::create("x0",
-                                                                        "y1",
-                                                                         "degree"));
-
-  
-  coords.attr("dimnames") = cnames;
-
-  return coords;
-}
-*/
 
 /** \brief Compute the length of the shortest edge */
 double LineTes::min_edge_length(){
@@ -203,34 +171,3 @@ void  LineTes::remove_xvertices(double step){
     }
   }
 }
-
-// To be moved to rlite_module.cpp
-/*
-Rcpp::NumericMatrix clipLineByPolygonR(double a, double b, LineTes* t){
-  NT aNT=NT(a);
-  NT bNT=NT(b);
-  Polygon W=t->get_window();
-  std::vector<Point2> getXY=clipLineByPolygon(aNT,bNT,W);
-  Rcpp::NumericMatrix intersectionXY(2,4);
-  for (int i=0;i<2;i++){
-    for (int j=0;j<4;j++){
-      intersectionXY(i,j)=CGAL::to_double(getXY[i][j]);
-    }
-  } 
-  return intersectionXY;
-}
-*/
-
-// Modifications to be moved to rlite_module.cpp
-/*
-RCPP_MODULE(lite){
-  using namespace Rcpp;
-  class_<LineTes>("LineTes")
-    .method("getVerticesCoords",&getVerticesCoords,
-	    "ka : return the  coordinates of all vertices together with their degree")
-    .method("remove_xvertices",&remove_xvertices,
-	    "ka : transform each X-vertex into 2 T-vertices")
-    ;
-  function("clipLineByPolygon",&clipLineByPolygonR,"toto");
-}
-*/

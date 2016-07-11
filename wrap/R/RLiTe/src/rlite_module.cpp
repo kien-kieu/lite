@@ -70,6 +70,24 @@ Rcpp::NumericMatrix getSegmentCoords(LineTes *tes) {
   coords.attr("dimnames") = cnames;
   return coords;
 }
+Rcpp::NumericMatrix getVertexCoords(LineTes *tes) {  
+  int n = (int) tes->number_of_vertices();
+  Rcpp::NumericMatrix coords(n,3);
+  int i = 0;
+  for (TTessel::Vertex_iterator v=tes->vertices_begin();
+       v!=tes->vertices_end();v++){
+    coords(i,0) = CGAL::to_double(v->point().x().exact());
+    coords(i,1) = CGAL::to_double(v->point().y().exact());
+    coords(i,2) = CGAL::to_double(v->degree());
+    i++;
+  }  
+  Rcpp::List cnames = Rcpp::List::create(R_NilValue,
+					 Rcpp::CharacterVector::create("x0",
+								       "y1",
+								       "degree"));
+  coords.attr("dimnames") = cnames;
+  return coords;
+}
 void insert_segment(LineTes *tes,double x0,double y0,double x1,double y1) {
   Segment seg(Point2(x0,y0),Point2(x1,y1));
   tes->insert_segment(seg);
@@ -457,6 +475,9 @@ RCPP_MODULE(lite){
     .method("getDomain",&LineTes::get_window,"get the domain to be tessellated")
     .method("getSegmentCoords",&getSegmentCoords,
 	    "return the segment coordinates")
+    .method("getVertexCoords",&getVertexCoords,
+	    "return the  coordinates of all vertices together with their "
+	    "degree")
     .method("insert_segment",&insert_segment,"insert a line segment in a tessellation")
     .method("remove_ivertices",&remove_ivertices,"remove I-vertices from a tessellation")
     .method("remove_lvertices",&remove_lvertices,"remove internal L-vertices from a tessellation")
