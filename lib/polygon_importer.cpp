@@ -1,7 +1,6 @@
 
 #include "ttessel.h"
 double infinity_double = std::numeric_limits<double>::infinity();
-NT infinity_NT = std::numeric_limits<NT>::infinity();
 /** \brief Read input polygons
  *
  * Feed data member input_polygons from input stream. Expected format:
@@ -127,16 +126,14 @@ Size PolygonImporter::number_of_I_vertices() {
  */
 Size PolygonImporter::remove_I_vertices(double within) {
   Size count = 0;
-  for (HistArrangement::Vertex_iterator v=arr.vertices_begin();
-       v!=arr.vertices_end();v++) {
-    if (v->degree()==1) {
-      HistArrangement::Halfedge_around_vertex_circulator 
-        e = v->incident_halfedges();
-      NT len2 = CGAL::squared_distance(e->curve().source(),
-                                       e->curve().target());
+  for (HistArrangement::Edge_iterator ei=arr.edges_begin();
+       ei!=arr.edges_end();ei++) {
+    if (ei->source()->degree()==1 || ei->target()->degree()==1) {
+      NT len2 = CGAL::squared_distance(ei->curve().source(),
+                                       ei->curve().target());
       if (sqrt(CGAL::to_double(len2))>=within)
         continue;
-      arr.remove_edge(e);
+      arr.remove_edge(ei);
       count++;
     }
   }
@@ -375,17 +372,18 @@ Points digitize(Points polyline,NT step_length) {
 /** \brief Compute the squared Hausdorff distance between two point sets
  */
 NT squared_Hausdorff_distance(Points& a,Points& b) {
-  std::vector<NT> da(a.size()), db(b.size());
+  std::vector<NT> da(a.size(),-1), db(b.size(),-1);
   for (Size i=0;i<a.size();i++) {
     for (Size j=0;j<b.size();j++) {
       NT dist = CGAL::squared_distance(a[i],b[j]);
-      if (dist<da[i]) da[i] = dist;
-      if (dist<db[j]) db[j] = dist;
+      if (dist<da[i] || da[i]<0) da[i] = dist;
+      if (dist<db[j] || db[j]<0) db[j] = dist;
     }
   }
   std::vector<NT> dab(da);
   dab.insert(dab.end(),db.begin(),db.end());
-  return *std::max_element(dab.begin(),dab.end());
+  std::vector<NT>::iterator max_it = std::max_element(dab.begin(),dab.end());
+  return *max_it;
 }
 /** \brief Compare a face to an input polygon
  * \param f : face of arr.
@@ -443,5 +441,33 @@ NT PolygonImporter::compare(HistArrangement::Face_handle f,unsigned int pidx,
     poly_sample.insert(poly_sample.end(),buf.begin(),buf.end());
   }
   NT res = squared_Hausdorff_distance(face_sample,poly_sample);
+  return res;
+}
+
+/** \brief Assess globally the fit polygon/face
+ */
+NT PolygonImporter::goodness_of_fit(NT eps,double weight_missing) {
+  NT res = 0.0;
+  NT dmax = 0;
+  std::vector<Size> missing;
+  for (Size i=0;i<input_polygons.size();i++)
+    missing.push_back(i+1);
+  std::vector<Size>::iterator missing_begin = missing.begin(), 
+    missing_end = missing.end();
+  Size face_counter = 0;
+  for (HistArrangement::Face_iterator fi=arr.faces_begin();
+       fi!=arr.faces_end();fi++) {
+    PolygonVote pv = elected_polygon(fi);
+    if (pv.first>0) {
+      NT dist = compare(fi,pv.first,eps);
+      res += dist;
+      if (dist>dmax) dmax = dist;
+      missing_end = std::remove(missing_begin,missing_end,pv.first);
+    }
+    face_counter++;
+  }
+  for (std::vector<Size>::iterator m=missing_begin;m!=missing_end;m++) {
+    res += weight_missing*weight_missing;
+  }
   return res;
 }
