@@ -516,6 +516,15 @@ struct ModList {
  */
 class PolygonImporter {
 public:
+  /** \typedef Side
+   * \brief Side of a holed polygon
+   *
+   * The side is oriented. It is represented as a line segment together
+   * with the polygon index (starting from 1. */
+  typedef std::pair<Segment,Size> Side;
+  /** \typedef Sides
+   * \brief Vector of Side */
+  typedef std::vector<Side> Sides;
   /** \typedef HistArrangement
    * \brief Arrangement of segments with history */
   typedef CGAL::Arrangement_with_history_2<Traits> HistArrangement;
@@ -578,8 +587,11 @@ public:
    */
   HistArrangement arr;
   // methods
+  PolygonImporter();
   void read_polygons(std::istream&);
   void read_side_clusters(std::istream&);
+  Sides get_polygon_sides();
+  inline void set_side_clusters(SideClusters sc) {side_clusters = sc;}
   void insert_segments(double expand=0.0);
   Size number_of_I_vertices(); 
   Size remove_I_vertices(double within=infinity_double);

@@ -1,6 +1,17 @@
 
+// Line Tessellation (LiTe) library
+// |||Development version
+// Authors: Katarzyna Adamczyk and Kiên Kiêu.
+// |||Copyright INRA 2006-yyyy.
+// Interdeposit Certification: IDDN.FR.001.030007.000.R.P.2015.000.31235
+// License: GPL v3.
+
 #include "ttessel.h"
+
 double infinity_double = std::numeric_limits<double>::infinity();
+
+/** \brief Empty constructor */
+PolygonImporter::PolygonImporter() {}
 /** \brief Read input polygons
  *
  * Feed data member input_polygons from input stream. Expected format:
@@ -38,6 +49,37 @@ void PolygonImporter::read_polygons(std::istream& input) {
     HPolygon hpoly(borders[0],borders.begin()+1,borders.end());
     input_polygons.push_back(hpoly);
   }
+}
+
+/** \brief Return the polygon sides */ 
+PolygonImporter::Sides PolygonImporter::get_polygon_sides() {
+  Sides res;
+  Size poly_index = 1;
+  for (HPolygons::iterator hi=input_polygons.begin();hi!=input_polygons.end();
+       hi++) {
+    Polygon outer, inner;
+    outer = hi->outer_boundary();
+    for (Polygon::Edge_const_iterator ei=outer.edges_begin();
+         ei!=outer.edges_end();ei++) {
+      Side side;
+      side.first = Segment(ei->source(),ei->target());
+      side.second = poly_index;
+      res.push_back(side);
+    }
+    for (HPolygon::Hole_const_iterator hoi=hi->holes_begin();
+         hoi!=hi->holes_end();hoi++) {
+      inner = *hoi;
+      for (Polygon::Edge_const_iterator ei=inner.edges_begin();
+           ei!=inner.edges_end();ei++) {
+        Side side;
+        side.first = Segment(ei->source(),ei->target());
+        side.second = poly_index;
+        res.push_back(side);
+      }
+    }
+    poly_index++;
+  }
+  return res;
 }
 
 /** \brief Read clustering data for polygon sides from an input stream

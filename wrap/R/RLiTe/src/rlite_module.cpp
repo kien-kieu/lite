@@ -22,8 +22,11 @@ namespace Rcpp {
   template<> HPolygon as(SEXP);
   template<> SEXP wrap(const HPolygons&);
   template<> HPolygons as(SEXP);
+  template<> SEXP wrap(const PolygonImporter::Sides&);
+  template<> PolygonImporter::SideClusters as(SEXP);
 }
 RCPP_EXPOSED_CLASS(LineTes)
+RCPP_EXPOSED_CLASS(PolygonImporter)
 RCPP_EXPOSED_CLASS(TTessel)
 RCPP_EXPOSED_CLASS(Energy)
 RCPP_EXPOSED_CLASS(SMFChain)
@@ -106,6 +109,14 @@ void write(LineTes *tes,std::string filename) {
   }
   tes->write(output_file);
   return;
+}
+
+void set_polygons(PolygonImporter* pi, Rcpp::List R_hpolygons) {
+  Rcpp::Rcout << "debug set_polygons. Here we are." << std::endl;
+  HPolygons hpolys = Rcpp::as<HPolygons>(R_hpolygons);
+  Rcpp::Rcout << "debug set_polygons. " << hpolys.size() << " holed polygons" << std::endl;
+  pi->input_polygons = hpolys;
+  Rcpp::Rcout << "debug set_polygons. Exiting." << std::endl;
 }
 
 int getSegmentNumber(TTessel *tes) {
@@ -353,12 +364,14 @@ namespace Rcpp {
     List R_hpoly(x);
     NumericMatrix outer_matrix = R_hpoly["outer"];
     Polygon outer = as<Polygon>(outer_matrix);
-    List hole_matrices = R_hpoly["holes"];
     Polygons holes;
-    for (int j=0;j<hole_matrices.size();j++) {
-      NumericMatrix hole_matrix = hole_matrices[j];
-      Polygon hole = as<Polygon>(hole_matrix);
-      holes.push_back(hole);
+    if (R_hpoly.containsElementNamed("holes")) {
+      List hole_matrices = R_hpoly["holes"];
+      for (int j=0;j<hole_matrices.size();j++) {
+	NumericMatrix hole_matrix = hole_matrices[j];
+	Polygon hole = as<Polygon>(hole_matrix);
+	holes.push_back(hole);
+      }
     }
     HPolygon hpoly(outer,holes.begin(),holes.end());
     return hpoly;
@@ -381,6 +394,48 @@ namespace Rcpp {
       hpolys.push_back(hpoly);
     }
     return hpolys;
+  }
+}
+
+namespace Rcpp {
+  template <> SEXP wrap(const PolygonImporter::Sides& sides) {
+    NumericMatrix R_sides(sides.size(),5);
+    for (Size i=0;i<sides.size();i++) {
+      R_sides(i,0) = CGAL::to_double(sides[i].first.source().x());
+      R_sides(i,1) = CGAL::to_double(sides[i].first.source().y());
+      R_sides(i,2) = CGAL::to_double(sides[i].first.target().x());
+      R_sides(i,3) = CGAL::to_double(sides[i].first.target().y());
+      R_sides(i,4) = CGAL::to_double(sides[i].second);
+    }
+    Rcpp::CharacterVector headers = Rcpp::CharacterVector::create("x0",
+								  "y0",
+								  "x1",
+								  "y1",
+								  "poly");
+    Rcpp::List dnames = Rcpp::List::create(R_NilValue,headers);
+    
+    R_sides.attr("dimnames") = dnames;
+    return R_sides;
+  }
+  template <> PolygonImporter::SideClusters as(SEXP R_list) {
+    List R_scs(R_list);
+    PolygonImporter::SideClusters scs;
+    NumericMatrix segments = R_scs["segments"];
+    List side_list = R_scs["sides"];
+    Size n = side_list.size();
+    for (Size i=0;i<n;i++) {
+      PolygonImporter::SideCluster sc;
+      NumericMatrix sides = side_list[i];
+      sc.representant = Segment(Point2(segments(i,0),segments(i,1)),
+				Point2(segments(i,2),segments(i,3)));
+      for(Size j=0;j<sides.nrow();j++) {
+	sc.side_start.push_back(sides(j,0));
+	sc.side_end.push_back(sides(i,1));
+	sc.side_polygon.push_back((unsigned int) sides(i,2));
+      }
+      scs.push_back(sc);
+    }
+    return scs;
   }
 }
 
@@ -463,6 +518,14 @@ RCPP_MODULE(lite){
     .method("is_a_T_tessellation",&is_a_T_tessellation,"test whether the tessellation is of T-type")
     .method("read",&read,"read a line tessellation from file")
     .method("write",&write,"write a line tessellation to a file")
+    ;
+  class_<PolygonImporter>("PolygonImporter")
+    .constructor("Empty constructor")
+    .method("set_polygons",&set_polygons,"set input polygons")
+    .method("get_polygon_sides",&PolygonImporter::get_polygon_sides,
+	    "get polygon sides")
+    .method("insert_segments",&PolygonImporter::insert_segments,
+	    "build arrangement from segments")
     ;
   class_<TTessel>("TTessel")
     .derives<LineTes>("LineTes")
