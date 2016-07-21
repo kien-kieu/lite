@@ -3,4 +3,5 @@ exportPattern("^[[:alpha:]]+")
 import(methods)
 importFrom(Rcpp, loadModule)
 importFrom(Rcpp, evalCpp)
-importFrom(spatstat, coords, psp, lengths.psp, endpoints.psp, pairdist.psp)
+importFrom(spatstat, owin, coords, psp, lengths.psp, endpoints.psp,
+           pairdist.psp, nsegments, marks)

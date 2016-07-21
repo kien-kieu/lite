@@ -24,6 +24,9 @@ namespace Rcpp {
   template<> HPolygons as(SEXP);
   template<> SEXP wrap(const PolygonImporter::Sides&);
   template<> PolygonImporter::SideClusters as(SEXP);
+  template<> SEXP wrap(const PolygonImporter::SideClusters&);
+  template<> SEXP wrap(const PolygonImporter::PolygonVote&);
+  template<> SEXP wrap(const PolygonImporter::PolygonVotes&);
 }
 RCPP_EXPOSED_CLASS(LineTes)
 RCPP_EXPOSED_CLASS(PolygonImporter)
@@ -111,14 +114,20 @@ void write(LineTes *tes,std::string filename) {
   return;
 }
 
-void set_polygons(PolygonImporter* pi, Rcpp::List R_hpolygons) {
-  Rcpp::Rcout << "debug set_polygons. Here we are." << std::endl;
-  HPolygons hpolys = Rcpp::as<HPolygons>(R_hpolygons);
-  Rcpp::Rcout << "debug set_polygons. " << hpolys.size() << " holed polygons" << std::endl;
-  pi->input_polygons = hpolys;
-  Rcpp::Rcout << "debug set_polygons. Exiting." << std::endl;
+PolygonImporter::PolygonVote elected_polygon(PolygonImporter* pi,Size i) {
+  PolygonImporter::HistArrangement::Face_iterator fi = pi->arr.faces_begin();
+  for(Size j=0;j<i;j++) fi++;
+  PolygonImporter::PolygonVote pv = pi->elected_polygon(fi);
+  return pv;
 }
 
+PolygonImporter::PolygonVotes polygon_votes_face(PolygonImporter* pi, Size i) {
+  PolygonImporter::HistArrangement::Face_iterator fi = pi->arr.faces_begin();
+  for(Size j=0;j<i;j++) fi++;
+  PolygonImporter::PolygonVotes pvs = pi->polygon_sides(fi);
+  return pvs;
+}
+  
 int getSegmentNumber(TTessel *tes) {
   return (int) tes->number_of_segments();
 }
@@ -347,23 +356,35 @@ namespace Rcpp {
     return Rcpp::wrap(R_polygons);
   }
   template <> SEXP wrap(const HPolygon &p) {
-    const Polygon outer = p.outer_boundary();
-    NumericMatrix outer_matrix = wrap<Polygon>(outer);
-    List holes;
-    for (HPolygon::Hole_const_iterator hi=p.holes_begin();
-	 hi!=p.holes_end();hi++) {
-      Polygon hole = *hi;
-      NumericMatrix hole_matrix = wrap<Polygon>(hole);
-      holes.push_back(hole_matrix);
+    List R_hpoly, lnames;
+    if (!p.is_unbounded()) {
+      Polygon outer;
+      outer = p.outer_boundary();
+      NumericMatrix outer_matrix = wrap<Polygon>(outer);
+      R_hpoly.push_back(outer_matrix);
+      lnames.push_back("outer");
     }
-    List R_hpoly = List::create(Named("outer")=outer_matrix,
-				Named("holes")=holes);
+    if (std::distance(p.holes_begin(),p.holes_end())>0) {
+      List holes;
+      for (HPolygon::Hole_const_iterator hi=p.holes_begin();
+	   hi!=p.holes_end();hi++) {
+	Polygon hole = *hi;
+	NumericMatrix hole_matrix = wrap<Polygon>(hole);
+	holes.push_back(hole_matrix);
+      }
+      R_hpoly.push_back(holes);
+      lnames.push_back("holes");
+    }
+    R_hpoly.attr("names") = lnames;
     return wrap(R_hpoly);
   }
   template <> HPolygon as(SEXP x) {
     List R_hpoly(x);
-    NumericMatrix outer_matrix = R_hpoly["outer"];
-    Polygon outer = as<Polygon>(outer_matrix);
+    Polygon outer;
+    if (R_hpoly.containsElementNamed("outer")) {
+      NumericMatrix outer_matrix = R_hpoly["outer"];
+      outer = as<Polygon>(outer_matrix);
+    }
     Polygons holes;
     if (R_hpoly.containsElementNamed("holes")) {
       List hole_matrices = R_hpoly["holes"];
@@ -418,6 +439,7 @@ namespace Rcpp {
     return R_sides;
   }
   template <> PolygonImporter::SideClusters as(SEXP R_list) {
+    Rcpp::Rcout << "from SideClusters as" << std::endl;//debug
     List R_scs(R_list);
     PolygonImporter::SideClusters scs;
     NumericMatrix segments = R_scs["segments"];
@@ -430,12 +452,67 @@ namespace Rcpp {
 				Point2(segments(i,2),segments(i,3)));
       for(Size j=0;j<sides.nrow();j++) {
 	sc.side_start.push_back(sides(j,0));
-	sc.side_end.push_back(sides(i,1));
-	sc.side_polygon.push_back((unsigned int) sides(i,2));
+	sc.side_end.push_back(sides(j,1));
+        sc.side_index.push_back(sides(j,2));
+	sc.side_polygon.push_back((unsigned int) sides(j,3));
       }
       scs.push_back(sc);
     }
     return scs;
+  }
+  template <> SEXP wrap(const PolygonImporter::SideClusters& scs) {
+    Rcpp::Rcout << "from SideClusters wrapping" << std::endl;//debug
+    NumericMatrix Rsegments(scs.size(),4);
+    List RSides;
+    Rcpp::Rcout << "Rsegments and RSides initialized" << std::endl;//debug
+    for (Size i=0;i<scs.size();i++) {
+      Rcpp::Rcout << "i=" << i << std::endl;//debug
+      PolygonImporter::SideCluster sc = scs[i];
+      Rcpp::Rcout << "got sc" << std::endl;//debug
+      Rsegments(i,0) = CGAL::to_double(sc.representant.source().x());
+      Rsegments(i,1) = CGAL::to_double(sc.representant.source().y());
+      Rsegments(i,2) = CGAL::to_double(sc.representant.target().x());
+      Rsegments(i,3) = CGAL::to_double(sc.representant.target().y());
+      Rcpp::Rcout << "Rsegments i-th row feed" << std::endl;//debug
+      NumericMatrix RClusterSides(sc.side_start.size(),4);
+      for (Size j=0;j<sc.side_start.size();j++) {
+	RClusterSides(j,0) = sc.side_start[j];
+	RClusterSides(j,1) = sc.side_end[j];
+	RClusterSides(j,2) = sc.side_index[j];
+	RClusterSides(j,3) = sc.side_polygon[j];
+      }
+      Rcpp::Rcout << "RClusterSides feed" << std::endl;//debug
+      List names = List::create(R_NilValue,
+				Rcpp::CharacterVector::create("start",
+							      "end",
+							      "index",
+							      "polygon"));
+      RClusterSides.attr("dimnames") = names;
+      RSides.push_back(RClusterSides);
+    }
+    List res = List::create(Named("segments")=Rsegments,Named("sides")=RSides);
+    return wrap(res);
+  }
+  template<> SEXP wrap(const PolygonImporter::PolygonVote& pv) {
+    NumericVector Rpv(2);
+    Rpv[0] = pv.first;
+    Rpv[1] = pv.second;
+    CharacterVector names = CharacterVector::create("polygon","vote");
+    Rpv.attr("names") = names;
+    return Rpv;
+  }
+  template<> SEXP wrap(const PolygonImporter::PolygonVotes& pvs) {
+    NumericMatrix Rpvs(pvs.size(),2);
+    Size i=0;
+    for (PolygonImporter::PolygonVotes::const_iterator pvi=pvs.begin();
+	 pvi!=pvs.end();pvi++) {
+      Rpvs(i,0) = pvi->first;
+      Rpvs(i,1) = pvi->second;
+      i++;
+    }
+    List dnames = List::create(R_NilValue,CharacterVector("polygon","vote"));
+    Rpvs.attr("dimnames") = dnames;
+    return Rpvs;
   }
 }
 
@@ -521,11 +598,22 @@ RCPP_MODULE(lite){
     ;
   class_<PolygonImporter>("PolygonImporter")
     .constructor("Empty constructor")
-    .method("set_polygons",&set_polygons,"set input polygons")
+    .method("set_polygons",&PolygonImporter::set_polygons,"set input polygons")
+    .method("get_polygons",&PolygonImporter::get_polygons,"get input polygons")
     .method("get_polygon_sides",&PolygonImporter::get_polygon_sides,
 	    "get polygon sides")
+    .method("set_side_clusters",&PolygonImporter::set_side_clusters,
+	    "store side clustering results")
+    .method("get_side_clusters",&PolygonImporter::get_side_clusters,
+	    "get stored side clustering results")
     .method("insert_segments",&PolygonImporter::insert_segments,
 	    "build arrangement from segments")
+    .method("remove_I_vertices",&PolygonImporter::remove_I_vertices,
+	    "remove I-vertices from arrangement")
+    .method("get_faces",&PolygonImporter::get_faces,"get arrangement faces")
+    .method("polygon_votes_face",&polygon_votes_face,
+	    "get polygon votes for a face")
+    .method("elected_polygon",&elected_polygon,"get polygon matched to a face")
     ;
   class_<TTessel>("TTessel")
     .derives<LineTes>("LineTes")

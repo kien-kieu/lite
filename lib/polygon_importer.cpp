@@ -182,6 +182,52 @@ Size PolygonImporter::remove_I_vertices(double within) {
   return count;
 }
 
+/** \brief Returns a HPolygon object representing an arrangement face
+ * \param f : the arrangement face to be converted.
+ * \param simplify : if true, only vertices joining non-aligned edges 
+ * are specified during the HPolygon construction. Default: true.
+ * \return a holed polygon.
+ **/
+HPolygon aface2poly(PolygonImporter::HistArrangement::Face_handle f, 
+                    bool poly_simplify) {
+  std::vector<PolygonImporter::HistArrangement::Ccb_halfedge_circulator> ccbs;
+  if (f->has_outer_ccb())
+    ccbs.push_back(f->outer_ccb());
+  if (std::distance(f->holes_begin(),f->holes_end())>0) {
+    ccbs.insert(ccbs.end(),f->holes_begin(),f->holes_end());
+  }
+  Polygons poly(ccbs.size());
+  for (Size i=0;i<ccbs.size();i++) {
+    PolygonImporter::HistArrangement::Ccb_halfedge_circulator e = ccbs[i];
+    PolygonImporter::HistArrangement::Halfedge_handle e_first=e;
+    do {
+        poly[i].push_back(e->target()->point());
+      e++;
+    } while (e!=e_first);
+    if (poly_simplify)
+      poly[i] = simplify(poly[i]);
+  }
+  if (f->has_outer_ccb()) {
+    Polygons::iterator hi(poly.begin());
+    hi++;
+    HPolygon res(poly[0],hi,poly.end());
+    return(res);
+  } else {
+    Polygon empty;
+    HPolygon res(empty,poly.begin(),poly.end());
+    return(res);
+  }
+}
+/** \brief Get arrangement faces as holed polygons*/
+HPolygons PolygonImporter::get_faces() {
+  HPolygons hpolys;
+  for (HistArrangement::Face_iterator fi=arr.faces_begin();fi!=arr.faces_end();
+       fi++) {
+    hpolys.push_back(aface2poly(fi,true));
+  }
+  return hpolys;
+}
+
 /** \brief Curvilinear abscissa of the projection of a point onto a line
  * \param p : point to be projected.
  * \param s : segment onto the target line. The segment start is considered

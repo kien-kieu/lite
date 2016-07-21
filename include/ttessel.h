@@ -548,6 +548,7 @@ public:
     Segment representant; ///< tessellation segment
     std::vector<double> side_start; ///< side start abscissa on the segment 
     std::vector<double> side_end; ///< side end abscissa on the segment
+    std::vector<double> side_index; ///< side index 
     std::vector<unsigned int> side_polygon; ///< polygon index of side
     Curve_handle curve_ref; ///< handle to the segment inserted into the arrangement
   };
@@ -588,14 +589,25 @@ public:
   HistArrangement arr;
   // methods
   PolygonImporter();
+  /** \brief Set input polygons
+   * 
+   * Input polygons are holed polgygons supposed to represent
+   * approximately the tessellation faces. */
+  inline void set_polygons(HPolygons hpolys) {input_polygons = hpolys;};
+  /** \brief Get input polygons */
+  inline HPolygons get_polygons() {return input_polygons;};
   void read_polygons(std::istream&);
   void read_side_clusters(std::istream&);
   Sides get_polygon_sides();
+  /** \brief Set side clustering results*/
   inline void set_side_clusters(SideClusters sc) {side_clusters = sc;}
+  /** \brief Get stored side clustering results*/
+  inline SideClusters get_side_clusters() {return side_clusters;};
   void insert_segments(double expand=0.0);
   Size number_of_I_vertices(); 
   Size remove_I_vertices(double within=infinity_double);
   SideClusters::iterator fetch_side_cluster(Curve_handle);
+  HPolygons get_faces();
   PolygonVotes polygon_sides(HistArrangement::Halfedge_handle);
   PolygonVotes polygon_sides(HistArrangement::Face_handle);
   PolygonVote elected_polygon(HistArrangement::Face_handle);
@@ -1444,6 +1456,9 @@ LineTes::Halfedge_handle find_halfedge(LineTes&,Point2,Point2);
 bool                     is_a_T_vertex(LineTes::Vertex_handle, 
 				       bool verbose=false);
 unsigned long int        number_of_internal_vertices(TTessel&);
+// conflict overloading/default argument -> aface2poly instead of face2poly
+HPolygon              aface2poly(PolygonImporter::HistArrangement::Face_handle,
+	   	                 bool poly_simplify=true);
 HPolygon                 face2poly(TTessel::Face_handle, bool simplify=true);
 double                   angle_between_vectors(Vector v1,Vector v2);
 double                   sum_of_faces_squared_areas(TTessel*);
