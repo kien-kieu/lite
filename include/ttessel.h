@@ -607,10 +607,14 @@ public:
   Size number_of_I_vertices(); 
   Size remove_I_vertices(double within=infinity_double);
   SideClusters::iterator fetch_side_cluster(Curve_handle);
-  HPolygons get_faces();
+  /** \brief Return the number of faces of the arrangement*/
+  inline Size number_of_faces() {return arr.number_of_faces();};
+  HPolygons get_faces(bool simplify=true);
   PolygonVotes polygon_sides(HistArrangement::Halfedge_handle);
   PolygonVotes polygon_sides(HistArrangement::Face_handle);
   PolygonVote elected_polygon(HistArrangement::Face_handle);
+  std::vector<PolygonVote> 
+    elected_polygons(HistArrangement::Ccb_halfedge_circulator);
   NT compare(HistArrangement::Face_handle,unsigned int,NT);    
   NT goodness_of_fit(NT eps,double weight_missing);
 };
@@ -1497,6 +1501,7 @@ double interval_free_length(double,double,
 NT area(HPolygon);
 Points digitize(Points,NT);
 NT squared_Hausdorff_distance(Points&,Points&);
+PolygonImporter::PolygonVote vote_winner(PolygonImporter::PolygonVotes);
 /** \defgroup features Features of T-tessellations
  *
  * Functions that can be used by Energy objects for defining a Gibbs model

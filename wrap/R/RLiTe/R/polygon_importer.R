@@ -132,3 +132,26 @@ segRepPattern <- function(cl,s) {
                                                  polygon=x$polygon))
     return(res)
 }
+
+setGeneric(name="optimize_parameters",
+           def=function(x,delta,missing.weight,par)
+           {
+               standardGeneric("optimize_parameters")
+           }
+           )
+setMethod("optimize_parameters",
+          signature(x="Rcpp_PolygonImporter",delta="numeric",
+                    missing.weight="numeric",par="numeric"),
+          function(x,delta,missing.weight,par) {
+              crit <- function(par,polygon.importer,delta,missing.weight) {
+                  par <- abs(par)
+                  par[2] <-round(par[2])
+                  cluster_sides(polygon.importer,omega=par[1],n=par[2])
+                  polygon.importer$insert_segments(expand=par[3])
+                  polygon.importer$remove_I_vertices(within=par[4])
+                  res <- polygon.importer$goodness_of_fit(delta,missing.weight)
+                  res
+              }
+              optim(par,crit,polygon.importer=x,delta=delta,
+                    missing.weight=missing.weight,method="Nelder-Mead")
+          })

@@ -27,6 +27,9 @@ namespace Rcpp {
   template<> SEXP wrap(const PolygonImporter::SideClusters&);
   template<> SEXP wrap(const PolygonImporter::PolygonVote&);
   template<> SEXP wrap(const PolygonImporter::PolygonVotes&);
+  template<> SEXP wrap(const std::vector<PolygonImporter::PolygonVote>&);
+  template<> SEXP wrap(const NT&);
+  template<> NT as(SEXP);
 }
 RCPP_EXPOSED_CLASS(LineTes)
 RCPP_EXPOSED_CLASS(PolygonImporter)
@@ -121,9 +124,28 @@ PolygonImporter::PolygonVote elected_polygon(PolygonImporter* pi,Size i) {
   return pv;
 }
 
+/* Parameters i and j identify a border. Index i for face. Index j for
+   a border of the face. If j=0, outer boundary, otherwise a inner
+   boundary (along a face hole) */
+std::vector<PolygonImporter::PolygonVote> 
+elected_polygons_ccb(PolygonImporter* pi, Size i, Size j) {
+  PolygonImporter::HistArrangement::Face_iterator fi = pi->arr.faces_begin();
+  for(Size k=0;k<i;k++) fi++;
+  PolygonImporter::HistArrangement::Ccb_halfedge_circulator e; 
+  if (j==0) {
+    e = fi->outer_ccb();
+  } else {
+    PolygonImporter::HistArrangement::Hole_iterator hi = fi->holes_begin();
+    for (Size k=0;k<j-1;k++) hi++;
+    e = *hi;
+  }
+  std::vector<PolygonImporter::PolygonVote> res = pi->elected_polygons(e);
+  return res;
+}
+
 PolygonImporter::PolygonVotes polygon_votes_face(PolygonImporter* pi, Size i) {
   PolygonImporter::HistArrangement::Face_iterator fi = pi->arr.faces_begin();
-  for(Size j=0;j<i;j++) fi++;
+  for(Size k=0;k<i;k++) fi++;
   PolygonImporter::PolygonVotes pvs = pi->polygon_sides(fi);
   return pvs;
 }
@@ -439,7 +461,6 @@ namespace Rcpp {
     return R_sides;
   }
   template <> PolygonImporter::SideClusters as(SEXP R_list) {
-    Rcpp::Rcout << "from SideClusters as" << std::endl;//debug
     List R_scs(R_list);
     PolygonImporter::SideClusters scs;
     NumericMatrix segments = R_scs["segments"];
@@ -461,19 +482,14 @@ namespace Rcpp {
     return scs;
   }
   template <> SEXP wrap(const PolygonImporter::SideClusters& scs) {
-    Rcpp::Rcout << "from SideClusters wrapping" << std::endl;//debug
     NumericMatrix Rsegments(scs.size(),4);
     List RSides;
-    Rcpp::Rcout << "Rsegments and RSides initialized" << std::endl;//debug
     for (Size i=0;i<scs.size();i++) {
-      Rcpp::Rcout << "i=" << i << std::endl;//debug
       PolygonImporter::SideCluster sc = scs[i];
-      Rcpp::Rcout << "got sc" << std::endl;//debug
       Rsegments(i,0) = CGAL::to_double(sc.representant.source().x());
       Rsegments(i,1) = CGAL::to_double(sc.representant.source().y());
       Rsegments(i,2) = CGAL::to_double(sc.representant.target().x());
       Rsegments(i,3) = CGAL::to_double(sc.representant.target().y());
-      Rcpp::Rcout << "Rsegments i-th row feed" << std::endl;//debug
       NumericMatrix RClusterSides(sc.side_start.size(),4);
       for (Size j=0;j<sc.side_start.size();j++) {
 	RClusterSides(j,0) = sc.side_start[j];
@@ -481,7 +497,6 @@ namespace Rcpp {
 	RClusterSides(j,2) = sc.side_index[j];
 	RClusterSides(j,3) = sc.side_polygon[j];
       }
-      Rcpp::Rcout << "RClusterSides feed" << std::endl;//debug
       List names = List::create(R_NilValue,
 				Rcpp::CharacterVector::create("start",
 							      "end",
@@ -510,9 +525,33 @@ namespace Rcpp {
       Rpvs(i,1) = pvi->second;
       i++;
     }
-    List dnames = List::create(R_NilValue,CharacterVector("polygon","vote"));
+    CharacterVector cnames = CharacterVector::create("polygon","vote");
+    List dnames = List::create(R_NilValue,cnames);
     Rpvs.attr("dimnames") = dnames;
     return Rpvs;
+  }
+  template<> SEXP wrap(const std::vector<PolygonImporter::PolygonVote>& pvs) {
+    NumericMatrix Rpvs(pvs.size(),2);
+    Size i=0;
+    for (std::vector<PolygonImporter::PolygonVote>::const_iterator 
+	   pvi=pvs.begin();pvi!=pvs.end();pvi++) {
+      Rpvs(i,0) = pvi->first;
+      Rpvs(i,1) = pvi->second;
+      i++;
+    }
+    CharacterVector cnames = CharacterVector::create("polygon","vote");
+    List dnames = List::create(R_NilValue,cnames);
+    Rpvs.attr("dimnames") = dnames;
+    return Rpvs;
+  }
+  template<> SEXP wrap(const NT& x) {
+    double  res = CGAL::to_double(x);
+    return wrap(res);
+  }
+  template<> NT as(SEXP x) {
+    NumericVector xx = x;
+    NT res(xx[0]);
+    return res;
   }
 }
 
@@ -610,10 +649,16 @@ RCPP_MODULE(lite){
 	    "build arrangement from segments")
     .method("remove_I_vertices",&PolygonImporter::remove_I_vertices,
 	    "remove I-vertices from arrangement")
+    .method("number_of_faces",&PolygonImporter::number_of_faces,
+	    "return the number of arrangement faces")
     .method("get_faces",&PolygonImporter::get_faces,"get arrangement faces")
     .method("polygon_votes_face",&polygon_votes_face,
 	    "get polygon votes for a face")
     .method("elected_polygon",&elected_polygon,"get polygon matched to a face")
+    .method("elected_polygons_ccb",&elected_polygons_ccb,
+	    "get polygon votes along a ccb")
+    .method("goodness_of_fit",&PolygonImporter::goodness_of_fit,
+	    "assess how arrangement faces match input polygons") 
     ;
   class_<TTessel>("TTessel")
     .derives<LineTes>("LineTes")

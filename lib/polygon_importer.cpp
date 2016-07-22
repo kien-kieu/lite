@@ -135,6 +135,7 @@ void PolygonImporter::read_side_clusters(std::istream& input) {
  * both ends by an extra length.  
  */
 void PolygonImporter::insert_segments(double expand) {
+  arr.clear();
   for (unsigned int i=0;i<side_clusters.size();i++) {
     Segment seg = side_clusters[i].representant;
     if (expand!=0) {
@@ -219,11 +220,11 @@ HPolygon aface2poly(PolygonImporter::HistArrangement::Face_handle f,
   }
 }
 /** \brief Get arrangement faces as holed polygons*/
-HPolygons PolygonImporter::get_faces() {
+HPolygons PolygonImporter::get_faces(bool simplify) {
   HPolygons hpolys;
   for (HistArrangement::Face_iterator fi=arr.faces_begin();fi!=arr.faces_end();
        fi++) {
-    hpolys.push_back(aface2poly(fi,true));
+    hpolys.push_back(aface2poly(fi,simplify));
   }
   return hpolys;
 }
@@ -400,6 +401,20 @@ PolygonImporter::polygon_sides(HistArrangement::Face_handle f) {
   return res;
 }
 
+/** \brief Compute which polygon wins a vote*/
+PolygonImporter::PolygonVote vote_winner(PolygonImporter::PolygonVotes pvs) {
+  PolygonImporter::PolygonVote res;
+  res.first = pvs.size();
+  res.second = 0.0;
+  for (PolygonImporter::PolygonVotes::iterator pvi=pvs.begin();
+       pvi!=pvs.end();pvi++) {
+    if (pvi->second>res.second) {
+      res.first = pvi->first;
+      res.second = pvi->second;
+    }
+  }
+  return res;
+}
 /** \brief Compute the polygon mostly associated with a face
  * \param f : face of arr.
  * \return the index of the polygon mostly associated with the face together
@@ -413,17 +428,27 @@ PolygonImporter::polygon_sides(HistArrangement::Face_handle f) {
  * hole).
  */
 PolygonImporter::PolygonVote PolygonImporter::elected_polygon(HistArrangement::Face_handle f) {
-  PolygonVote res;
-  PolygonVotes pv = polygon_sides(f);
-  res.first = pv.size();
-  res.second = 0.0;
-  for (PolygonImporter::PolygonVotes::iterator pvi=pv.begin();
-       pvi!=pv.end();pvi++) {
-    if (pvi->second>res.second) {
-      res.first = pvi->first;
-      res.second = pvi->second;
-    }
+  PolygonVotes pvs = polygon_sides(f);
+  PolygonVote res = vote_winner(pvs);
+  return res;
+}
+
+std::vector<PolygonImporter::PolygonVote>
+PolygonImporter::elected_polygons(HistArrangement::Ccb_halfedge_circulator e) {
+  if (e==NULL) {
+    throw std::domain_error("empty circulator provided to "
+                            "PolygonImporter::elected_polygons");
   }
+  std::vector<PolygonVote> res;
+  HistArrangement::Ccb_halfedge_circulator done = e;
+  do {
+    PolygonVote poly_edge = vote_winner(polygon_sides(e));
+    NT len2 =  CGAL::squared_distance(e->source()->point(),
+                                      e->target()->point());
+    poly_edge.second /= sqrt(CGAL::to_double(len2));
+    res.push_back(poly_edge);
+    e++;
+  } while (e!=done);
   return res;
 }
 
@@ -549,7 +574,6 @@ NT PolygonImporter::goodness_of_fit(NT eps,double weight_missing) {
     if (pv.first>0) {
       NT dist = compare(fi,pv.first,eps);
       res += dist;
-      if (dist>dmax) dmax = dist;
       missing_end = std::remove(missing_begin,missing_end,pv.first);
     }
     face_counter++;
