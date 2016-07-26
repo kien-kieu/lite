@@ -13,7 +13,7 @@ if ( CGAL_FOUND )
   include( CGAL_CreateSingleSourceCGALProgram )
   include_directories (BEFORE ../include)
 
-  add_library(ttesselSharedLib SHARED ttessel.cpp remove_xvertices.cpp)
+  add_library(ttesselSharedLib SHARED ttessel.cpp)
   # install(TARGETS ttesselSharedLib LIBRARY DESTINATION lib)
   install(TARGETS ttesselSharedLib DESTINATION lib)
   # property INSTALL_NAME_DIR is Mac OS X specific
