@@ -82,8 +82,8 @@ Rcpp::NumericMatrix getVertexCoords(LineTes *tes) {
     i++;
   }  
   Rcpp::List cnames = Rcpp::List::create(R_NilValue,
-					 Rcpp::CharacterVector::create("x0",
-								       "y1",
+					 Rcpp::CharacterVector::create("x",
+								       "y",
 								       "degree"));
   coords.attr("dimnames") = cnames;
   return coords;
