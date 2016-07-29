@@ -1194,6 +1194,13 @@ void  LineTes::remove_xvertices(double step){
   
   while (XVertices.size()>0){
     v=XVertices[0];
+    // Due to previous modifications a previously irreducible X-vertex may
+    // have become reducible. Test for it.
+    if (!is_an_irreducible_X_vertex(v)) {
+      XVertices.erase(std::remove(XVertices.begin(),XVertices.end(),v),
+		      XVertices.end());
+      continue;
+    }
     // a halfedge belonging to a segment to be disturbed
     curr=v->incident_halfedges(); 
     // a segment to be disturbed
