@@ -1235,11 +1235,8 @@ void  LineTes::remove_xvertices(double step){
       // if vs!=v, vs does not exist anymore, remove it from the list
       // of X-vertices. If vs==v, it is not an X-vertex anymore,
       // remove it from the list too.
-      for (int j=0;j<XVertices.size();j++){ // à simplifier
-	if (XVertices[j]==vs){
-	  XVertices.erase(XVertices.begin()+j);	  
-	}
-      }
+      XVertices.erase(std::remove(XVertices.begin(),XVertices.end(),vs),
+		      XVertices.end());
       he=he->get_next_hf();
       suppress_edge(he_shadow);
     }
