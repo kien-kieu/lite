@@ -1178,11 +1178,11 @@ void LineTes::remove_lvertices(Size imax, bool verbose) {
  */
 void  LineTes::remove_xvertices(double step){
   double eps;
-  std::vector<TTessel::Vertex_handle> XVertices; 
-  TTessel::Vertex_handle v, vs ; 
-  LineTes::Halfedge_around_vertex_circulator  curr; 
-  LineTes::Halfedge_handle he, he_shadow;
-  LineTes::Seg_handle s;
+  std::vector<Vertex_handle> XVertices; 
+  Vertex_handle v, vs ; 
+  Halfedge_around_vertex_circulator  curr; 
+  Halfedge_handle he, he_shadow;
+  Seg_handle s;
   
  // initializing a vector of X-vertices
    
@@ -1224,7 +1224,7 @@ void  LineTes::remove_xvertices(double step){
     move = eps*move/curr->get_length();
     Segment new_s(s->pointSource(),curr->target()->point() + move);
     
-    LineTes::Seg_handle new_s_tes = insert_segment(new_s);
+    Seg_handle new_s_tes = insert_segment(new_s);
     
     // removing the edges of "s" from "tes"
     
@@ -1252,6 +1252,8 @@ void  LineTes::remove_xvertices(double step){
       if (rxv_select(vs,this)){
 	XVertices.push_back(vs);
       }
+      // check neighbour vertices
+      
       curr = curr->get_next_hf();
       vs=curr->target();     
     }
