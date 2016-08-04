@@ -1080,4 +1080,65 @@ BOOST_AUTO_TEST_CASE(remove_xvertices) {
   BOOST_CHECK_MESSAGE(tes.is_valid(true),"Invalid line tessellation" 
 		      " after removal of X-vertices");
 }
-    
+
+BOOST_AUTO_TEST_CASE(remove_xvertices_recursion) {
+  rnd = new CGAL::Random(2);
+  LineTes tes;
+  tes.insert_window(Rectangle(Point2(0,0),Point2(8,8)));
+  Segment seg(Point2(4,0),Point2(4,8));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(0,4),Point2(8,4));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(0,2),Point2(2,2));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(2,2),Point2(2,0));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(1,3.9),Point2(1,1));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(1,1),Point2(3.9,1));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(0,6),Point2(2,6));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(2,6),Point2(2,8));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(1,4.1),Point2(1,7));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(1,7),Point2(3.9,7));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(4.1,7),Point2(7,7));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(7,7),Point2(7,4.1));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(6,8),Point2(6,6));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(6,6),Point2(8,6));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(4.1,1),Point2(7,1));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(7,1),Point2(7,3.9));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(6,0),Point2(6,2));
+  tes.insert_segment(seg);
+  seg = Segment(Point2(6,2),Point2(8,2));
+  tes.insert_segment(seg);
+  Size xvertex_number = 0;
+  for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
+       vi++) {
+    if (rxv_select(vi,&tes)) xvertex_number++;
+  }
+  BOOST_CHECK_MESSAGE(xvertex_number==1,
+  		      "Counted " << xvertex_number 
+  		      << " X-vertices to be removed instead of 1");
+  tes.remove_xvertices(2);
+  xvertex_number = 0;
+  for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
+       vi++) {
+    if (rxv_select(vi,&tes)) xvertex_number++;
+  }
+  BOOST_CHECK_MESSAGE(xvertex_number==0,
+  		      "" << xvertex_number 
+  		      << " X-vertices left");
+  BOOST_CHECK_MESSAGE(tes.is_valid(true),"Invalid line tessellation" 
+  		      " after removal of X-vertices");
+}
+

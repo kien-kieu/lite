@@ -1253,7 +1253,30 @@ void  LineTes::remove_xvertices(double step){
 	XVertices.push_back(vs);
       }
       // check neighbour vertices
-      
+      Halfedge_around_vertex_circulator vs_edge = vs->incident_halfedges(),
+	done = vs_edge;
+      do {
+	Seg_handle vs_segment = vs_edge->segment();
+	if (vs_segment==new_s_tes) {
+	  vs_edge++;
+	  continue;
+	}
+	Vertex_handle vs_neighbour = vs_edge->source();
+	if (rxv_select(vs_neighbour,this)) {
+	  if (std::find(XVertices.begin(),XVertices.end(),
+			vs_neighbour)==XVertices.end()) {
+	    XVertices.push_back(vs_neighbour);
+	  }
+	} else {
+	  std::vector<Vertex_handle>::iterator found =
+	    std::find(XVertices.begin(),XVertices.end(),
+		      vs_neighbour);
+	  if (found!=XVertices.end()) {
+	    XVertices.erase(found);
+	  }
+	}
+	vs_edge++;
+      } while (vs_edge!=done);
       curr = curr->get_next_hf();
       vs=curr->target();     
     }
