@@ -4052,6 +4052,20 @@ bool is_an_X_vertex(LineTes::Vertex_handle v) {
   if (e1->get_next_hf()!=e3->twin()) return false;
   return true;
 }
+/** \brief Test whether a vertex has a neighbour which is an I-vertex
+ *
+ * Neighbours are ends of incident edges. An I-vertex is a vertex of 
+ * degree 1.
+ */
+bool has_an_I_vertex_neighbour(LineTes::Vertex_handle v) {
+  LineTes::Halfedge_around_vertex_circulator e = v->incident_halfedges(),
+    done = e;
+  do {
+    if (e->source()->degree()==1) return true;
+    e++;
+  } while (e!=done);
+  return false;
+}
 /** \brief Test whether a vertex is an irreducible X-vertex
  *
  * An X-vertex is said to be irreducible if it is still an X-vertex after
@@ -4060,12 +4074,7 @@ bool is_an_X_vertex(LineTes::Vertex_handle v) {
  */
 bool is_an_irreducible_X_vertex(LineTes::Vertex_handle v) {
   if (!is_an_X_vertex(v)) return false;
-  LineTes::Halfedge_around_vertex_circulator e_x = v->incident_halfedges(),
-    done = e_x;
-  do {
-    if (e_x->source()->degree()==1) return false;
-    e_x++;
-  } while (e_x!=done);
+  if (has_an_I_vertex_neighbour(v)) return false;
   return true;
 }
 /* For use by function remove_xvertices. Determine whether a vertex

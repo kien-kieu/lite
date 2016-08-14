@@ -1332,9 +1332,10 @@ LineTes::Halfedge_handle find_halfedge(LineTes&,Point2,Point2);
 bool                     is_a_T_vertex(LineTes::Vertex_handle, 
 				       bool verbose=false);
 bool                     is_an_X_vertex(LineTes::Vertex_handle);
+bool                     has_an_I_vertex_neighbour(LineTes::Vertex_handle);
 bool                     is_an_irreducible_X_vertex(LineTes::Vertex_handle);
 /// \cond
-     bool                     rxv_select(LineTes::Vertex_handle,LineTes*);
+bool                     rxv_select(LineTes::Vertex_handle,LineTes*);
 /// \endcond
 unsigned long int        number_of_internal_vertices(TTessel&);
 HPolygon                 face2poly(TTessel::Face_handle, bool simplify=true);
