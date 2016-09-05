@@ -260,6 +260,22 @@ Size LineTes::number_of_internal_segments() {
   }
   return count;
 }
+/** \brief Count the number of X-vertices
+ * \param exclude_boundaries : for excluding X-vertices lying on
+ *                             the boundaries of the tessellation 
+ *                             domain
+ * \param exclude_ineighbours : for excluding so-called reducible
+ *                              X-vertices, i.e. X-vertices that
+ *                              have a I-vertex among their neigbours
+ * \return the number of X-vertices
+ */
+Size LineTes::number_of_xvertices(bool exclude_boundaries,
+				  bool exclude_ineighbours) {
+  std::vector<Vertex_handle> xv;
+  xvertices(std::back_inserter(xv),exclude_boundaries,
+	    exclude_ineighbours);
+  return xv.size();
+}
 /** \brief Check whether the LineTes object is valid
  * \param verbose : if true, details are sent to std::clog. Default to false.
  * return true if valid, false otherwise
@@ -1159,6 +1175,7 @@ void LineTes::remove_lvertices(Size imax, bool verbose) {
     std::cout << "added length " << total_added_length << std::endl;
   }
 }
+
 /** \brief Remove all internal and irreducible X-vertices from a line 
  * tessellation
  * \param step : lenghth of vertex move.
@@ -1184,13 +1201,8 @@ void  LineTes::remove_xvertices(double step){
   Halfedge_handle he, he_shadow;
   Seg_handle s;
   
- // initializing a vector of X-vertices
-   
-  for (TTessel::Vertex_iterator v=vertices_begin();v!=vertices_end();v++){
-    if (rxv_select(v,this)){
-      XVertices.push_back(v);
-    }  
-  } 
+  // initializing a vector of X-vertices
+  xvertices(std::back_inserter(XVertices),true,true);
   
   while (XVertices.size()>0){
     v=XVertices[0];

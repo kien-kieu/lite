@@ -1060,20 +1060,12 @@ BOOST_AUTO_TEST_CASE(remove_xvertices) {
   tes.insert_segment(seg);
   seg = Segment(Point2(1,0),Point2(1,2));
   tes.insert_segment(seg);
-  Size xvertex_number = 0;
-  for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
-       vi++) {
-    if (is_an_X_vertex(vi)) xvertex_number++;
-  }
+  Size xvertex_number = tes.number_of_xvertices(true,true);
   BOOST_CHECK_MESSAGE(xvertex_number==2,
 		      "Counted " << xvertex_number 
 		      << " X-vertices instead of 2");
   tes.remove_xvertices(0.1);
-  xvertex_number = 0;
-  for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
-       vi++) {
-    if (is_an_X_vertex(vi)) xvertex_number++;
-  }
+  xvertex_number = tes.number_of_xvertices(true,true);
   BOOST_CHECK_MESSAGE(xvertex_number==0,
 		      "" << xvertex_number 
 		      << " X-vertices left");
@@ -1121,20 +1113,12 @@ BOOST_AUTO_TEST_CASE(remove_xvertices_recursion) {
   tes.insert_segment(seg);
   seg = Segment(Point2(6,2),Point2(8,2));
   tes.insert_segment(seg);
-  Size xvertex_number = 0;
-  for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
-       vi++) {
-    if (rxv_select(vi,&tes)) xvertex_number++;
-  }
+  Size xvertex_number = tes.number_of_xvertices(true,true);
   BOOST_CHECK_MESSAGE(xvertex_number==1,
   		      "Counted " << xvertex_number 
   		      << " X-vertices to be removed instead of 1");
   tes.remove_xvertices(2);
-  xvertex_number = 0;
-  for (LineTes::Vertex_iterator vi=tes.vertices_begin();vi!=tes.vertices_end();
-       vi++) {
-    if (rxv_select(vi,&tes)) xvertex_number++;
-  }
+  xvertex_number = tes.number_of_xvertices(true,true);
   BOOST_CHECK_MESSAGE(xvertex_number==0,
   		      "" << xvertex_number 
   		      << " X-vertices left");

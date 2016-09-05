@@ -307,6 +307,10 @@ class LineTes : public Arrangement {
    * tessellation segments
    */
   inline Seg_list_iterator      segments_end(){return all_segments.end();}
+  template <class Output_iterator>
+    Output_iterator             xvertices(Output_iterator,
+					  bool exclude_boundaries=false,
+					  bool exclude_ineighbours=false);
   /** \brief Return the domain that is tessellated 
    */
   inline HPolygons              get_window(){return window;} 
@@ -319,6 +323,8 @@ class LineTes : public Arrangement {
    */
   inline Size                   number_of_segments(){return all_segments.size();}
   Size                          number_of_internal_segments();
+  Size                          number_of_xvertices(bool exclude_boundaries=false,
+						    bool exclude_ineighbours=false);
   Size                          number_of_window_edges();
   double                        get_window_perimeter();
   double                        min_edge_length();
@@ -1398,3 +1404,30 @@ double                   face_sum_of_angles(HPolygon,TTessel*);
 double                   min_angle(HPolygon, TTessel*);
 double                   segment_size_2(std::vector<Point2>,TTessel*);
 /** @}*/
+
+/** \brief Compute the list of X-vertices
+ * \param xv : output iterator to the beginning of the data 
+ *             struture where to store the handles to X-vertices
+ * \param exclude_boundaries : for excluding X-vertices lying on
+ *                             the boundaries of the tessellation 
+ *                             domain
+ * \param exclude_ineighbours : for excluding so-called reducible
+ *                              X-vertices, i.e. X-vertices that
+ *                              have a I-vertex among their neigbours
+ * \return past-the-end iterator to the data structure containing the
+ *         handles to X-vertices
+ */
+template <class Output_iterator>
+Output_iterator LineTes::xvertices(Output_iterator xv,
+				   bool exclude_boundaries,
+				   bool exclude_ineighbours) {
+  for (Vertex_iterator v=vertices_begin();v!=vertices_end();v++) {
+    if (is_an_X_vertex(v)) {
+      if (exclude_boundaries && is_on_boundary(v)) continue;
+      if (exclude_ineighbours && has_an_I_vertex_neighbour(v)) continue;
+      *xv = v;
+      xv++;
+    }
+  }
+  return xv;
+}
