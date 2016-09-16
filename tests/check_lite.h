@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <exception>
 #include "ttessel.h"
+#include <CGAL/Cartesian_d.h>
+#include <CGAL/point_generators_d.h>
 
 Point2 upper_left_vertex(const Polygon&);
 bool llt(const Polygon&,const Polygon&);

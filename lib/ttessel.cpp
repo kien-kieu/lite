@@ -4248,7 +4248,8 @@ Polygons boundaries(HPolygon hp) {
 }
 /** \brief Remove unnecessary vertices on a polygon
  *
- * A vertex is not necessary if it is collinear with its neighbours. 
+ * A vertex is not necessary if it is collinear with 
+ * its neighbours and if it lies between them. 
  */
 Polygon simplify(Polygon p) throw(std::domain_error const&) {
   if (p.is_empty()) {
@@ -4262,7 +4263,7 @@ Polygon simplify(Polygon p) throw(std::domain_error const&) {
   Polygon::Vertex_circulator pv1 = pv2++, pv0 = pv1++, pv_end = pv1;
   pv2++;
   do {
-    if(!CGAL::collinear(*pv0,*pv1,*pv2)) {
+    if(!CGAL::are_ordered_along_line(*pv0,*pv1,*pv2)) {
       sp.push_back(*pv1);
     }
     pv0++; pv1++; pv2++;

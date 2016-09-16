@@ -1048,3 +1048,26 @@ BOOST_AUTO_TEST_CASE(non_convex_holed_domain) {
   check_predictions_4_random_smf(5,5,5000,dom);
 }
 
+BOOST_AUTO_TEST_CASE(squared_diameter_points) {
+  typedef CGAL::Cartesian_d<double> Kd;
+  typedef Kd::Point_d Point;
+  int n = 100;
+  CGAL::Random_points_in_ball_d<Point> gen (2, 5.0);
+  Points sample;
+  for (int k=0;k<n;k++) {
+    Point p = *gen++;
+    Point2 p2(p.x(),p.y());
+    sample.push_back(p2);
+  }
+  NT diam2_rc = squared_diameter(sample.begin(),sample.end());
+  NT diam2_bf = 0;
+  for (int k=0;k<sample.size();k++) {
+    for (int l=0;l<k;l++) {
+      NT d = CGAL::squared_distance(sample[k],sample[l]);
+      if (d>diam2_bf) diam2_bf = d;
+    }
+  }
+  BOOST_CHECK_MESSAGE(diam2_rc==diam2_bf,"computed squared diameter"
+		      << " is " << diam2_rc << " instead of " << diam2_bf);
+}
+		      

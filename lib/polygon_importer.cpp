@@ -462,24 +462,53 @@ NT area(HPolygon hp) {
   }
   return res;
 }
-/** \brief Sample points along a polygonal line
- * \param polyline : the polygonal line as a sequence of points.
- * \param step_length: distance between consecutive sampling points on the same
- * edge of the polyline.
+/** \brief Sample points along a line segment
+ */
+Points digitize(Segment seg, NT step_length) {
+  Points res;
+  if (seg.source()==seg.target()) {
+    res.push_back(seg.source());
+    return res;
+  }
+  Vector vec(seg.source(),seg.target());
+  NT len = sqrt(CGAL::to_double(vec.squared_length()));
+  vec = vec /len;
+  for (NT delta=0;delta<=len;delta+=step_length) {
+    res.push_back(seg.source()+delta*vec);
+  }
+  return res;
+}
+/** \brief Sample points along line segments */
+Points digitize(std::vector<Segment> segs,NT step_length) {
+  Points res;
+  for (std::vector<Segment>::iterator si=segs.begin();si!=segs.end();si++) {
+    Points buf = digitize(*si,step_length);
+    res.insert(res.end(),buf.begin(),buf.end());
+  }
+  return res;
+}
+  
+/** \brief Sample points along the boundaries of a holed polygon
+ * \param hpoly : the input holed polygon.
+ * \param step_length: distance between consecutive sampling points.
  * \return set of sampling points.
  */
-Points digitize(Points polyline,NT step_length) {
-  Points res;
-  for (Points::iterator src=polyline.begin();true;src++) {
-    Points::iterator end = src+1;
-    if (end==polyline.end()) break;
-    Vector vec(*src,*end);
-    NT len = sqrt(CGAL::to_double(vec.squared_length()));
-    vec = vec /len;
-    for (NT delta=0;delta<=len;delta+=step_length) {
-      res.push_back(*src+delta*vec);
+Points digitize(HPolygon hpoly,NT step_length) {
+  std::vector<Segment> segs;
+  if (!hpoly.is_unbounded()) {
+    for (Polygon::Edge_const_iterator ei=hpoly.outer_boundary().edges_begin();
+         ei!=hpoly.outer_boundary().edges_end();ei++) {
+      segs.push_back(*ei);
     }
   }
+  for (HPolygon::Hole_const_iterator hi=hpoly.holes_begin();
+       hi!=hpoly.holes_end();hi++) {
+    for (Polygon::Edge_const_iterator ei=hi->edges_begin();
+         ei!=hi->edges_end();ei++) {
+      segs.push_back(*ei);
+    }
+  }
+  Points res = digitize(segs,step_length);
   return res;
 }
 /** \brief Compute the squared Hausdorff distance between two point sets
@@ -498,73 +527,123 @@ NT squared_Hausdorff_distance(Points& a,Points& b) {
   std::vector<NT>::iterator max_it = std::max_element(dab.begin(),dab.end());
   return *max_it;
 }
+NT squared_Hausdorff_distance_vd(Points& a,Points& b) {
+  typedef CGAL::Delaunay_triangulation_2<Kernel> DT;
+  typedef CGAL::Delaunay_triangulation_adaptation_traits_2<DT> AT;
+  typedef CGAL::Identity_policy_2<DT,AT> AP;
+  typedef CGAL::Voronoi_diagram_2<DT,AT,AP> VD;
+ 
+  VD vda(a.begin(),a.end());
+  VD vdb(b.begin(),b.end());
+  NT res = 0;
+  for (Points::iterator pi=a.begin();pi!=a.end();pi++) {
+    VD::Locate_result lr = vdb.locate(*pi);
+    if (VD::Face_handle* f = boost::get<VD::Face_handle>(&lr)) {
+      Point2 nearest = (*f)->dual()->point();
+      NT dist2 = CGAL::squared_distance(*pi,nearest);
+      if (dist2>res)
+        res = dist2;
+    } else {
+      throw std::domain_error("squared_Hausdorff_distance_v,"
+                              " case not supported");
+    }
+  }
+  for (Points::iterator pi=b.begin();pi!=b.end();pi++) {
+    VD::Locate_result lr = vda.locate(*pi);
+    if (VD::Face_handle* f = boost::get<VD::Face_handle>(&lr)) {
+      Point2 nearest = (*f)->dual()->point();
+      NT dist2 = CGAL::squared_distance(*pi,nearest);
+      if (dist2>res)
+        res = dist2;
+    } else {
+      throw std::domain_error("squared_Hausdorff_distance_v,"
+                              " case not supported");
+    }
+  }
+  return res;
+}
+NT squared_Hausdorff_distance_dt(Points& a, Points& b) {
+  typedef CGAL::Delaunay_triangulation_2<Kernel> DT;
+  DT dta, dtb;
+  dta.insert(a.begin(),a.end());
+  dtb.insert(b.begin(),b.end());
+  NT res = 0;
+  for (Points::iterator pi=a.begin();pi!=a.end();pi++) {
+    DT::Vertex_handle v_nearest = dtb.nearest_vertex(*pi);
+    NT dist2 = CGAL::squared_distance(*pi,v_nearest->point());
+    if (dist2>res)
+      res = dist2;
+  }
+  for (Points::iterator pi=b.begin();pi!=b.end();pi++) {
+    DT::Vertex_handle v_nearest = dta.nearest_vertex(*pi);
+    NT dist2 = CGAL::squared_distance(*pi,v_nearest->point());
+    if (dist2>res)
+      res = dist2;
+  }
+  return res;
+}
+NT squared_Hausdorff_distance_dtbis(Points& a,Points& b) {
+  typedef CGAL::Point_set_2<Kernel> PS;
+  PS psa(a.begin(),a.end()), psb(b.begin(),b.end());
+  NT res = 0;
+  for (Points::iterator pi=a.begin();pi!=a.end();pi++) {
+    PS::Vertex_handle v_nearest = psb.nearest_neighbor(*pi);
+    NT dist2 = CGAL::squared_distance(*pi,v_nearest->point());
+    if (dist2>res)
+      res = dist2;
+  }
+  for (Points::iterator pi=b.begin();pi!=b.end();pi++) {
+    PS::Vertex_handle v_nearest = psa.nearest_neighbor(*pi);
+    NT dist2 = CGAL::squared_distance(*pi,v_nearest->point());
+    if (dist2>res)
+      res = dist2;
+  }
+  return res;
+}
+NT squared_Hausdorff_distance_os(Points& a,Points& b) {
+  typedef CGAL::Search_traits_2<Kernel>  ST;
+  typedef CGAL::Orthogonal_k_neighbor_search<ST> OS;
+  OS::Tree tree_a(a.begin(),a.end()), tree_b(b.begin(),b.end());
+  NT res = 0;
+  for (Points::iterator pi=a.begin();pi!=a.end();pi++) {
+    OS search(tree_b,*pi);
+    NT dist2 = search.begin()->second;
+    if (dist2>res)
+      res = dist2;
+  }
+  for (Points::iterator pi=b.begin();pi!=b.end();pi++) {
+    OS search(tree_a,*pi);
+    NT dist2 = search.begin()->second;
+    if (dist2>res)
+      res = dist2;
+  }
+  return res;
+}
 /** \brief Compare a face to an input polygon
  * \param f : face of arr.
  * \param an index of an input polygon (starting from 1).
- * \param eps : step length to be used for digitizing the face and the polygon
+ * \param eps : step length to be used for digitization.
  * border.
  * \return the squared discrete Hausdorff distance between the face and the
  * polygon borders.
  */
-NT PolygonImporter::compare(HistArrangement::Face_handle f,unsigned int pidx,
-                            NT eps) {
-  Points face_sample;
-  Points poly_sample;
-  HistArrangement::Ccb_halfedge_circulator ccb_begin, ccb_end;
-  if (f->has_outer_ccb()) {
-    Points vertices;
-    HistArrangement::Ccb_halfedge_circulator e, done;
-    e = f->outer_ccb();
-    done = e;
-    do {
-      vertices.push_back(e->source()->point());
-      e++;
-    } while (e!=done);
-    vertices.push_back(e->source()->point());
-    Points buf = digitize(vertices,eps);
-    face_sample.insert(face_sample.end(),buf.begin(),buf.end());
-  }
-  for (HistArrangement::Hole_iterator hi=f->holes_begin();hi!=f->holes_end();
-       hi++) {
-    Points vertices;
-    HistArrangement::Ccb_halfedge_circulator e, done;
-    e = *hi;
-    done = e;
-    do {
-      vertices.push_back(e->source()->point());
-      e++;
-    } while (e!=done);
-    vertices.push_back(e->source()->point());
-    Points buf = digitize(vertices,eps);
-    face_sample.insert(face_sample.end(),buf.begin(),buf.end());
-  }
-  HPolygon ref_hp = input_polygons[pidx-1];
-  if (!ref_hp.is_unbounded()) {
-    Points vertices(ref_hp.outer_boundary().vertices_begin(),
-                    ref_hp.outer_boundary().vertices_end());
-    vertices.push_back(vertices[0]);
-    Points buf = digitize(vertices,eps);
-    poly_sample.insert(poly_sample.end(),buf.begin(),buf.end());
-  }
-  for (HPolygon::Hole_const_iterator hi=ref_hp.holes_begin();
-       hi!=ref_hp.holes_end();hi++) {
-    Points vertices(hi->vertices_begin(),hi->vertices_end());
-    vertices.push_back(vertices[0]);
-    Points buf = digitize(vertices,eps);
-    poly_sample.insert(poly_sample.end(),buf.begin(),buf.end());
-  }
-  NT res = squared_Hausdorff_distance(face_sample,poly_sample);
+NT PolygonImporter::compare(HistArrangement::Face_handle f,
+                            unsigned int pidx,NT eps) {
+  HPolygon f_poly = aface2poly(f,true);
+  Points arr_sample = digitize(f_poly,eps);
+  Points poly_sample = digitize(input_polygons[pidx-1],eps);
+  NT res = squared_Hausdorff_distance_os(arr_sample,poly_sample);
   return res;
 }
 
 /** \brief Assess globally the fit polygon/face
  */
-NT PolygonImporter::goodness_of_fit(NT eps,double weight_missing) {
+NT PolygonImporter::goodness_of_fit(NT eps) {
   NT res = 0.0;
   NT dmax = 0;
   std::vector<Size> missing;
   for (Size i=0;i<input_polygons.size();i++)
-    missing.push_back(i+1);
+    missing.push_back(i);
   std::vector<Size>::iterator missing_begin = missing.begin(), 
     missing_end = missing.end();
   Size face_counter = 0;
@@ -572,14 +651,17 @@ NT PolygonImporter::goodness_of_fit(NT eps,double weight_missing) {
        fi!=arr.faces_end();fi++) {
     PolygonVote pv = elected_polygon(fi);
     if (pv.first>0) {
-      NT dist = compare(fi,pv.first,eps);
-      res += dist;
-      missing_end = std::remove(missing_begin,missing_end,pv.first);
+      NT dist2 = compare(fi,pv.first,eps);
+      res += dist2;
+      missing_end = std::remove(missing_begin,missing_end,pv.first-1);
     }
     face_counter++;
   }
   for (std::vector<Size>::iterator m=missing_begin;m!=missing_end;m++) {
-    res += weight_missing*weight_missing;
+    Polygon outer = input_polygons[*m].outer_boundary();
+    NT diam2 = squared_diameter(outer.vertices_begin(),
+                                outer.vertices_end());
+    res += diam2;
   }
   return res;
 }

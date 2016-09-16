@@ -46,6 +46,15 @@ n'est implémentée.*/
 #include <CGAL/Polygon_with_holes_2.h>
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Arrangement_with_history_2.h>
+#include <CGAL/convex_hull_2.h>
+#include <CGAL/utils_classes.h>
+#include <CGAL/Delaunay_triangulation_2.h>
+#include <CGAL/Voronoi_diagram_2.h>
+#include <CGAL/Delaunay_triangulation_adaptation_traits_2.h>
+#include <CGAL/Delaunay_triangulation_adaptation_policies_2.h>
+#include <CGAL/Point_set_2.h>
+#include <CGAL/Orthogonal_k_neighbor_search.h>
+#include <CGAL/Search_traits_2.h>
 
 /******************************************************************************/
 /*          TYPE DEFINITIONS AND FORWARD CLASS DECLARATIONS                   */
@@ -616,7 +625,7 @@ public:
   std::vector<PolygonVote> 
     elected_polygons(HistArrangement::Ccb_halfedge_circulator);
   NT compare(HistArrangement::Face_handle,unsigned int,NT);    
-  NT goodness_of_fit(NT eps,double weight_missing);
+  NT goodness_of_fit(NT eps);
 };
 
 /******************************************************************************/
@@ -1449,6 +1458,8 @@ Segment clip_segment_by_polygon(Segment, HPolygon)
      throw(std::domain_error const&);
 Segment clip_segment_by_polygon(Segment, HPolygons) 
      throw(std::domain_error const&);
+template<class InputIterator> NT squared_diameter(InputIterator,
+						  InputIterator);
 double                   precompute_lengthening(Arrangement::Halfedge_handle,
 						Arrangement::Halfedge_handle*,
 						Point2*);
@@ -1499,7 +1510,7 @@ NT curvilinear_coordinate(Point2,Segment);
 double interval_free_length(double,double,
                             std::vector<std::pair<double,double> >);
 NT area(HPolygon);
-Points digitize(Points,NT);
+     //Points digitize(Points,NT);
 NT squared_Hausdorff_distance(Points&,Points&);
 PolygonImporter::PolygonVote vote_winner(PolygonImporter::PolygonVotes);
 /** \defgroup features Features of T-tessellations
@@ -1530,3 +1541,44 @@ double                   face_sum_of_angles(HPolygon,TTessel*);
 double                   min_angle(HPolygon, TTessel*);
 double                   segment_size_2(std::vector<Point2>,TTessel*);
 /** @}*/
+
+/** \brief Compute the largest interdistance within a point set
+ * \param begin : iterator pointing to the first point.
+ * \param end : past-the-end iterator.
+ * \return the largest distance between two points. If there is
+ * only one point, zero.
+ * \pre the point set must not be empty.
+ */
+template<class InputIterator> NT squared_diameter(InputIterator begin,
+						  InputIterator end) {
+  if (end==begin) {
+    throw std::domain_error("Function squared_diameter was provided"
+			    " an empty point set");
+  }
+  Points U, L;
+  CGAL::upper_hull_points_2(begin,end,std::back_inserter(U));
+  Point2 rightmost = U[0];
+  CGAL::lower_hull_points_2(begin,end,std::back_inserter(L));
+  Point2 leftmost = L[0];
+  L.push_back(rightmost); // ???
+  U.push_back(leftmost);
+  std::reverse(U.begin(),U.end());
+  NT res = 0;
+  Size i = 0;
+  Size j = L.size()-1;
+  while (i<U.size()-1 or j>0) {
+    NT dist = CGAL::squared_distance(U[i],L[j]);
+    if (dist>res)
+      res = dist;
+    if (i==U.size()-1)
+      j--;
+    else if (j==0)
+      i++;
+    else if ((U[i+1].y()-U[i].y())*(L[j].x()-L[j-1].x())>
+             (U[i+1].x()-U[i].x())*(L[j].y()-L[j-1].y()))
+      i++;
+    else
+      j--;
+  }
+  return res;
+}
