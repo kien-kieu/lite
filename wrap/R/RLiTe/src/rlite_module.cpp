@@ -30,6 +30,8 @@ namespace Rcpp {
   template<> SEXP wrap(const std::vector<PolygonImporter::PolygonVote>&);
   template<> SEXP wrap(const NT&);
   template<> NT as(SEXP);
+  template<> FMatrix as(SEXP);
+  template<> SEXP wrap(const FMatrix&);
 }
 RCPP_EXPOSED_CLASS(LineTes)
 RCPP_EXPOSED_CLASS(PolygonImporter)
@@ -555,6 +557,28 @@ namespace Rcpp {
   }
 }
 
+namespace Rcpp {
+  template <> SEXP wrap(const FMatrix& fmat) {
+    NumericMatrix res(fmat.row_dimension(),fmat.column_dimension());
+    for (int i=0;i!=fmat.row_dimension();i++) {
+      for (int j=0;j!=fmat.column_dimension();j++) {
+	res(i,j) = fmat(i,j);
+      }
+    }
+    return wrap(res);
+  }
+  template<> FMatrix as(SEXP x) {
+    NumericMatrix mat(x);
+    FMatrix res(mat.nrow(),mat.ncol());
+    for(int i=0;i!=mat.nrow();i++) {
+      for(int j=0;j!=mat.ncol();j++) {
+	res(i,j) = mat(i,j);
+      }
+    }
+    return res;
+  }
+}
+	
 // Rcpp::NumericVector R_get_theta(Energy *e) {
 //   Parameters par = e->get_theta();
 //   Rcpp::NumericVector theta = Parameters2NumericVector(par);
@@ -658,7 +682,11 @@ RCPP_MODULE(lite){
     .method("elected_polygons_ccb",&elected_polygons_ccb,
 	    "get polygon votes along a ccb")
     .method("goodness_of_fit",&PolygonImporter::goodness_of_fit,
-	    "assess how arrangement faces match input polygons") 
+	    "assess how arrangement faces match input polygons")
+    .field("sep_dists",&PolygonImporter::sep_dists,
+	   "matrix of distances separating the input polygon sides")
+    .field("angle_dists",&PolygonImporter::angle_dists,
+	   "matrix of angle difference between the input polygon sides")
     ;
   class_<TTessel>("TTessel")
     .derives<LineTes>("LineTes")

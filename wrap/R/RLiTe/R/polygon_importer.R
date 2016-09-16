@@ -74,6 +74,21 @@ distSeg <- function(s,omega=0.5){
     (1-omega)*distSegSep(s) + omega*distSegAng(s)
 }
 
+setGeneric(name="compute_dissimilarities",
+           def=function(x,...) {standardGeneric("compute_dissimilarities")})
+setMethod("compute_dissimilarities",
+          signature(x="Rcpp_PolygonImporter"),
+          function(x,...) {
+              sides <- x$get_polygon_sides()
+              sides.psp <- psp(x0=sides[,"x0"],y0=sides[,"y0"],
+                               x1=sides[,"x1"],y1=sides[,"y1"],
+                               window=owin(xrange=range(sides[,c("x0","x1")]),
+                                   yrange=range(sides[,c("y0","y1")])),
+                               marks=sides[,"poly"])
+              x$sep_dists <- distSegSep(sides.psp)
+              x$angle_dists <- distSegAng(sides.psp)
+          })
+
 setGeneric(name="cluster_sides",
            def=function(x,omega,n)
            {
@@ -83,16 +98,16 @@ setGeneric(name="cluster_sides",
 setMethod("cluster_sides",
           signature(x="Rcpp_PolygonImporter",omega="numeric",n="numeric"),
           function(x,omega,n) {
+              d.s <- (1-omega)*x$sep_dists+omega*x$angle_dists
+              d.s.hclust <- as.dist(d.s)
+              s.class <- hclust(d.s.hclust,method="single")
+              classesId.s <- cutree(s.class,k=n)
               sides <- x$get_polygon_sides()
               sides.psp <- psp(x0=sides[,"x0"],y0=sides[,"y0"],
                                x1=sides[,"x1"],y1=sides[,"y1"],
                                window=owin(xrange=range(sides[,c("x0","x1")]),
                                    yrange=range(sides[,c("y0","y1")])),
                                marks=sides[,"poly"])
-              d.s <- distSeg(sides.psp,omega=omega)
-              d.s.hclust <- as.dist(d.s)
-              s.class <- hclust(d.s.hclust,method="single")
-              classesId.s <- cutree(s.class,k=n)
               sr <- segRepPattern(cl=classesId.s,s=sides.psp)
               x$set_side_clusters(sr)
           })

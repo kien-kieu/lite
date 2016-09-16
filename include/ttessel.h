@@ -581,6 +581,10 @@ public:
    * Input polygons represent the faces of the line tessellation to be
    * reconstructed. They may be defined approximately. */
   HPolygons input_polygons;
+  /** \brief Matrix of separating distances between polygon sides */
+  FMatrix sep_dists;
+  /** \brief Matrix of angular distances between polygons sides */
+  FMatrix angle_dists;
   /** \brief Results of the polygon side clustering
    *
    * Polygon sides supposed to be parts of the same tessellation segment are
