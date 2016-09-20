@@ -47,7 +47,7 @@ This stage depends on your development environment. For Linux users, it is perfo
     make
     make install
 
-Libraries are copied into CMAKE_INSTALL_PREFIX/lib, header files into CMAKE_INSTALL_PREFIX/include, HTML documentation files into CMAKE_INSTALL_PREFIX/share/doc/lite. A shell script lite-config is copied to CMAKE_INSTALL_PREFIX. Compiled demos and applications are left in the build directory. 
+Libraries are copied into CMAKE_INSTALL_PREFIX/lib, header files into CMAKE_INSTALL_PREFIX/include, HTML documentation files into CMAKE_INSTALL_PREFIX/share/doc/lite. A shell script lite-config is copied to CMAKE_INSTALL_PREFIX. Compiled applications are left in the build directory. 
 
 Of course, installation requires write access to CMAKE_INSTALL_PREFIX. If needed, run
 
@@ -55,12 +55,22 @@ Of course, installation requires write access to CMAKE_INSTALL_PREFIX. If needed
 
 The shell script lite-config can be used to get the installation prefix a posteriori.
 
+Build demos
+-----------
+
+As a prerequisite, LiTe must be installed before building demos. Copy the directory lite_src/demos somewhere. Go to the new demos directory
+
+     mdkdir build
+     cd build
+     cmake ..
+     make
+
 Compile of a new application using LiTe
 ---------------------------------------
 
 Compiling programs using LiTe may require additional steps depending on the OS. For instance, under Linux, if CMAKE_INSTALL_PREFIX is /usr/local (default value), one may need to run ldconfig as root. Or if CMAKE_INSTALL_PREFIX is set to some non standard path say "foo", one should have the environment variable LD_LIBRARY_PATH containing "foo/lib".
 
-Compilation can be done using the template CMake configuration file `CMakeLists_standalone_template.txt` provided in the build directory.
+An example of CMake file that can be used for building LiTe based application is provided in the demos directory.
 
 Uninstalling LiTe
 -----------------
