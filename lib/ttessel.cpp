@@ -1515,18 +1515,18 @@ TTessel::TTessel(LineTes& lt) {
   if (lt.is_a_T_tessellation()) {
     HPolygons p = lt.get_window();
     insert_window(p);
-    for (Seg_list_iterator s=lt.segments_begin();s!=lt.segments_end();s++)
-      insert_segment(Curve((*s)->pointSource(),(*s)->pointTarget()));
-    int_length = 0.0;
+    for (Seg_list_iterator s=lt.segments_begin();s!=lt.segments_end();s++) {
+      if (!is_on_boundary(*s)) {
+	insert_segment(Curve((*s)->pointSource(),(*s)->pointTarget()));
+      }
+    }
     for (Seg_list_iterator s=segments_begin();s!=segments_end();s++) {
+      if (is_on_boundary(*s))
+	continue;
       double seglen = 
 	sqrt(CGAL::to_double(CGAL::squared_distance((*s)->pointSource(),
 						    (*s)->pointTarget())));
-      if (is_on_boundary(*s)) { 
-	int_length += seglen;
-	continue;
-      } else
-	int_length += 2*seglen;
+      int_length += 2*seglen;
 	
       if ((*s)->number_of_edges()==1) {
 	non_blocking_segments.add(*s);
@@ -1535,7 +1535,7 @@ TTessel::TTessel(LineTes& lt) {
       }
     }
   } else {
-    std::cout << "warning: input is not a T-tesselation, returning a void TTessel object" << std::endl;
+    throw std::domain_error("TTessel(LinTes&) input is not a T-tesselation");
   }
 }
 
