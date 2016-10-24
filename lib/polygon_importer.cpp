@@ -600,19 +600,18 @@ NT squared_Hausdorff_distance_dtbis(Points& a,Points& b) {
   }
   return res;
 }
-NT squared_Hausdorff_distance_os(Points& a,Points& b) {
-  typedef CGAL::Search_traits_2<Kernel>  ST;
-  typedef CGAL::Orthogonal_k_neighbor_search<ST> OS;
-  OS::Tree tree_a(a.begin(),a.end()), tree_b(b.begin(),b.end());
+NT squared_Hausdorff_distance_os(PolygonImporter::OS::Tree* a,
+                                 PolygonImporter::OS::Tree* b,
+                                 NT eps) {
   NT res = 0;
-  for (Points::iterator pi=a.begin();pi!=a.end();pi++) {
-    OS search(tree_b,*pi);
+  for (PolygonImporter::OS::Tree::iterator pi=a->begin();pi!=a->end();pi++) {
+    PolygonImporter::OS search(*b,*pi,1,eps);
     NT dist2 = search.begin()->second;
     if (dist2>res)
       res = dist2;
   }
-  for (Points::iterator pi=b.begin();pi!=b.end();pi++) {
-    OS search(tree_a,*pi);
+  for (PolygonImporter::OS::Tree::iterator pi=b->begin();pi!=b->end();pi++) {
+    PolygonImporter::OS search(*a,*pi,1,eps);
     NT dist2 = search.begin()->second;
     if (dist2>res)
       res = dist2;
@@ -627,19 +626,35 @@ NT squared_Hausdorff_distance_os(Points& a,Points& b) {
  * \return the squared discrete Hausdorff distance between the face and the
  * polygon borders.
  */
-NT PolygonImporter::compare(HistArrangement::Face_handle f,
-                            unsigned int pidx,NT eps) {
-  HPolygon f_poly = aface2poly(f,true);
-  Points arr_sample = digitize(f_poly,eps);
-  Points poly_sample = digitize(input_polygons[pidx-1],eps);
-  NT res = squared_Hausdorff_distance_os(arr_sample,poly_sample);
+NT PolygonImporter::compare(Size fidx,Size pidx,NT eps) {
+  NT res = squared_Hausdorff_distance_os(polygon_trees[pidx],face_trees[fidx],
+                                         eps);
   return res;
 }
 
+void PolygonImporter::preprocess_polygons_4compare(NT eps) {
+  polygon_trees.clear();
+  for (HPolygons::iterator hpi = input_polygons.begin();
+       hpi != input_polygons.end();hpi++) {
+    Points sample = digitize(*hpi,eps);
+    OS::Tree* tree = new OS::Tree(sample.begin(),sample.end());
+    polygon_trees.push_back(tree);
+  }
+}
+void PolygonImporter::preprocess_faces_4compare(NT eps) {
+  face_trees.clear();
+  for (HistArrangement::Face_iterator fi = arr.faces_begin();
+       fi != arr.faces_end(); fi++) {
+    HPolygon f_poly = aface2poly(fi,true);
+    Points sample = digitize(f_poly,eps);
+    OS::Tree* tree = new OS::Tree(sample.begin(),sample.end());
+    face_trees.push_back(tree);
+  }
+}
 /** \brief Assess globally the fit polygon/face
  */
-NT PolygonImporter::goodness_of_fit(NT eps) {
-  NT res = 0.0;
+FMatrix PolygonImporter::goodness_of_fit(NT eps) {
+  std::vector<FVector> res;
   NT dmax = 0;
   std::vector<Size> missing;
   for (Size i=0;i<input_polygons.size();i++)
@@ -649,19 +664,26 @@ NT PolygonImporter::goodness_of_fit(NT eps) {
   Size face_counter = 0;
   for (HistArrangement::Face_iterator fi=arr.faces_begin();
        fi!=arr.faces_end();fi++) {
-    PolygonVote pv = elected_polygon(fi);
-    if (pv.first>0) {
-      NT dist2 = compare(fi,pv.first,eps);
-      res += dist2;
-      missing_end = std::remove(missing_begin,missing_end,pv.first-1);
+    Size face_index = std::distance(arr.faces_begin(),fi);
+    PolygonVotes pv = polygon_sides(fi);
+    for (PolygonVotes::iterator pvi=pv.begin();pvi!=pv.end();pvi++) {
+      if (pvi->first>0) {
+        NT dist2 = compare(face_index,pvi->first-1,eps);
+        FVector col(4);
+        col[0] = (double) std::distance(arr.faces_begin(),fi);
+        col[1] = (double) pvi->first-1;
+        col[2] = pvi->second;
+        col[3] = CGAL::to_double(dist2);
+        res.push_back(col);
+        missing_end = std::remove(missing_begin,missing_end,pvi->first-1);
+      }
     }
     face_counter++;
   }
-  for (std::vector<Size>::iterator m=missing_begin;m!=missing_end;m++) {
-    Polygon outer = input_polygons[*m].outer_boundary();
-    NT diam2 = squared_diameter(outer.vertices_begin(),
-                                outer.vertices_end());
-    res += diam2;
+  if (std::distance(missing_begin,missing_end)>0) {
+    std::clog << "Warning: there are " << std::distance(missing_begin,missing_end) << " orphan polygons" << std::endl;
   }
-  return res;
+  FMatrix matres(res.begin(),res.end());
+  FMatrix mtransp = LA::transpose(matres);
+  return mtransp;
 }

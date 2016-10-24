@@ -681,6 +681,10 @@ RCPP_MODULE(lite){
     .method("elected_polygon",&elected_polygon,"get polygon matched to a face")
     .method("elected_polygons_ccb",&elected_polygons_ccb,
 	    "get polygon votes along a ccb")
+    .method("preprocess_faces_4compare",
+	    &PolygonImporter::preprocess_faces_4compare,"???")
+    .method("preprocess_polygons_4compare",
+	    &PolygonImporter::preprocess_polygons_4compare,"???")
     .method("goodness_of_fit",&PolygonImporter::goodness_of_fit,
 	    "assess how arrangement faces match input polygons")
     .field("sep_dists",&PolygonImporter::sep_dists,

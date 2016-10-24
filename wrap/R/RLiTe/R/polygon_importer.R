@@ -154,18 +154,36 @@ setGeneric(name="optimize_parameters",
                standardGeneric("optimize_parameters")
            }
            )
+crit.v1 <- function(par,polygon.importer,delta) {
+    par <- abs(par)
+    par[2] <-round(par[2])
+    cluster_sides(polygon.importer,omega=par[1],n=par[2])
+    polygon.importer$insert_segments(expand=par[3])
+    polygon.importer$remove_I_vertices(within=par[4])
+    res <- polygon.importer$goodness_of_fit(delta)
+    res
+}
+crit.v2 <- function(par,polygon.importer,delta,expand) {
+    par <- abs(par)
+    par[2] <-round(par[2])
+    cluster_sides(polygon.importer,omega=par[1],n=par[2])
+    polygon.importer$insert_segments(expand=expand)
+    res <- polygon.importer$goodness_of_fit(delta)
+    res
+}
+crit.v3 <- function(par,polygon.importer,delta,expand) {
+    tpar <- c(1/(1+exp(-par[1])),round(par[2]))
+    nsides <- nrow(polygon.importer$sep_dists)
+    tpar[2] <- min(nsides,max(1,tpar[2]))
+    cat("omega",tpar[1],"n",tpar[2],"\n")
+    cluster_sides(polygon.importer,omega=tpar[1],n=tpar[2])
+    polygon.importer$insert_segments(expand=expand)
+    polygon.importer$preprocess_faces_4compare(delta)
+    res <- polygon.importer$goodness_of_fit(delta*0.95)
+    mean(res[,3]*res[,4])
+}
 setMethod("optimize_parameters",
           signature(x="Rcpp_PolygonImporter",par="numeric"),
-          function(x,par,delta,...) {
-              crit <- function(par,polygon.importer,delta) {
-                  par <- abs(par)
-                  par[2] <-round(par[2])
-                  cluster_sides(polygon.importer,omega=par[1],n=par[2])
-                  polygon.importer$insert_segments(expand=par[3])
-                  polygon.importer$remove_I_vertices(within=par[4])
-                  res <- polygon.importer$goodness_of_fit(delta)
-                  res
-              }
-              optim(par,crit,polygon.importer=x,delta=delta,
-                    method="Nelder-Mead",...)
+          function(x,par,...) {
+              optim(par,crit.v3,polygon.importer=x,method="Nelder-Mead",...)
           })

@@ -575,6 +575,8 @@ public:
    *
    *  Hash map where the polygon indices are used as hash keys. */
   typedef boost::unordered_map<unsigned int,double> PolygonVotes;
+  typedef CGAL::Search_traits_2<Kernel>  ST;
+  typedef CGAL::Orthogonal_k_neighbor_search<ST> OS;
   // data members
   /** \brief Input polygons
    *
@@ -600,6 +602,8 @@ public:
    * halfedges to segments.
    */
   HistArrangement arr;
+  std::vector<OS::Tree*> polygon_trees;
+  std::vector<OS::Tree*> face_trees;
   // methods
   PolygonImporter();
   /** \brief Set input polygons
@@ -628,8 +632,11 @@ public:
   PolygonVote elected_polygon(HistArrangement::Face_handle);
   std::vector<PolygonVote> 
     elected_polygons(HistArrangement::Ccb_halfedge_circulator);
-  NT compare(HistArrangement::Face_handle,unsigned int,NT);    
-  NT goodness_of_fit(NT eps);
+  void preprocess_polygons_4compare(NT);
+  void preprocess_faces_4compare(NT);
+  NT compare(Size,Size,NT);    
+  //NT goodness_of_fit(NT eps);
+  FMatrix goodness_of_fit(NT eps);
 };
 
 /******************************************************************************/
