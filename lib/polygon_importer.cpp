@@ -618,6 +618,19 @@ NT squared_Hausdorff_distance_os(PolygonImporter::OS::Tree* a,
   }
   return res;
 }
+NT squared_Hausdorff_distance(std::vector<Segment>& P,std::vector<Segment>& Q) {
+  typedef CGAL::Segment_Delaunay_graph_traits_2<Kernel> SDGTraits;
+  typedef CGAL::Segment_Delaunay_graph_2<SDGTraits> SDG;
+  typedef CGAL::Segment_Delaunay_graph_adaptation_traits_2<SDG> SDGAdaptTraits;
+  typedef CGAL::Segment_Delaunay_graph_degeneracy_removal_policy_2<SDG> SDGPol;
+  typedef CGAL::Voronoi_diagram_2<SDG,SDGAdaptTraits,SDGPol> SVD;
+  SVD VorP;
+  SDGAdaptTraits::Point_2 a(0,0), b(1,0);
+  SDGAdaptTraits::Site_2 toto;
+  toto.construct_site_2(a,b);
+  VorP.insert(toto);
+  return 0;
+}
 /** \brief Compare a face to an input polygon
  * \param f : face of arr.
  * \param an index of an input polygon (starting from 1).

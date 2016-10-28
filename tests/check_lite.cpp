@@ -1071,3 +1071,18 @@ BOOST_AUTO_TEST_CASE(squared_diameter_points) {
 		      << " is " << diam2_rc << " instead of " << diam2_bf);
 }
 		      
+BOOST_AUTO_TEST_CASE(hausdorff_segments) {
+  std::vector<Segment> P, Q;
+  P.push_back(Segment(Point2(0,0),Point2(3,0)));
+  P.push_back(Segment(Point2(3,0),Point2(0,3)));
+  P.push_back(Segment(Point2(0,3),Point2(2,3)));
+  P.push_back(Segment(Point2(2,3),Point2(0,1)));
+  P.push_back(Segment(Point2(0,1),Point2(0,0)));
+  Q.push_back(Segment(Point2(0,0),Point2(3,0)));
+  Q.push_back(Segment(Point2(0,0),Point2(3,0)));
+  Q.push_back(Segment(Point2(3,0),Point2(3,3)));
+  Q.push_back(Segment(Point2(3,3),Point2(0,0)));
+  Q.push_back(Segment(Point2(1,2),Point2(3,2)));
+  NT shd = squared_Hausdorff_distance(P,Q);
+  BOOST_CHECK_MESSAGE(shd==0,"temporary dummy test for debugging");
+}

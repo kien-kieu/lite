@@ -55,6 +55,10 @@ n'est implémentée.*/
 #include <CGAL/Point_set_2.h>
 #include <CGAL/Orthogonal_k_neighbor_search.h>
 #include <CGAL/Search_traits_2.h>
+#include <CGAL/Segment_Delaunay_graph_2.h>
+#include <CGAL/Segment_Delaunay_graph_traits_2.h>
+#include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
+#include <CGAL/Segment_Delaunay_graph_adaptation_policies_2.h>
 
 /******************************************************************************/
 /*          TYPE DEFINITIONS AND FORWARD CLASS DECLARATIONS                   */
@@ -1523,6 +1527,7 @@ double interval_free_length(double,double,
 NT area(HPolygon);
      //Points digitize(Points,NT);
 NT squared_Hausdorff_distance(Points&,Points&);
+NT squared_Hausdorff_distance(std::vector<Segment>&,std::vector<Segment>&);
 PolygonImporter::PolygonVote vote_winner(PolygonImporter::PolygonVotes);
 /** \defgroup features Features of T-tessellations
  *
