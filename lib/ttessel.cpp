@@ -4216,7 +4216,8 @@ double face_area_2(HPolygon f, TTessel* t){
   Polygons p = boundaries(f);
   double area = 0.0; 
   for (Size i=0;i!=p.size();i++) {
-    area += CGAL::to_double(p[i].area());
+    double a = CGAL::to_double(p[i].area());
+    area += a*a;
   }
   return area;
 }
