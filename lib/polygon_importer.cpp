@@ -618,18 +618,84 @@ NT squared_Hausdorff_distance_os(PolygonImporter::OS::Tree* a,
   }
   return res;
 }
-NT squared_Hausdorff_distance(std::vector<Segment>& P,std::vector<Segment>& Q) {
+template<class Site2> void print_site(Site2 site) {
+  if (!site.is_defined()) {
+    std::cout << "a site which is neither a ";
+    std::cout << "valid point or segment";
+  } else if (site.is_point()) {
+    typename Site2::Point_2 site_point = site.point();
+    std::cout << "the point site " << site_point;
+  } else if (site.is_segment()) {
+    typename Site2::Segment_2 site_segment = site.segment();
+    std::cout << "the segment site " << site_segment;
+  }
+}
+template<class Site2> NT dist_site(Point2 p,Site2 site) {
+  if (!site.is_defined()) {
+    throw std::domain_error("undefined site");
+  } else if (site.is_point()) {
+    typename Site2::Point_2 site_point = site.point();
+    return CGAL::squared_distance(p,site_point);
+  } else if (site.is_segment()) {
+    typename Site2::Segment_2 site_segment = site.segment();
+    return CGAL::squared_distance(p,site_segment);
+  }
+}
+NT oriented_squared_Hausdorff_distance(Polygons& P,Polygons& Q) {
   typedef CGAL::Segment_Delaunay_graph_traits_2<Kernel> SDGTraits;
   typedef CGAL::Segment_Delaunay_graph_2<SDGTraits> SDG;
   typedef CGAL::Segment_Delaunay_graph_adaptation_traits_2<SDG> SDGAdaptTraits;
   typedef CGAL::Segment_Delaunay_graph_degeneracy_removal_policy_2<SDG> SDGPol;
   typedef CGAL::Voronoi_diagram_2<SDG,SDGAdaptTraits,SDGPol> SVD;
+  typedef SVD::Locate_result Locate;
   SVD VorP;
-  SDGAdaptTraits::Point_2 a(0,0), b(1,0);
-  SDGAdaptTraits::Site_2 toto;
-  toto.construct_site_2(a,b);
-  VorP.insert(toto);
-  return 0;
+  for (Polygons::iterator pi=P.begin();pi!=P.end();pi++) {
+    for (Polygon::Edge_const_iterator ei=pi->edges_begin();ei!=pi->edges_end();
+         ei++) {
+      SDGAdaptTraits::Point_2 src(ei->source().x(),ei->source().y()),
+        tgt(ei->target().x(),ei->target().y());
+      SDGAdaptTraits::Site_2 seg = SDGAdaptTraits::Site_2::construct_site_2(src,
+                                                                          tgt);
+      SVD::Face_handle f = VorP.insert(seg);
+      if (!VorP.is_valid())
+        throw std::domain_error("invalid segment Voronoi diagram");
+    }
+  }
+  NT Q_dist = 0;
+  for (Polygons::iterator pi=Q.begin();pi!=Q.end();pi++) {
+    NT boundary_dist = 0; 
+    for (Polygon::Vertex_const_iterator vi=pi->vertices_begin();
+         vi!=pi->vertices_end();vi++) {
+      SDGAdaptTraits::Point_2 query(vi->x(),vi->y());
+      Locate locate = VorP.locate(query);
+      SVD::Delaunay_graph::Site_2 nearest_site;
+      if (SVD::Vertex_handle* v=boost::get<SVD::Vertex_handle>(&locate)) {
+        SVD::Delaunay_vertex_handle vh = (*v)->site(0);
+        nearest_site = vh->site();
+      } else if (SVD::Halfedge_handle*
+                 he=boost::get<SVD::Halfedge_handle>(&locate)) {
+        nearest_site = (*he)->up()->site();
+      } else if (SVD::Face_handle* f=boost::get<SVD::Face_handle>(&locate)) {
+        nearest_site = (*f)->dual()->site();
+      }
+      NT vertex_dist = dist_site(*vi,nearest_site);
+      if (vertex_dist>boundary_dist) {
+        boundary_dist = vertex_dist;
+      }
+      if (boundary_dist>Q_dist) {
+        Q_dist = boundary_dist;
+      }
+    }
+  }
+  return Q_dist;
+}
+NT squared_Hausdorff_distance(Polygons& P,Polygons& Q) {
+  NT Q2P = oriented_squared_Hausdorff_distance(P,Q);
+  NT P2Q = oriented_squared_Hausdorff_distance(P,Q);
+  if (Q2P>P2Q)
+    return Q2P;
+  else
+    return P2Q;
 }
 /** \brief Compare a face to an input polygon
  * \param f : face of arr.

@@ -1527,7 +1527,9 @@ double interval_free_length(double,double,
 NT area(HPolygon);
      //Points digitize(Points,NT);
 NT squared_Hausdorff_distance(Points&,Points&);
-NT squared_Hausdorff_distance(std::vector<Segment>&,std::vector<Segment>&);
+NT oriented_squared_Hausdorff_distance(Polygons&,
+				       Polygons&);
+NT squared_Hausdorff_distance(Polygons&,Polygons&);
 PolygonImporter::PolygonVote vote_winner(PolygonImporter::PolygonVotes);
 /** \defgroup features Features of T-tessellations
  *
